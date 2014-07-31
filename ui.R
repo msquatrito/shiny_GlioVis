@@ -7,27 +7,38 @@ library (gridExtra)
 library (rCharts)
 
 shinyUI(fluidPage(
+    # Add a background image
+#   tags$style(type="text/css", "body { background-image: url(neurocomic.jpg); }"),
+  
   # progressInit() must be called somewhere in the UI in order for the progress UI to actually appear
   progressInit(),
  
-  headerPanel("GlioVis"),
+#   headerPanel("GlioVis"),
 
-#   img(src = "GlioVis_logo.jpg", height = 90, width = 270),
-
-  sidebarLayout(
+  sidebarLayout(fluid = FALSE,
+                
     sidebarPanel(
-      #       helpText("Visualization tools for glioma datasets"),
+#       tags$style(type="text/css",".well {background-color: black; }"),
+      img(src = "GlioVis_logo.jpg", height = 90, width = 270),
+      br(),
+      br(),
       selectInput("dataset", 
                   label = h4("Dataset"),
                   choices = c("TCGA GBM", "TCGA Lgg", "Rembrandt",
                               "Gravendeel", "Phillips", "Murat", "Freije"),
                   selected = "TCGA GBM"),
       br(),
-      selectInput("plotTypeSel", 
-                   label = h4("Plot type"), choices = ""),
+      selectizeInput("plotTypeSel", 
+                     label = h4("Plot type"), choices = NULL, selected = NULL),
       br(),
-      selectInput("gene", h4("Gene"), "Enter gene, eg: EGFR", selectize = TRUE)
+      selectizeInput("gene", 
+                     label = h4("Gene"), choices = NULL, selected = NULL,
+                     options = list(placeholder = "Enter gene, eg: EGFR", 
+                                    plugins = list('restore_on_backspace'))),
+      br(),
+      uiOutput("help")
     ),
+
     
     mainPanel(
       
@@ -39,7 +50,7 @@ shinyUI(fluidPage(
                  
                  fluidRow(
                    column(4, 
-                          inputPanel(
+                          wellPanel(
                             strong("Plot options:"),
                             checkboxInput("scale", "Scale y axis", FALSE),
                             checkboxInput("stat", "Show statistic", FALSE),
@@ -179,7 +190,11 @@ shinyUI(fluidPage(
                  br(),
                  downloadButton('downloadData', 'Download table'), 
                  br(),
-                 dataTableOutput("table")))
+                 dataTableOutput("table")),
+        
+        tabPanel("About", includeMarkdown("tools/about.Rmd"))
+        
+        )
     )
   )
 ))
