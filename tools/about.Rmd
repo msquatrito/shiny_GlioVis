@@ -1,0 +1,34 @@
+## Available Dataset 
+
+### TCGA GBM
+
+### Rembrandt
+
+### Gravendeel
+
+### Phillips
+
+### Freije
+
+### Murat
+
+
+
+### App info
+
+Version 0.10 (7/25/2014)
+
+By: <a href="http://www.cnio.es/ing/grupos/plantillas/presentacion.asp?grupo=50008938" target="_blank"> 
+Massimo Squatrito</a> 
+
+Built using <a href="http://www.rstudio.com/shiny/" target="_blank">Shiny</a> by <a href="http://www.rstudio.com/" target="_blank">Rstudio</a>
+
+Code available on <a href="https://github.com" target="_blank">GitHub</a> (NOT YET)
+
+### License
+
+The GlioVis is licensed under the <a href="http://www.tldrlegal.com/l/AGPL3" target="_blank">AGPLv3</a>. 
+
+As a summary, the AGPLv3 license requires, attribution, include copyright and license in copies of the software, state changes if you modify the code, and disclose all source code. 
+
+&copy; Massimo Squatrito (2014) <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /></a>
