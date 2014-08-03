@@ -20,19 +20,8 @@ gene_names <- readRDS("data/gene_names.Rds")
 shinyServer(
   function(input, output, session) {   
     
-    # Help popup NOT WORKING YET
-    output$help <- renderUI({ 
-      helpPopup(title = "Help me pleaseeeeee", 
-#                 content = "", 
-                content = includeMarkdown("tools/help.Rmd"), # I've still to create the Rmd file
-                placement = "right", trigger = "click") 
-    }) 
-
-    # Help popup alternative NOT WORKING YET
-#     output$help <- renderUI({ 
-#       helpModal("Help me pleaseeeeee","help",includeMarkdown("tools/help.Rmd"))
-#     })
-#     
+    # Text matching with the gene names list
+    updateSelectizeInput(session, "gene",  choices = c("", gene_names), server = TRUE)
     
     # Caption with gene and dataset
     output$caption <- renderText({
@@ -40,6 +29,20 @@ shinyServer(
         return()
       title <- paste(input$gene, "in", input$dataset, "dataset")
     })
+    
+    # Help popup NOT WORKING YET
+    output$help <- renderUI({ 
+      helpPopup(title = "Help me pleaseeeeee", 
+                #                 content = "", 
+                content = includeMarkdown("tools/help.Rmd"), # I've still to create the Rmd file
+                placement = "right", trigger = "click") 
+    })
+    
+    # Help popup alternative NOT WORKING YET
+    #     output$help <- renderUI({ 
+    #       helpModal("Help me pleaseeeeee","help",includeMarkdown("tools/help.Rmd"))
+    #     })
+    #     
     
     # Return the requested dataset
     datasetInput <- reactive({
@@ -63,35 +66,25 @@ shinyServer(
              Recurrence = "Type")
     })
     
-    plotAvailable <- reactive({
-      datasetInput()[["plotType"]]
-    })
-
     # Return the available histology, to be used in the updateSelectInput for correlation and survival
     histo <- reactive({
       levels(datasetInput()[["pData"]][,"Histology"])
     })
     
     observe({
-        # This will change the plot type available for a specific dataset
-        updateSelectInput(session, "plotTypeSel", choices = plotAvailable())
+      # This will change the value of input$gene1, based on input$gene
+      updateSelectizeInput(session, "gene1", choices = gene_names, server = TRUE, selected = input$gene)
+      # This will change the value of input$gene2, based on input$gene
+      updateSelectizeInput(session, "gene2", choices = gene_names, server = TRUE, selected = input$gene)
+      # This will change the value of input$histologySurv, based on histological group available for that dataset
+      updateSelectInput(session, "histologySurv", choices = histo(), selected = tail(histo(), n=1))
+      # This will change the value of input$histologyCorr, based on histological group available for that dataset
+      updateSelectInput(session, "histologyCorr", choices = c("All", histo()), selected = "All")
+      # This will change the value of input$histologyCorr, based on histological group available for that dataset
+      updateSelectInput(session, "histologyCorrTable", choices = c("All", histo()), selected = "All")
+      # This will change the plot type available for a specific dataset
+      updateSelectInput(session, "plotTypeSel", choices = datasetInput()[["plotType"]], selected = datasetInput()[["plotType"]][1])
     })
-
-    # Text matching with the gene names list
-    updateSelectizeInput(session, "gene",  choices = c("", gene_names), selected = "") # server = TRUE    
-
-    observe({
-          # This will change the value of input$gene1, based on input$gene
-          updateSelectizeInput(session, "gene1", choices = c("", gene_names),  selected = input$gene) # server = TRUE
-          # This will change the value of input$gene2, based on input$gene
-          updateSelectizeInput(session, "gene2", choices = c("", gene_names), selected = input$gene) # server = TRUE
-          # This will change the value of input$histologySurv, based on histological group available for that dataset
-          updateSelectInput(session, "histologySurv", choices = histo(), selected = tail(histo(), n=1))
-          # This will change the value of input$histologyCorr, based on histological group available for that dataset
-          updateSelectInput(session, "histologyCorr", choices = c("All", histo()), selected = "All")
-          # This will change the value of input$histologyCorr, based on histological group available for that dataset
-          updateSelectInput(session, "histologyCorrTable", choices = c("All", histo()), selected = "All")
-        })
 
     # Need a wrapper around the densityClick input so we can manage whether or
     # not the click occured on the current Gene. If it occured on a previous
