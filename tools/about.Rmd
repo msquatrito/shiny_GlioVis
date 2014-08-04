@@ -1,33 +1,45 @@
-## Available Dataset 
+### Available Datasets 
 
-### TCGA GBM
+**TCGA GBM** 
+  + [TCGA](https://tcga-data.nci.nih.gov/tcga/tcgaCancerDetails.jsp?diseaseType=GBM&diseaseName=Glioblastoma%20multiforme) ^1
 
-### Rembrandt
+**Rembrandt**
+  + [caArray](https://array.nci.nih.gov/caarray/project/fine-00037)
+  + [Repository for Molecular Brain Neoplasia Data](https://caintegrator.nci.nih.gov/rembrandt/) ^2
 
-### Gravendeel
+**Gravendeel**
+  + [GSE16011](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE16011) ^3
 
-### Phillips
+**Phillips**
+  + [GSE4271](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE4271) ^4
 
-### Freije
+**Freije**
+  + [GSE4412](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE4412) ^5
+  
+**Murat**
+  + [GSE7696](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE7696) ^6
 
-### Murat
-
-
+References:  
+1 [The Cancer Genome Atlas Research Network 2008](http://www.ncbi.nlm.nih.gov/pubmed/18772890)  
+2 [Madhavan S et al. 2009](http://www.ncbi.nlm.nih.gov/pubmed/19208739)  
+3 [Gravendeel LA et al. 2009](http://www.ncbi.nlm.nih.gov/pubmed/19920198)  
+4 [Phillips HS et al. 2006](http://www.ncbi.nlm.nih.gov/pubmed/16530701)  
+5 [Freije WA et al. 2004](http://www.ncbi.nlm.nih.gov/pubmed/15374961)  
+6 [Murat A et al. 2008](http://www.ncbi.nlm.nih.gov/pubmed/18565887)
 
 ### App info
 
-Version 0.10 (7/25/2014)
+Version 0.10 (08/01/2014)
 
-By: <a href="http://www.cnio.es/ing/grupos/plantillas/presentacion.asp?grupo=50008938" target="_blank"> 
-Massimo Squatrito</a> 
+By: [Massimo Squatrito](m_squatrito@gmail.com) and [Robert Bowman]()
 
-Built using <a href="http://www.rstudio.com/shiny/" target="_blank">Shiny</a> by <a href="http://www.rstudio.com/" target="_blank">Rstudio</a>
+Built using [Shiny](http://www.rstudio.com/shiny) by [RStudio](http://www.rstudio.com)
 
-Code available on <a href="https://github.com" target="_blank">GitHub</a> (NOT YET)
+Code available on [GitHub](https://github.com/msquatrito/shiny_GlioVis)
 
 ### License
 
-The GlioVis is licensed under the <a href="http://www.tldrlegal.com/l/AGPL3" target="_blank">AGPLv3</a>. 
+The GlioVis is licensed under the [AGPLv3](http://www.tldrlegal.com/l/AGPL3) 
 
 As a summary, the AGPLv3 license requires, attribution, include copyright and license in copies of the software, state changes if you modify the code, and disclose all source code. 
 
