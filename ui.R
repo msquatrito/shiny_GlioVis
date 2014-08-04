@@ -48,10 +48,22 @@ shinyUI(fluidPage(
                                       wellPanel(
                                         strong("Plot options:"),
                                         checkboxInput("scale", "Scale y axis", FALSE),
-                                        checkboxInput("stat", "Show statistic", FALSE),
                                         checkboxInput("colStrip", "Color stripchart", FALSE),
-                                        checkboxInput("colBox", "Color box", FALSE)))),
+                                        checkboxInput("colBox", "Color box", FALSE))),
+                               
+                               column(4, 
+                                      wellPanel(
+                                        strong("Statistic:"),
+                                        checkboxInput("stat", "Tukey's HSD (plot)", FALSE),
+                                        checkboxInput("statTable", "Tukey's HSD (table)", FALSE)))),
+                             
                              plotOutput("plot"),
+                             br(),
+                             conditionalPanel(
+                               condition = "input.statTable",
+                               strong(" Tukey's Honest Significant Difference (HSD):"),
+                               verbatimTextOutput("tukeyTest")),
+                             br(),
                              
                              wellPanel( 
                                selectInput(

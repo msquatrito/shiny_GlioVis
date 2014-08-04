@@ -194,6 +194,30 @@ shinyServer(
       # I needed to create the ggboxPlot function (see helper file) to use it in the output$downloadPlot .... OTHER WAY TO DO IT??
     })
     
+    #' Tukey post-hoc test
+    output$tukeyTest <- renderPrint({     
+      if (input$gene == "Enter gene, eg: EGFR" | input$gene == "" )
+        return()
+      exprs <- datasetInput()[["expr"]]
+      cna <- datasetInput()[["cna"]]
+      mRNA <- exprs[ ,input$gene]
+      if (plotType() == "Copy number") {
+        group <- cna[, input$gene]
+        group <- factor(group, levels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp"))
+        group <- droplevels(group)
+      } else {
+        group <- exprs[ ,plotType()]
+      }
+      if (any(!is.na(group))) {
+        data <- data.frame(mRNA,group)
+        data <- na.omit(data)
+      }
+      tukey <- data.frame(TukeyHSD(aov(mRNA ~ group, data = data))[[1]])
+      tukey$Significance <- as.factor(starmaker(tukey$p.adj,p.levels=c(.001, .01, .05, 1), 
+                                                symbols=c("***", "**", "*", "ns")))
+      tukey
+     })
+    
     #' Get the selected download file type.
     downloadPlotFileType <- reactive({
       input$downloadPlotFileType  
