@@ -1,31 +1,39 @@
 ### Available Datasets 
 
-**TCGA GBM** 
-  + [TCGA](https://tcga-data.nci.nih.gov/tcga/tcgaCancerDetails.jsp?diseaseType=GBM&diseaseName=Glioblastoma%20multiforme) ^1
-
+**TCGA** 
+  + [GBM](https://tcga-data.nci.nih.gov/tcga/tcgaCancerDetails.jsp?diseaseType=GBM&diseaseName=Glioblastoma%20multiforme) ^1
+  + [LGG](https://tcga-data.nci.nih.gov/tcga/tcgaCancerDetails.jsp?diseaseType=LGG&diseaseName=Brain%20Lower%20Grade%20Glioma) ^2 (currently available only for the GlioVis stand alone version)
+  + [cBioPortal](http://www.cbioportal.org/public-portal/index.do) ^3 
+  
 **Rembrandt**
   + [caArray](https://array.nci.nih.gov/caarray/project/fine-00037)
-  + [Repository for Molecular Brain Neoplasia Data](https://caintegrator.nci.nih.gov/rembrandt/) ^2
+  + [Repository for Molecular Brain Neoplasia Data](https://caintegrator.nci.nih.gov/rembrandt/) ^4
 
 **Gravendeel**
-  + [GSE16011](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE16011) ^3
+  + [GSE16011](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE16011) ^5
 
 **Phillips**
-  + [GSE4271](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE4271) ^4
+  + [GSE4271](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE4271) ^6
 
 **Freije**
-  + [GSE4412](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE4412) ^5
+  + [GSE4412](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE4412) ^7
   
 **Murat**
-  + [GSE7696](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE7696) ^6
+  + [GSE7696](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE7696) ^8
 
 References:  
 1 [The Cancer Genome Atlas Research Network 2008](http://www.ncbi.nlm.nih.gov/pubmed/18772890)  
-2 [Madhavan S et al. 2009](http://www.ncbi.nlm.nih.gov/pubmed/19208739)  
-3 [Gravendeel LA et al. 2009](http://www.ncbi.nlm.nih.gov/pubmed/19920198)  
-4 [Phillips HS et al. 2006](http://www.ncbi.nlm.nih.gov/pubmed/16530701)  
-5 [Freije WA et al. 2004](http://www.ncbi.nlm.nih.gov/pubmed/15374961)  
-6 [Murat A et al. 2008](http://www.ncbi.nlm.nih.gov/pubmed/18565887)
+2 unpublished, see [TCGA guidelines](http://cancergenome.nih.gov/publications/publicationguidelines) for unpublished data  
+3 [Cerami E et al. 2012](http://www.ncbi.nlm.nih.gov/pubmed/22588877)  
+4 [Madhavan S et al. 2009](http://www.ncbi.nlm.nih.gov/pubmed/19208739)  
+5 [Gravendeel LA et al. 2009](http://www.ncbi.nlm.nih.gov/pubmed/19920198)  
+6 [Phillips HS et al. 2006](http://www.ncbi.nlm.nih.gov/pubmed/16530701)  
+7 [Freije WA et al. 2004](http://www.ncbi.nlm.nih.gov/pubmed/15374961)  
+8 [Murat A et al. 2008](http://www.ncbi.nlm.nih.gov/pubmed/18565887)
+
+### Data processing  
+Affymetrix expression array analyses were completed in R using the [Bioconductor](http://bioconductor.org) suite. The ‘affy’ package was used for robust multi-array average normalization followed by quantile normalization. RNA-seq data (TCGA Lgg dataset) and copy number alteration (TCGA GBM and Lgg datasets) were downloaded from the [cBioPortal](http://www.cbioportal.org/public-portal/index.do).  
+Kaplan–Meier survival analysis were completed using the ‘survival’ package in R. Hazard ratios were determined utilizing the ‘coxph’ function from the ‘survival’ package.
 
 ### App info
 
@@ -43,4 +51,5 @@ The GlioVis is licensed under the [AGPLv3](http://www.tldrlegal.com/l/AGPL3)
 
 As a summary, the AGPLv3 license requires, attribution, include copyright and license in copies of the software, state changes if you modify the code, and disclose all source code. 
 
-&copy; Massimo Squatrito (2014) <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /></a>
+&copy; Massimo Squatrito (2014) 
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /></a>

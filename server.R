@@ -18,31 +18,7 @@ gene_names <- readRDS("data/gene_names.Rds")
 
 
 shinyServer(
-  function(input, output, session) {   
-    
-    # Text matching with the gene names list
-    updateSelectizeInput(session, "gene",  choices = c("", gene_names), server = TRUE)
-    
-    # Caption with gene and dataset
-    output$caption <- renderText({
-      if (input$gene == "Enter gene, eg: EGFR" | input$gene == "" )
-        return()
-      title <- paste(input$gene, "in", input$dataset, "dataset")
-    })
-    
-    # Help popup NOT WORKING YET
-    output$help <- renderUI({ 
-      helpPopup(title = "Help me pleaseeeeee", 
-                #                 content = "", 
-                content = includeMarkdown("tools/help.Rmd"), # I've still to create the Rmd file
-                placement = "right", trigger = "click") 
-    })
-    
-    # Help popup alternative NOT WORKING YET
-    #     output$help <- renderUI({ 
-    #       helpModal("Help me pleaseeeeee","help",includeMarkdown("tools/help.Rmd"))
-    #     })
-    #     
+  function(input, output, session) {
     
     # Return the requested dataset
     datasetInput <- reactive({
@@ -66,6 +42,34 @@ shinyServer(
              Recurrence = "Type")
     })
     
+    # Text matching with the gene names list
+    updateSelectizeInput(session, "gene",  choices = gene_names, server = TRUE)
+    
+    # Caption with gene and dataset
+    output$caption <- renderText({
+      if (input$gene == "Enter gene, eg: EGFR" | input$gene == "" )
+        return()
+      title <- paste(input$gene, "in", input$dataset, "dataset")
+    })
+    
+#     addTooltip(session, "dataset", "Select a dataset", "right", trigger="hover")
+#     addTooltip(session, "gene", "Enter gene name", "right", trigger="hover")
+#     addTooltip(session, "plotTypeSel", "Select one of the available plot", "right", trigger="hover")
+    
+    # Help popup NOT WORKING YET
+    output$help <- renderUI({ 
+      helpPopup(title = "Help me pleaseeeeee", 
+                #                 content = "", 
+                content = includeMarkdown("tools/help.Rmd"), # I've still to create the Rmd file
+                placement = "right", trigger = "click") 
+    })
+    
+    # Help popup alternative NOT WORKING YET
+    #     output$help <- renderUI({ 
+    #       helpModal("Help me pleaseeeeee","help",includeMarkdown("tools/help.Rmd"))
+    #     })
+    #     
+    
     # Return the available histology, to be used in the updateSelectInput for correlation and survival
     histo <- reactive({
       levels(datasetInput()[["pData"]][,"Histology"])
@@ -83,10 +87,11 @@ shinyServer(
       # This will change the value of input$histologyCorr, based on histological group available for that dataset
       updateSelectInput(session, "histologyCorrTable", choices = c("All", histo()), selected = "All")
       # This will change the plot type available for a specific dataset
-      updateSelectInput(session, "plotTypeSel", choices = datasetInput()[["plotType"]], selected = datasetInput()[["plotType"]][1])
+      updateSelectInput(session, "plotTypeSel", choices = datasetInput()[["plotType"]], selected = NULL) # selected = datasetInput()[["plotType"]][1]
     })
-
-    # Need a wrapper around the densityClick input so we can manage whether or
+    
+    
+    # Need a wrapper around the densityClick input so we can manage whether or 
     # not the click occured on the current Gene. If it occured on a previous
     # gene, we'll want to mark that click as 'stale' so we don't try to use it
     # later. https://gist.github.com/trestletech/5929598
@@ -215,8 +220,32 @@ shinyServer(
       tukey <- data.frame(TukeyHSD(aov(mRNA ~ group, data = data))[[1]])
       tukey$Significance <- as.factor(starmaker(tukey$p.adj,p.levels=c(.001, .01, .05, 1), 
                                                 symbols=c("***", "**", "*", "ns")))
+      tukey <- tukey[order(tukey$diff),]
       tukey
      })
+    
+    
+    #' pairwise t test
+    output$pairwiseTtest <- renderPrint({     
+      if (input$gene == "Enter gene, eg: EGFR" | input$gene == "" )
+        return()
+      exprs <- datasetInput()[["expr"]]
+      cna <- datasetInput()[["cna"]]
+      mRNA <- exprs[ ,input$gene]
+      if (plotType() == "Copy number") {
+        group <- cna[, input$gene]
+        group <- factor(group, levels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp"))
+        group <- droplevels(group)
+      } else {
+        group <- exprs[ ,plotType()]
+      }
+      if (any(!is.na(group))) {
+        data <- data.frame(mRNA,group)
+        data <- na.omit(data)
+      }
+      pttest <- pairwise.t.test(mRNA, group, p.adj="bonferroni", paired=F)[[3]]
+      pttest
+    })
     
     #' Get the selected download file type.
     downloadPlotFileType <- reactive({
@@ -393,13 +422,13 @@ shinyServer(
       }
     )
     
-    #' Generate a summary of the dataset
-    output$summary <- renderPrint({
-      if (input$gene == "Enter gene, eg: EGFR" | input$gene == "" )
-        return()
-      data <- getData (datasetInput()[["expr"]], input$gene)
-      summary(data)
-    })
+#     #' Generate a summary of the dataset NOT SURE IS USEFUL
+#     output$summary <- renderPrint({
+#       if (input$gene == "Enter gene, eg: EGFR" | input$gene == "" )
+#         return()
+#       data <- getData (datasetInput()[["expr"]], input$gene)
+#       summary(data[,-c(1,7)])
+#     })
 
     #' Generate a graphic summary of the dataset, using rCharts
     output$piePlots <- renderUI({
@@ -436,7 +465,7 @@ shinyServer(
     #' Generate an HTML table view of the data
     output$table <- renderDataTable({
       if (input$gene == "Enter gene, eg: EGFR" | input$gene == "" )
-        return()
+        return(datasetInput()[["pData"]])
       data <- getData (datasetInput()[["expr"]], input$gene)
       data.frame(data)
     })
@@ -450,4 +479,47 @@ shinyServer(
         write.csv(getData (datasetInput()[["expr"]], input$gene),file)
       }
     )
+
+    #' Generate survival groups stratified by Histology, etc.
+    output$survPlots <- renderUI({
+      df <- datasetInput()[["pData"]]
+      df <- df[,colSums(is.na(df)) < nrow(df)] # Removing unavailable (all NA) groups
+      df <- droplevels.data.frame(subset(df, Histology!="Non-tumor")) # Exclude normal sample, not displayng properly
+      groups <- names(df)[!names(df) %in% c("Sample","status","survival")]
+      plot_output_list <- lapply(groups, function(i) {
+        survPlotname <- paste("plotSurv", i, sep="")
+        plotOutput(survPlotname, height = 400, width = 400)
+      })
+      # Convert the list to a tagList - this is necessary for the list of items
+      # to display properly.
+      do.call(tagList, plot_output_list)
+    })  
+    
+    observe ({   
+      df <- datasetInput()[["pData"]]
+      df <- df[,colSums(is.na(df)) < nrow(df)] # Removing unavailable (all NA) groups
+      df <- droplevels.data.frame(subset(df, Histology!="Non-tumor")) # Exclude normal sample, not displayng properly
+      groups <- names(df)[!names(df) %in% c("Sample","status","survival")]
+      for (i in groups) {                                                    
+        # Need local so that each item gets its own name. Without it, the value
+        # of i in the renderPlot() will be the same across all instances, because
+        # of when the expression is evaluated.
+        local({
+          my_Survi <-i
+          survPlotname <- paste("plotSurv", my_Survi, sep="")
+          output[[survPlotname]] <- renderPlot({
+            surv.status <- df[ ,"status"]
+            surv.time <- df[ ,"survival"]
+            my.Surv <- Surv(surv.time, surv.status == 1)
+            expr.surv <- survfit(my.Surv ~ df[,my_Survi], data = df, conf.type = "none")
+            plot(expr.surv, xlab = "Survival time (Months)", ylab = "% Surviving", 
+                 yscale = 100,  col = 1:length((levels(df[,my_Survi]))), mark.time = FALSE,
+                 main = paste(my_Survi))
+            legend("topright", legend = levels(df[,my_Survi]), col = 1:length((levels(df[,my_Survi]))), lty = 1)
+          })
+        })
+      }
+    })
+
+
 })

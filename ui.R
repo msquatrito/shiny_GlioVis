@@ -5,13 +5,14 @@ library (shinyIncubator)
 library (ggplot2)
 library (gridExtra)
 library (rCharts)
+library (shinysky)
+library (shinyBS)
 
 shinyUI(fluidPage(
   # progressInit() must be called somewhere in the UI in order for the progress UI to actually appear
   progressInit(),
 
   sidebarLayout(
-                
                 sidebarPanel(
                   #       tags$head(tags$style(".well {background-color: black; }")),
                   img(src = "GlioVis_logo.jpg", height = 90, width = 270),
@@ -23,15 +24,23 @@ shinyUI(fluidPage(
                                           "Gravendeel", "Phillips", "Murat", "Freije"),
                               selected = "TCGA GBM"),
                   br(),
-                  selectInput("plotTypeSel", 
-                              label = h4("Plot type"), choices = ""),
-                  br(),
                   selectizeInput("gene", 
                                  label = h4("Gene"), choices = NULL, selected = NULL,
                                  options = list(placeholder = "Enter gene, eg: EGFR", 
                                                 plugins = list('restore_on_backspace'))),
                   br(),
-                  uiOutput("help")
+                  selectInput("plotTypeSel", 
+                              label = h4("Plot type"), choices = ""),
+                  br(),
+                  actionButton(inputId = 'helpLink', label = 'Help', 
+                               styleclass = "link", icon = "question-sign"),
+#                   bsTooltip("dataset", "Select a dataset", "right", trigger="hover"),
+#                   bsTooltip("gene", "Enter gene name", "right", trigger="hover"),
+#                   bsTooltip("plotTypeSel", "Select one of the available plot", "right", trigger="hover"),
+                  bsPopover(id = "helpLink", title =  "Help", 
+                            content = "I am just trying to help here. I have to see if I can include a Rmd file ", 
+                            trigger="hover", placement="bottom")
+#                   uiOutput("help")
                 ),
                 
                 
@@ -54,15 +63,24 @@ shinyUI(fluidPage(
                                column(4, 
                                       wellPanel(
                                         strong("Statistic:"),
-                                        checkboxInput("stat", "Tukey's HSD (plot)", FALSE),
-                                        checkboxInput("statTable", "Tukey's HSD (table)", FALSE)))),
+                                        checkboxInput("statTable", "Tukey's HSD", FALSE),
+                                        checkboxInput("tTest", "Pairwise t tests", FALSE)))),
                              
                              plotOutput("plot"),
                              br(),
                              conditionalPanel(
                                condition = "input.statTable",
-                               strong(" Tukey's Honest Significant Difference (HSD):"),
+                               
+                               strong("Tukey's Honest Significant Difference (HSD)"),
+                               helpText("The table shows the difference between pairs, the 95% confidence interval and the p-value of the pairwise comparisons:"),
+                               checkboxInput("stat", "Show the results in the plot", FALSE),
                                verbatimTextOutput("tukeyTest")),
+                             conditionalPanel(
+                               condition = "input.tTest",
+                               br(),
+                               strong("Pairwise t tests"),
+                               helpText("Pairwise comparisons between group levels with corrections for multiple testing (p-values with Bonferroni correction):"),
+                               verbatimTextOutput("pairwiseTtest")),
                              br(),
                              
                              wellPanel( 
@@ -90,10 +108,12 @@ shinyUI(fluidPage(
                                  label = "Width (inches)",
                                  value = 7,
                                  min = 1,
-                                 max = 100)
-                             ),
-                             br(),               
-                             downloadButton('downloadPlot', 'Download')),
+                                 max = 100),
+                              
+                               br(),
+                               br(),
+                               actionButton(inputId = 'downloadPlot', label = 'Download', 
+                                            styleclass = "info", icon = "download-alt"))),
                     
                     tabPanel("Survival", icon = icon("user-md"),
                              tabsetPanel(
@@ -108,8 +128,10 @@ shinyUI(fluidPage(
                                                              c("median", "lower quartile", "upper quartile", "quartiles"))
                                           ),
                                           column(4, 
-                                                 selectInput("subtypeSurv", strong("Subtype (GBM only):"), 
-                                                             c("All", "Classical", "Mesenchymal", "Neural", "Proneural","G-CIMP"))
+                                                 conditionalPanel(
+                                                   condition = "input.histologySurv == 'GBM'",
+                                                   selectInput("subtypeSurv", strong("Subtype:"), 
+                                                             c("All", "Classical", "Mesenchymal", "Neural", "Proneural","G-CIMP")))
                                           )
                                         ),
                                         conditionalPanel(
@@ -117,6 +139,7 @@ shinyUI(fluidPage(
                                           checkboxInput("gcimpSurv", "Exclude G-CIMP samples", FALSE)
                                         ),
                                         plotOutput("survPlot"),
+                                        br(),
                                         downloadButton('downloadsurvPlot', 'Download')
                                ),
                                
@@ -142,10 +165,10 @@ shinyUI(fluidPage(
                                tabPanel("Correlation plot", # icon = icon("bar-chart-o"),
                                         fluidRow(
                                           column(4,
-                                                 selectInput("gene1", h5("Gene 1"), "", selectize = TRUE)
+                                                 selectizeInput("gene1", h5("Gene 1"), "", options = list(plugins = list('restore_on_backspace')))
                                           ),
                                           column(4, 
-                                                 selectInput("gene2", h5("Gene 2"), "", selectize = TRUE)
+                                                 selectizeInput("gene2", h5("Gene 2"), "", options = list(plugins = list('restore_on_backspace')))
                                           )),
                                         br(),
                                         fluidRow(
@@ -153,8 +176,10 @@ shinyUI(fluidPage(
                                                  selectInput("histologyCorr", h5("Histology:"), choices = "")
                                           ),
                                           column(3, 
-                                                 selectInput("subtype", h5("Subtype (GBM):"), 
-                                                             c("All", "Classical", "Mesenchymal", "Neural", "Proneural","G-CIMP"))
+                                                 conditionalPanel(
+                                                   condition = "input.histologyCorr == 'GBM'",
+                                                   selectInput("subtype", h5("Subtype (GBM):"), 
+                                                             c("All", "Classical", "Mesenchymal", "Neural", "Proneural","G-CIMP")))
                                           ),
                                           column(3, inputPanel(
                                             radioButtons("colorBy", 
@@ -169,6 +194,7 @@ shinyUI(fluidPage(
                                         br(),
                                         plotOutput("corrPlot"),
                                         downloadButton('downloadcorrPlot', 'Download plot'), 
+                                        br(),
                                         br(),
                                         verbatimTextOutput("corrTest"), id = "corrPlot") ,
                                
@@ -190,16 +216,20 @@ shinyUI(fluidPage(
                     ),
                     
                     tabPanel("Data", icon = icon("table"),
-                             uiOutput("piePlots"),
                              fluidRow(
-                               column(12,
-                                      verbatimTextOutput("summary"))),
+                               splitLayout(
+                                      uiOutput("piePlots"),
+                                      uiOutput("survPlots")
+                                      )),
+#                              verbatimTextOutput("summary"),
                              br(),
                              downloadButton('downloadData', 'Download table'), 
                              br(),
+                             br(),
                              dataTableOutput("table")),
                     
-                    tabPanel("About", includeMarkdown("tools/about.Rmd"))
+                    tabPanel("About", icon = icon("info-circle"),
+                             includeMarkdown("tools/about.Rmd"))
                     
                   )
                 )

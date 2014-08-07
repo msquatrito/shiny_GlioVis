@@ -15,7 +15,7 @@ ggboxPlot <- function(exprs, cna, gene, plotType, scale = FALSE, stat = FALSE, c
   }
   if (plotType == "Copy number") {
     group <- cna[, gene]
-    group <- factor(group, levels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp"))
+    group <- factor(group, levels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp")) # I should have done this directly on all the cna in the Rds file
     group <- droplevels(group)
   } else {
     group <- exprs[ ,plotType]
@@ -43,6 +43,7 @@ ggboxPlot <- function(exprs, cna, gene, plotType, scale = FALSE, stat = FALSE, c
     tukey <<- tukey ##  see scoping rules http://shiny.rstudio.com/articles/scoping.html
     tukey$Significance <- as.factor(starmaker(tukey$p.adj,p.levels=c(.001, .01, .05, 1), 
                                               symbols=c("***", "**", "*", "ns")))
+    
     t <- ggplot(tukey, aes(row.names(tukey), diff, ymin = lwr, ymax= upr, colour = Significance)) +
       geom_point() + geom_errorbar(width = 0.25) + 
       ylab("Differences in mean levels") + xlab("") + 
@@ -365,25 +366,25 @@ kmPlot <- function (cutoff,surv){
 ############## getData  #############
 ######################################
 getData <- function (df, gene){
-  data <- df [,c(names(df)[1:6],gene)]
+  data <- df [,c(names(df)[1:7],gene)]
 }
 
-######################################
-############## Pie charts  ###########
-######################################
-piePlot <- function (df, group) {
-  df <- df[,colSums(is.na(df)) < nrow(df)]
-  if (is.null(df[, group])){
-    return()
-  }
-  mytable <- data.frame(table(df[, group]))
-  plot <- paste0("pie",group)
-  a <- hPlot("Var1", y = "Freq", data = mytable, type = "pie", title = group)
-  a$plotOptions(pie = list(size = 150))
-  a$chart(backgroundColor = NULL)
-  a$set(dom = plot)
-  return(a)
-}
+# ######################################
+# ############## Pie charts  ###########
+# ######################################
+# piePlot <- function (df, group) {
+#   df <- df[,colSums(is.na(df)) < nrow(df)]
+#   if (is.null(df[, group])){
+#     return()
+#   }
+#   mytable <- data.frame(table(df[, group]))
+#   plot <- paste0("pie",group)
+#   a <- hPlot("Var1", y = "Freq", data = mytable, type = "pie", title = group)
+#   a$plotOptions(pie = list(size = 150))
+#   a$chart(backgroundColor = NULL)
+#   a$set(dom = plot)
+#   return(a)
+# }
 
 ############################################################################
 ############## Help popup (https://gist.github.com/jcheng5/5913297)  ###########
