@@ -366,48 +366,13 @@ kmPlot <- function (cutoff,surv){
 ############## getData  #############
 ######################################
 getData <- function (df, gene){
-  data <- df [,c(names(df)[1:7],gene)]
+  data <- df[ ,c(names(df)[1:7], gene)]
 }
 
-# ######################################
-# ############## Pie charts  ###########
-# ######################################
-# piePlot <- function (df, group) {
-#   df <- df[,colSums(is.na(df)) < nrow(df)]
-#   if (is.null(df[, group])){
-#     return()
-#   }
-#   mytable <- data.frame(table(df[, group]))
-#   plot <- paste0("pie",group)
-#   a <- hPlot("Var1", y = "Freq", data = mytable, type = "pie", title = group)
-#   a$plotOptions(pie = list(size = 150))
-#   a$chart(backgroundColor = NULL)
-#   a$set(dom = plot)
-#   return(a)
-# }
 
 ############################################################################
-############## Help popup (https://gist.github.com/jcheng5/5913297)  ###########
+############## Help popup (https://gist.github.com/jcheng5/5913297)  #######
 ############################################################################
-# helpPopup <- function(title, content,
-#                       placement=c("right", "top", "left", "bottom"),
-#                       trigger=c("click", "hover", "focus", "manual")) {
-#   tagList(
-#     singleton(
-#       tags$head(
-#         tags$script("$(function() { $(\"[data-toggle='popover']\").popover(); })")
-#       )
-#     ),
-#     tags$a(
-#       href = "#", `data-toggle` = "popover",
-#       title = title, `data-content` = content, `data-animation` = TRUE,
-#       `data-placement` = match.arg(placement, several.ok=TRUE)[1],
-#       `data-trigger` = match.arg(trigger, several.ok=TRUE)[1],
-#       
-#       tags$i(class="icon-question-sign")
-#     )
-#   )
-# }
 ## https://groups.google.com/forum/#!searchin/shiny-discuss/helpPopup/shiny-discuss/ZAkBsL5QwB4/vnmbT47uY7gJ
 helpPopup <- function(title, content,
                       placement=c("right", "top", "left", "bottom"),
@@ -434,7 +399,7 @@ helpPopup <- function(title, content,
       # tags$i(class="icon-info-sign")
       tags$i(class="icon-question-sign")
     ),
-    tags$style(type='text/css', ".popover { width: 400px; relative; left: 320px !important; }")
+    tags$style(type='text/css', ".popover { width: 1200px; relative; top: 20px; left: 20px !important; }")
   )
 }
 

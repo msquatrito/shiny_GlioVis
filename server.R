@@ -32,6 +32,36 @@ shinyServer(
              "Freije" = freije)
     })
     
+    # Expression data
+    exprs <- reactive({
+      datasetInput()[["expr"]]
+    })
+    
+    # Phenotype data
+    pDatas <- reactive({
+      datasetInput()[["pData"]]
+    })
+    
+    # CNA data
+    cnas <- reactive({
+      datasetInput()[["cna"]]
+    })
+    
+    # Text matching with the gene names list
+    updateSelectizeInput(session, inputId = "gene", choices = gene_names, server = TRUE)
+    
+    observe({
+      # This will change the value of input$gene1, based on input$gene
+      updateSelectizeInput(session, "gene1", choices = gene_names, server = TRUE, selected = input$gene)
+      # This will change the value of input$gene2, based on input$gene
+      updateSelectizeInput(session, "gene2", choices = gene_names, server = TRUE, selected = input$gene) 
+    })
+    
+    # This will change the plot type available for a specific dataset
+    observe({
+    updateSelectInput(session, inputId = "plotTypeSel", choices = datasetInput()[["plotType"]], selected = NULL) # selected = datasetInput()[["plotType"]][1]
+    }, priority = 10)
+    
     # Return the requested plotType
     plotType <- reactive({
       switch(input$plotTypeSel, 
@@ -40,14 +70,11 @@ shinyServer(
              Subtype = "Subtype", 
              Grade = "Grade", 
              Recurrence = "Type")
-    })
-    
-    # Text matching with the gene names list
-    updateSelectizeInput(session, "gene",  choices = gene_names, server = TRUE)
+    })    
     
     # Caption with gene and dataset
     output$caption <- renderText({
-      if (input$gene == "Enter gene, eg: EGFR" | input$gene == "" )
+      if (input$gene == "" )
         return()
       title <- paste(input$gene, "in", input$dataset, "dataset")
     })
@@ -56,19 +83,18 @@ shinyServer(
 #     addTooltip(session, "gene", "Enter gene name", "right", trigger="hover")
 #     addTooltip(session, "plotTypeSel", "Select one of the available plot", "right", trigger="hover")
     
-    # Help popup NOT WORKING YET
-    output$help <- renderUI({ 
-      helpPopup(title = "Help me pleaseeeeee", 
-                #                 content = "", 
-                content = includeMarkdown("tools/help.Rmd"), # I've still to create the Rmd file
-                placement = "right", trigger = "click") 
-    })
+#     # Help popup NOT WORKING YET
+#     output$help <- renderUI({ 
+#       helpPopup(title = "Help me pleaseeeeee", 
+#                 content = includeMarkdown("tools/help.Rmd"), 
+#                 placement = "right", 
+#                 trigger = "click") 
+#     })
     
-    # Help popup alternative NOT WORKING YET
-    #     output$help <- renderUI({ 
-    #       helpModal("Help me pleaseeeeee","help",includeMarkdown("tools/help.Rmd"))
-    #     })
-    #     
+#     # Help popup alternative NOT WORKING YET
+#         output$help <- renderUI({ 
+#           helpModal(title = "Help me pleaseeeeee", link = "helpLink", content = includeMarkdown("tools/help.Rmd"))
+#         })
     
     # Return the available histology, to be used in the updateSelectInput for correlation and survival
     histo <- reactive({
@@ -76,18 +102,12 @@ shinyServer(
     })
     
     observe({
-      # This will change the value of input$gene1, based on input$gene
-      updateSelectizeInput(session, "gene1", choices = gene_names, server = TRUE, selected = input$gene)
-      # This will change the value of input$gene2, based on input$gene
-      updateSelectizeInput(session, "gene2", choices = gene_names, server = TRUE, selected = input$gene)
-      # This will change the value of input$histologySurv, based on histological group available for that dataset
-      updateSelectInput(session, "histologySurv", choices = histo(), selected = tail(histo(), n=1))
+      # This will change the value of input$histologySurv, based on histological group available for that dataset  
+      updateSelectInput(session, inputId = "histologySurv", choices = histo(), selected = tail(histo(), n=1))
       # This will change the value of input$histologyCorr, based on histological group available for that dataset
-      updateSelectInput(session, "histologyCorr", choices = c("All", histo()), selected = "All")
-      # This will change the value of input$histologyCorr, based on histological group available for that dataset
-      updateSelectInput(session, "histologyCorrTable", choices = c("All", histo()), selected = "All")
-      # This will change the plot type available for a specific dataset
-      updateSelectInput(session, "plotTypeSel", choices = datasetInput()[["plotType"]], selected = NULL) # selected = datasetInput()[["plotType"]][1]
+      updateSelectInput(session, inputId = "histologyCorr", choices = c("All", histo()), selected = "All")
+      # This will change the value of input$histologyCorrTable, based on histological group available for that dataset
+      updateSelectInput(session, inputId = "histologyCorrTable", choices = c("All", histo()), selected = "All")
     })
     
     
@@ -96,6 +116,7 @@ shinyServer(
     # gene, we'll want to mark that click as 'stale' so we don't try to use it
     # later. https://gist.github.com/trestletech/5929598
     currentClick <- list(click=NULL, stale=FALSE)
+
     handleClick <- observe({
       if (!is.null(input$densityClick) && !is.null(input$densityClick$x)){
         currentClick$click <<- input$densityClick
@@ -119,10 +140,9 @@ shinyServer(
     
     # Extract the relevant GBM expression values.
     geneExp <- reactive({
-      df <- datasetInput()[["expr"]]
-      df <- subset (df, Histology == "GBM")
+      df <- subset(exprs(), Histology == "GBM")
       if (input$gcimp){
-        df <- subset (df, Subtype != "G-CIMP")
+        df <- subset(exprs(), Subtype != "G-CIMP")
       }
       geneExp <- df[ ,input$gene]
       currentClick$stale <<- TRUE
@@ -131,119 +151,107 @@ shinyServer(
     
     # Extract the Hazard ratios for the input gene.
     HR <- reactive ({
-      df <- datasetInput()[["expr"]]
-      HR <- getHR(df, input$gene, input$gcimp)
+      HR <- getHR(exprs(), input$gene, input$gcimp)
     })
     
-    #' Render a plot to show the distribution of the gene's expression
+    #' Render a plot to show the the Hazard ratio for the gene's expression values
     output$hazardPlot <- renderPlot({        
-      if (input$gene == "Enter gene, eg: EGFR" | input$gene == "" )
+      if (input$gene == "")
         return()
       # Wrap the entire expensive operation with withProgress 
-      withProgress(session, min=1, max=5, {
+      withProgress(session, min = 1, max = 5, {
         setProgress(message = "Calculating, please wait",
                     detail = "This may take a few moments...")
         for (i in 1:5) {
           setProgress(value = i)
           Sys.sleep(0.5)
         }          
-        # Plot the hazardplot
-        HR <- HR()  
-        hazardPlot(HR, input$quantile)
+        # Plot the hazardplot 
+        hazardPlot(HR(), input$quantile)
         # Add a vertical line to show where the current cutoff is.
-        abline(v=getCutoff(), col=4)
-        }
-      )
-    }, bg="transparent")
+        abline(v = getCutoff(), col = 4)
+      })
+    }, bg = "transparent")
     
     # A reactive survival formula
     survivalFml <- reactive({
-      df <- datasetInput()[["expr"]]
-      df <- subset (df, Histology == "GBM")
+      df <- subset (exprs(), Histology == "GBM")
       if (input$gcimp){
-        df <- subset (df, Subtype != "G-CIMP")
+        df <- subset (exprs(), Subtype != "G-CIMP")
       }
       # Create the groups based on which samples are above/below the cutoff
       expressionGrp <- as.integer(geneExp() < getCutoff())
       # Create the survival object
-      surv <-with(df, Surv(survival,status== 1))
+      surv <- with(df, Surv(survival, status == 1))
       return(surv ~ expressionGrp)
     })
     
     #' Create a Kaplan Meier plot on the HR cutoff
     output$kmPlot <- renderPlot({
-      if (input$gene == "Enter gene, eg: EGFR" | input$gene == "" )
+      if (input$gene == "")
         return()
       cutoff <- getCutoff()
       surv <- survivalFml()
-      kmPlot(cutoff,surv)
+      kmPlot(cutoff, surv)
     })
 
     #' Create a Kaplan Meier plot with cutoff based on quantiles
     output$survPlot <- renderPlot({
-      if (input$gene == "Enter gene, eg: EGFR" | input$gene == "" | input$histologySurv == "" )
+      if (input$gene == "" | input$histologySurv == "")
         return()
-      df <- datasetInput()[["expr"]]
-      survivalPlot (df, input$gene, group = input$histologySurv, cutoff = input$cutoff, subtype = input$subtypeSurv, gcimp = input$gcimpSurv)
+      survivalPlot (exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, subtype = input$subtypeSurv, 
+                    gcimp = input$gcimpSurv)
     })
     
     #' Create the selected plot
     output$plot <- renderPlot({     
-      if (input$gene == "Enter gene, eg: EGFR" | input$gene == "" )
+      if (input$gene == "" )
         return()
-      exprs <- datasetInput()[["expr"]]
-      cna <- datasetInput()[["cna"]]
-      
-      ggboxPlot(exprs = exprs, cna = cna, gene = input$gene, plotType = plotType(), scale = input$scale, 
+      ggboxPlot(exprs = exprs(), cna = cnas(), gene = input$gene, plotType = plotType(), scale = input$scale, 
                 stat = input$stat, colBox = input$colBox, colStrip = input$colStrip) 
       # I needed to create the ggboxPlot function (see helper file) to use it in the output$downloadPlot .... OTHER WAY TO DO IT??
     })
     
     #' Tukey post-hoc test
     output$tukeyTest <- renderPrint({     
-      if (input$gene == "Enter gene, eg: EGFR" | input$gene == "" )
+      if (input$gene == "" )
         return()
-      exprs <- datasetInput()[["expr"]]
-      cna <- datasetInput()[["cna"]]
-      mRNA <- exprs[ ,input$gene]
+      mRNA <- exprs()[ ,input$gene]
       if (plotType() == "Copy number") {
-        group <- cna[, input$gene]
+        group <- cnas()[ ,input$gene]
         group <- factor(group, levels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp"))
         group <- droplevels(group)
       } else {
-        group <- exprs[ ,plotType()]
+        group <- exprs()[ ,plotType()]
       }
       if (any(!is.na(group))) {
-        data <- data.frame(mRNA,group)
+        data <- data.frame(mRNA, group)
         data <- na.omit(data)
       }
       tukey <- data.frame(TukeyHSD(aov(mRNA ~ group, data = data))[[1]])
-      tukey$Significance <- as.factor(starmaker(tukey$p.adj,p.levels=c(.001, .01, .05, 1), 
-                                                symbols=c("***", "**", "*", "ns")))
-      tukey <- tukey[order(tukey$diff),]
+      tukey$Significance <- as.factor(starmaker(tukey$p.adj, p.levels = c(.001, .01, .05, 1), symbols=c("***", "**", "*", "ns")))
+      tukey <- tukey[order(tukey$diff), ]
       tukey
      })
     
     
-    #' pairwise t test
+    #' Pairwise t test
     output$pairwiseTtest <- renderPrint({     
-      if (input$gene == "Enter gene, eg: EGFR" | input$gene == "" )
+      if (input$gene == "" )
         return()
-      exprs <- datasetInput()[["expr"]]
-      cna <- datasetInput()[["cna"]]
-      mRNA <- exprs[ ,input$gene]
+      mRNA <- exprs()[ ,input$gene]
       if (plotType() == "Copy number") {
-        group <- cna[, input$gene]
+        group <- cnas()[ ,input$gene]
         group <- factor(group, levels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp"))
         group <- droplevels(group)
       } else {
-        group <- exprs[ ,plotType()]
+        group <- exprs()[ ,plotType()]
       }
       if (any(!is.na(group))) {
-        data <- data.frame(mRNA,group)
+        data <- data.frame(mRNA, group)
         data <- na.omit(data)
       }
-      pttest <- pairwise.t.test(mRNA, group, p.adj="bonferroni", paired=F)[[3]]
+      pttest <- pairwise.t.test(mRNA, group, p.adj = "bonferroni", paired = FALSE)[[3]]
       pttest
     })
     
@@ -269,13 +277,13 @@ shinyServer(
         inputId = "downloadPlotWidth",
         label = sprintf("Width (%s)", plotUnit),
         value = plotUnitDef)
-      
     })
     
     # Get the download dimensions.
     downloadPlotHeight <- reactive({
       input$downloadPlotHeight
     })
+
     downloadPlotWidth <- reactive({
       input$downloadPlotWidth
     })
@@ -284,8 +292,7 @@ shinyServer(
     output$downloadPlot <- downloadHandler(
       filename = function() {
         paste(input$gene, "_", input$dataset, "_", input$plotType, ".", downloadPlotFileType(), sep = "")
-      },
-      
+      },     
       # The argument content below takes filename as a function
       # and returns what's printed to it.
       content = function(con) {
@@ -294,8 +301,8 @@ shinyServer(
         # returns function pdf() if downloadFileType == "pdf".
         plotFunction <- match.fun(downloadPlotFileType())
         plotFunction(con, width = downloadPlotWidth(), height = downloadPlotHeight())
-        ggboxPlot(exprs = datasetInput()[["expr"]], cna = datasetInput()[["cna"]], gene = input$gene, 
-                  plotType = plotType(), scale = input$scale, stat = input$stat, colBox = input$colBox, colStrip = input$colStrip)
+        ggboxPlot(exprs = exprs(), cna = cnas(), gene = input$gene, plotType = plotType(), scale = input$scale, 
+                  stat = input$stat, colBox = input$colBox, colStrip = input$colStrip)
         dev.off(which=dev.cur())
       }
     )
@@ -304,12 +311,11 @@ shinyServer(
     output$downloadsurvPlot <- downloadHandler(
       filename = function() {
         paste(input$gene, "_", input$dataset, "_survPlot.pdf", sep = "")
-      },
-      
+      },      
       content = function(file) {
         pdf(file)
-        survivalPlot (datasetInput()[["expr"]], input$gene, group = input$histologySurv, 
-                      cutoff = input$cutoff, subtype = input$subtypeSurv, gcimp = input$gcimpSurv)
+        survivalPlot (exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, 
+                      subtype = input$subtypeSurv, gcimp = input$gcimpSurv)
         dev.off()
       }
     )
@@ -319,7 +325,6 @@ shinyServer(
       filename = function() {
         paste(input$gene, "_", input$dataset, "_kmPlot.pdf", sep = "")
       },
-      
       content = function(file) {
         pdf(file)
         kmPlot(getCutoff(), survivalFml())
@@ -329,16 +334,15 @@ shinyServer(
     
     #' Generate the correlation table ##  CURRENTLY TOO SLOW
     corr <- reactive ({
-      corr <- getCorr(datasetInput()[["expr"]], input$gene, input$histologyCorrTable)
+      corr <- getCorr(exprs(), input$gene, input$histologyCorrTable)
       corr <- corr[order(-abs(corr$r)), ]
       corr
     })
 
     #' Generate an HTML table view of the the correlation table 
     output$corrData <- renderDataTable({
-      if (input$gene == "Enter gene, eg: EGFR" | input$gene == "" )
+      if (input$gene == "")
         return()
-      # Wrap the entire expensive operation with withProgress 
       withProgress(session, min=1, max=5, {
         setProgress(message = "Calculating, please wait",
                     detail = "This takes forever...")
@@ -381,6 +385,7 @@ shinyServer(
              Histology = "Histology",
              Subtype = "Subtype")
     })
+
     separateByInput <- reactive({
       switch(input$separateBy, 
              none = "none",
@@ -390,22 +395,17 @@ shinyServer(
     
     #' Generate the correlation plot
     output$corrPlot <-renderPlot({     
-      if (input$gene1 == "Enter gene, eg: EGFR" | input$gene1 == "" |
-            input$gene2 == "Enter gene, eg: EGFR" | input$gene2 == "")
+      if (input$gene1 == "" | input$gene2 == "")
         return()
-      df <- datasetInput()[["expr"]]
-      myCorggPlot (df, input$gene1, input$gene2, 
-                   input$histologyCorr, input$subtype , 
-                   colorBy = colorByInput (), separateBy = separateByInput())
+      myCorggPlot(exprs(), input$gene1, input$gene2, input$histologyCorr, input$subtype, 
+                   colorBy = colorByInput(), separateBy = separateByInput())
     })
     
     #' Generate a summary of the correlation test
     output$corrTest <-renderPrint({     
-      if (input$gene1 == "Enter gene, eg: EGFR" | input$gene1 == "" |
-            input$gene2 == "Enter gene, eg: EGFR" | input$gene2 == "")
+      if (input$gene1 == "" | input$gene2 == "" | input$separateBy != "none")
         return()
-      df <- datasetInput()[["expr"]]  
-      myCorrTest (df, input$gene1, input$gene2, input$histologyCorr, input$subtype)
+      myCorrTest(exprs(), input$gene1, input$gene2, input$histologyCorr, input$subtype)
     })
     
     #' Download the corrPlot
@@ -415,36 +415,34 @@ shinyServer(
       },
       content = function(file) {
         pdf(file)
-        myCorggPlot (datasetInput()[["expr"]], input$gene1, input$gene2, 
-                     input$histologyCorr, input$subtype, 
-                     colorByInput (), separateByInput())
+        myCorggPlot (exprs(), input$gene1, input$gene2, input$histologyCorr, input$subtype, 
+                     colorByInput(), separateByInput())
         dev.off()
       }
     )
     
 #     #' Generate a summary of the dataset NOT SURE IS USEFUL
 #     output$summary <- renderPrint({
-#       if (input$gene == "Enter gene, eg: EGFR" | input$gene == "" )
+#       if (input$gene == "" )
 #         return()
-#       data <- getData (datasetInput()[["expr"]], input$gene)
+#       data <- getData (exprs(), input$gene)
 #       summary(data[,-c(1,7)])
 #     })
 
     #' Generate a graphic summary of the dataset, using rCharts
     output$piePlots <- renderUI({
-      data <- datasetInput()[["expr"]][,c("Histology","Grade","Type","Subtype")]
+      data <- pDatas()[,c("Histology","Grade","Type","Subtype")]
       data <- data[,colSums(is.na(data)) < nrow(data)]
       plot_output_list <- lapply(names(data), function(i) {
         plotname <- paste("plot", i, sep="")
         chartOutput(plotname, "highcharts")
       })
-      # Convert the list to a tagList - this is necessary for the list of items
-      # to display properly.
+      # Convert the list to a tagList - this is necessary for the list of items to display properly.
       do.call(tagList, plot_output_list)
     })
     
     observe ({                                                               
-      data <- datasetInput()[["expr"]][,c("Histology","Grade","Type","Subtype")]
+      data <- pDatas()[,c("Histology","Grade","Type","Subtype")]
       data <- data[,colSums(is.na(data)) < nrow(data)]
       # Call renderChart for each one. 
       for (i in names(data)) {                                                    
@@ -464,9 +462,9 @@ shinyServer(
 
     #' Generate an HTML table view of the data
     output$table <- renderDataTable({
-      if (input$gene == "Enter gene, eg: EGFR" | input$gene == "" )
-        return(datasetInput()[["pData"]])
-      data <- getData (datasetInput()[["expr"]], input$gene)
+      if (input$gene == "")
+        return(pDatas())
+      data <- getData(exprs(), input$gene)
       data.frame(data)
     })
     
@@ -476,19 +474,19 @@ shinyServer(
         paste(input$gene, "_", input$dataset, ".csv", sep="")
       },
       content = function(file) {
-        write.csv(getData (datasetInput()[["expr"]], input$gene),file)
+        write.csv(getData(exprs(), input$gene), file)
       }
     )
 
     #' Generate survival groups stratified by Histology, etc.
     output$survPlots <- renderUI({
-      df <- datasetInput()[["pData"]]
+      df <- pDatas()
       df <- df[,colSums(is.na(df)) < nrow(df)] # Removing unavailable (all NA) groups
-      df <- droplevels.data.frame(subset(df, Histology!="Non-tumor")) # Exclude normal sample, not displayng properly
+      df <- droplevels.data.frame(subset(df, Histology!="Non-tumor")) # Exclude normal sample, not displaying properly
       groups <- names(df)[!names(df) %in% c("Sample","status","survival")]
       plot_output_list <- lapply(groups, function(i) {
-        survPlotname <- paste("plotSurv", i, sep="")
-        plotOutput(survPlotname, height = 400, width = 400)
+        plot_surv_name <- paste("plotSurv", i, sep = "")
+        plotOutput(plot_surv_name, height = 400, width = 400)
       })
       # Convert the list to a tagList - this is necessary for the list of items
       # to display properly.
@@ -496,30 +494,28 @@ shinyServer(
     })  
     
     observe ({   
-      df <- datasetInput()[["pData"]]
+      df <- pDatas()
       df <- df[,colSums(is.na(df)) < nrow(df)] # Removing unavailable (all NA) groups
-      df <- droplevels.data.frame(subset(df, Histology!="Non-tumor")) # Exclude normal sample, not displayng properly
+      df <- droplevels.data.frame(subset(df, Histology!="Non-tumor")) # Exclude normal sample, not displaying properly
       groups <- names(df)[!names(df) %in% c("Sample","status","survival")]
       for (i in groups) {                                                    
         # Need local so that each item gets its own name. Without it, the value
         # of i in the renderPlot() will be the same across all instances, because
         # of when the expression is evaluated.
         local({
-          my_Survi <-i
-          survPlotname <- paste("plotSurv", my_Survi, sep="")
-          output[[survPlotname]] <- renderPlot({
+          my_Survi <- i
+          plot_surv_name <- paste("plotSurv", my_Survi, sep="")
+          output[[plot_surv_name]] <- renderPlot({
             surv.status <- df[ ,"status"]
             surv.time <- df[ ,"survival"]
             my.Surv <- Surv(surv.time, surv.status == 1)
-            expr.surv <- survfit(my.Surv ~ df[,my_Survi], data = df, conf.type = "none")
+            expr.surv <- survfit(my.Surv ~ df[ ,my_Survi], data = df, conf.type = "none")
             plot(expr.surv, xlab = "Survival time (Months)", ylab = "% Surviving", 
-                 yscale = 100,  col = 1:length((levels(df[,my_Survi]))), mark.time = FALSE,
-                 main = paste(my_Survi))
-            legend("topright", legend = levels(df[,my_Survi]), col = 1:length((levels(df[,my_Survi]))), lty = 1)
+                 yscale = 100,  col = 1:length((levels(df[ ,my_Survi]))), mark.time = FALSE, main = paste(my_Survi))
+            legend("topright", legend = levels(df[ ,my_Survi]), col = 1:length((levels(df[ ,my_Survi]))), lty = 1)
           })
         })
       }
     })
-
 
 })
