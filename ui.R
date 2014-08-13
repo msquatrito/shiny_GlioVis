@@ -7,6 +7,9 @@ library (gridExtra)
 library (rCharts)
 library (shinysky)
 library (shinyBS)
+library (kernlab)
+library (dplyr)
+
 
 shinyUI(
   
@@ -38,8 +41,9 @@ shinyUI(
 #         bsPopover(id = "helpLink", title =  "Help", 
 #                   content = "I am just trying to help here. I have to see if I can include a Rmd file ", 
 #                   trigger="hover", placement="bottom")
-                  helpPopup(title = "Help me pleaseeeeee", content = includeMarkdown("tools/help.Rmd"), 
-                            placement = "bottom", trigger = "click")
+#                   helpPopup(title = "Help me pleaseeeeee", content = includeMarkdown("tools/help.Rmd"), 
+#                             placement = "bottom", trigger = "click")
+        uiOutput("help")
       ),
       
       
@@ -84,7 +88,7 @@ shinyUI(
                      verbatimTextOutput(outputId = "pairwiseTtest")
                    ),
                    br(),
-                   wellPanel( 
+                   wellPanel(
                      selectInput(inputId = "downloadPlotFileType", label   = h5("Select download file type"),
                                  choices = list("PDF"  = "pdf", "BMP"  = "bmp", "JPEG" = "jpeg", "PNG"  = "png")
                      ),
@@ -218,6 +222,41 @@ shinyUI(
                    br(),
                    br(),
                    dataTableOutput(outputId = "table")
+          ),
+          
+          tabPanel(title = "Tools", icon = icon("gear"),
+                   tabsetPanel(
+                     tabPanel(title = "SubtypeME",
+                              helpText(HTML("Classify GBM samples based on mRNA expression profiles using Supported Vector Machine Learning")),
+#                               helpText(HTML("<b>IMPORTANT: </b> Currently active only for GBM samples.")),
+                              helpText(HTML("<b>File input format: </b> Upload a .csv file with samples in rows and genes expression in columns.<br>
+                                            The first column should contain the sample ID and should be named 'Sample'.<br>")),
+                              fluidRow(
+                                column(width = 4,
+                                       wellPanel(width = 400,
+
+                                        fileInput('upFile', 'Choose CSV File',
+                                                  accept=c('text/csv', 
+                                                           'text/comma-separated-values,text/plain', 
+                                                           '.csv')),
+                                        tags$hr(),
+                                        checkboxInput('header', 'Header', TRUE),
+                                        radioButtons('sep', 'Separator',
+                                                     c(Comma=',',
+                                                       Semicolon=';',
+                                                       Tab='\t'),
+                                                     ','),
+                                        radioButtons('quote', 'Quote',
+                                                     c(None='',
+                                                       'Double Quote'='"',
+                                                       'Single Quote'="'"),
+                                                     '"'))
+                                       ),
+                                column(width = 8,
+                                       tableOutput('svm'))
+                              )
+                     )
+                   )
           ),
           
           tabPanel(title = "About", icon = icon("info-circle"), includeMarkdown("tools/about.Rmd"))

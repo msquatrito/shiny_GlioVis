@@ -234,8 +234,6 @@ getCorr <- function (df, gene, histology) {
 ############## 2 genes correlation plot ##############
 ######################################################
 myCorggPlot <- function (df, gene1, gene2, histo = "All", subtype = "All", colorBy = "none", separateBy = "none",...) {
-  gene1 <- toupper(gene1)
-  gene2 <- toupper(gene2)
   if (!gene1%in%names(df) | !gene2%in%names(df)) {
     stop ("Incorrect gene entry or gene not available for this dataset")
   }
@@ -313,9 +311,7 @@ myCorggPlot <- function (df, gene1, gene2, histo = "All", subtype = "All", color
 ############## myCorrTest ##############
 ########################################
 # Use to generate summary data for the correlation analysis
-myCorrTest <- function (df, gene1, gene2, histo, subtype = "All", ...) {
-  gene1 <- toupper(gene1)
-  gene2 <- toupper(gene2)
+myCorrTest <- function (df, gene1, gene2, histo = "All", subtype = "All", colorBy = "none", separateBy = "none",...) {
   if (!gene1%in%names(df) | !gene2%in%names(df)) {
     stop ("Incorrect gene entry or gene not available for this dataset")
   }
@@ -327,9 +323,25 @@ myCorrTest <- function (df, gene1, gene2, histo, subtype = "All", ...) {
   if (histo == "GBM" & subtype != "All") {
     df <- subset (df, Subtype == subtype)
   }
-  Gene1<-df[ ,gene1]
-  Gene2<-df[ ,gene2]
+  Gene1 <- df[ ,gene1]
+  Gene2 <- df[ ,gene2]
+  if (separateBy == "Histology") {
+    cor <- substitute(df %.%
+                        group_by(Histology)%.%
+                        summarise(r = cor.test(x, y, use = "complete.obs")$estimate,
+                                  p.value = cor.test(x, y, use = "complete.obs")$p.value), 
+                      list(x = as.name(gene1), y = as.name(gene2)))
+    cor <- data.frame(eval(cor))
+  } else if (separateBy == "Subtype") {
+    cor <- substitute(df %.%
+                        group_by(Subtype)%.%
+                        summarise(r = cor.test(x, y, use = "complete.obs")$estimate,
+                                  p.value = cor.test(x, y, use = "complete.obs")$p.value), 
+                      list(x = as.name(gene1), y = as.name(gene2)))
+    cor <- data.frame(eval(cor))
+  } else if (separateBy == "none"){
   cor <- cor.test(Gene1, Gene2, use = "complete.obs")
+  }
   cor
 }
 
