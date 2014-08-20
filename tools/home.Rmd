@@ -1,0 +1,22 @@
+---
+title: "home"
+runtime: shiny
+output: html_document
+---
+
+In this tab I would add a wellcome message, some info regarding available datasets and  plots
+
+****
+**Datasets**  
+
+|            |            |    Samples  |         |             |         | Available plots|          |            |
+|:----------:|:----------:|:-----------:|:-------:|:-----------:|:-------:|:-------------:|:---------:|:----------:|
+|            |  Non-tumor |  Low-grade  |   GBM   |  Histology  |  Grade  |  Copy Number  |  Subtype  | Recurrence |
+| TCGA GBM   |       10   |       0     |   528   |      ✔      |    -    |       ✔       |     ✔     |      ✔     |
+| TCGA LGG   |       0    |      268    |    0    |      ✔      |    ✔    |       ✔       |     -     |      -     |
+| Rembrandt  |       21   |      200    |   184   |      ✔      |    ✔    |       -       |     ✔     |      -     |
+| Gravendeel |       8    |      117    |   159   |      ✔      |    ✔    |       -       |     ✔     |      -     |
+| Phillips   |       0    |       0     |   100   |      -      |    ✔    |       -       |     ✔     |      ✔     |
+| Murat      |       0    |       0     |    80   |      -      |    -    |       -       |     ✔     |      ✔     |
+| Freije     |       0    |       26    |    59   |      ✔      |    ✔    |       -       |     ✔     |      -     |   
+
