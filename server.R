@@ -8,10 +8,13 @@ library (rCharts)
 library (shinysky)
 library (shinyBS)
 library (dplyr)
-library (kernlab)
-
+# library (kernlab)
 
 source("helpers.R")
+
+#######################################
+############## Datasets  ##############
+#######################################
 gbm.tcga <- readRDS("data/TCGA.GBM.Rds")
 lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
 rembrandt <- readRDS("data/Rembrandt.Rds")
@@ -21,7 +24,9 @@ murat <- readRDS("data/Murat.Rds")
 phillips <- readRDS("data/Phillips.Rds")
 gene_names <- readRDS("data/gene_names.Rds")
 
-
+#######################################
+############## server.R  ##############
+#######################################
 shinyServer(
   function(input, output, session) {
     options(shiny.maxRequestSize=30*1024^2)    
@@ -75,7 +80,7 @@ shinyServer(
     
     # When switching datasets, if the selected plot is not available it will choose the first plot of the list
     plotSelected <- reactive ({
-      if (input$plotTypeSel %in% datasetInput()[["plotType"]]){ # application breaks when Murat is chosen TO CHECK THE DATASET
+      if (input$plotTypeSel %in% datasetInput()[["plotType"]]){ 
         plotType()
       } else {
         NULL
@@ -84,7 +89,7 @@ shinyServer(
     
     # This will change the plot type available for a specific dataset
     observe({
-    updateSelectInput(session, inputId = "plotTypeSel", choices = datasetInput()[["plotType"]], selected = plotSelected()) 
+      updateSelectInput(session, inputId = "plotTypeSel", choices = datasetInput()[["plotType"]], selected = plotSelected()) 
     }, priority = 10)
     
     # Caption with gene and dataset
@@ -94,7 +99,7 @@ shinyServer(
       title <- paste(input$gene, "in", input$dataset, "dataset")
     })
     
-#     # Help popup NOT WORKING YET
+    #     # Help popup NOT WORKING YET
     output$help <- renderUI({ 
       helpPopup(title = "Help me pleaseeeeee", 
                 content = includeMarkdown("tools/help.Rmd"), 
@@ -102,10 +107,10 @@ shinyServer(
                 trigger = "click") 
     })
     
-#     # Help popup alternative NOT WORKING YET
-#         output$help <- renderUI({ 
-#           helpModal(title = "Help me pleaseeeeee", link = "helpLink", content = includeMarkdown("tools/help.Rmd"))
-#         })
+    #     # Help popup alternative NOT WORKING YET
+    #         output$help <- renderUI({ 
+    #           helpModal(title = "Help me pleaseeeeee", link = "helpLink", content = includeMarkdown("tools/help.Rmd"))
+    #         })
     
     # Return the available histology, to be used in the updateSelectInput for correlation and survival
     histo <- reactive({
@@ -120,8 +125,8 @@ shinyServer(
         tail(histo(), n=1)
       }
     })
-
-    # When switching datasets, if the selected histo is not available it will choose GBM (the last histo of the list)
+    
+    # When switching datasets, if the selected histo is not available it will choose "All"
     histoCorrSelected <- reactive ({
       if (input$histologyCorr %in% histo()){
         input$histologyCorr
@@ -145,7 +150,7 @@ shinyServer(
     # gene, we'll want to mark that click as 'stale' so we don't try to use it
     # later. https://gist.github.com/trestletech/5929598
     currentClick <- list(click=NULL, stale=FALSE)
-
+    
     handleClick <- observe({
       if (!is.null(input$densityClick) && !is.null(input$densityClick$x)){
         currentClick$click <<- input$densityClick
@@ -223,7 +228,7 @@ shinyServer(
       surv <- survivalFml()
       kmPlot(cutoff, surv)
     })
-
+    
     #' Create a Kaplan Meier plot with cutoff based on quantiles
     output$survPlot <- renderPlot({
       if (input$gene == "" | input$histologySurv == "")
@@ -243,7 +248,7 @@ shinyServer(
         need(plotType() %in% datasetInput()[["plotType"]],"")
       ) # Trying to avoid an error when switching datasets in case the plotType is not available.
       ggboxPlot(exprs = exprs(), cna = cnas(), gene = input$gene, plotType = plotType(), scale = input$scale, 
-                stat = input$stat, colBox = input$colBox, colStrip = input$colStrip) 
+                stat = input$stat, colBox = input$colBox, colStrip = input$colStrip, bw = input$bw) 
       # I needed to create the ggboxPlot function (see helper file) to use it in the output$downloadPlot .... OTHER WAY TO DO IT??
     })
     
@@ -251,6 +256,9 @@ shinyServer(
     output$tukeyTest <- renderPrint({     
       if (input$gene == "" )
         return()
+      validate(
+        need(plotType() %in% datasetInput()[["plotType"]],"")
+      ) # Trying to avoid an error when switching datasets in case the plotType is not available.
       mRNA <- exprs()[ ,input$gene]
       if (plotType() == "Copy number") {
         group <- cnas()[ ,input$gene]
@@ -267,13 +275,16 @@ shinyServer(
       tukey$Significance <- as.factor(starmaker(tukey$p.adj, p.levels = c(.001, .01, .05, 1), symbols=c("***", "**", "*", "ns")))
       tukey <- tukey[order(tukey$diff), ]
       tukey
-     })
+    })
     
     
     #' Pairwise t test
     output$pairwiseTtest <- renderPrint({     
       if (input$gene == "" )
         return()
+      validate(
+        need(plotType() %in% datasetInput()[["plotType"]],"")
+      ) # Trying to avoid an error when switching datasets in case the plotType is not available.
       mRNA <- exprs()[ ,input$gene]
       if (plotType() == "Copy number") {
         group <- cnas()[ ,input$gene]
@@ -318,7 +329,7 @@ shinyServer(
     downloadPlotHeight <- reactive({
       input$downloadPlotHeight
     })
-
+    
     downloadPlotWidth <- reactive({
       input$downloadPlotWidth
     })
@@ -337,7 +348,7 @@ shinyServer(
         plotFunction <- match.fun(downloadPlotFileType())
         plotFunction(con, width = downloadPlotWidth(), height = downloadPlotHeight())
         ggboxPlot(exprs = exprs(), cna = cnas(), gene = input$gene, plotType = plotType(), scale = input$scale, 
-                  stat = input$stat, colBox = input$colBox, colStrip = input$colStrip)
+                  stat = input$stat, colBox = input$colBox, colStrip = input$colStrip, bw = input$bw)
         dev.off(which=dev.cur())
       }
     )
@@ -354,7 +365,7 @@ shinyServer(
         dev.off()
       }
     )
-
+    
     #' Download the kmPlot
     output$downloadkmPlot <- downloadHandler(
       filename = function() {
@@ -373,7 +384,7 @@ shinyServer(
       corr <- corr[order(-abs(corr$r)), ]
       corr
     })
-
+    
     #' Generate an HTML table view of the the correlation table 
     output$corrData <- renderDataTable({
       if (input$gene == "")
@@ -402,7 +413,7 @@ shinyServer(
         corr.table
       })
     })
-
+    
     #' Download the correlation table 
     output$downloadCorrData <- downloadHandler(
       filename = function() {
@@ -420,7 +431,7 @@ shinyServer(
              Histology = "Histology",
              Subtype = "Subtype")
     })
-
+    
     separateByInput <- reactive({
       switch(input$separateBy, 
              none = "none",
@@ -436,7 +447,7 @@ shinyServer(
         need(input$histologyCorr %in% c("All",histo()),"")
       ) # Trying to avoid an error when switching datasets in case the choosen histology is not available.
       myCorggPlot(exprs(), input$gene1, input$gene2, input$histologyCorr, input$subtype, 
-                   colorBy = colorByInput(), separateBy = separateByInput())
+                  colorBy = colorByInput(), separateBy = separateByInput())
     })
     
     #' Generate a summary of the correlation test
@@ -462,14 +473,14 @@ shinyServer(
       }
     )
     
-#     #' Generate a summary of the dataset NOT SURE IS USEFUL
-#     output$summary <- renderPrint({
-#       if (input$gene == "" )
-#         return()
-#       data <- getData (exprs(), input$gene)
-#       summary(data[,-c(1,7)])
-#     })
-
+    #     #' Generate a summary of the dataset NOT SURE IS USEFUL
+    #     output$summary <- renderPrint({
+    #       if (input$gene == "" )
+    #         return()
+    #       data <- getData (exprs(), input$gene)
+    #       summary(data[,-c(1,7)])
+    #     })
+    
     #' Generate a graphic summary of the dataset, using rCharts
     output$piePlots <- renderUI({
       data <- pDatas()[,c("Histology","Grade","Type","Subtype")]
@@ -500,7 +511,7 @@ shinyServer(
         })
       }
     })
-
+    
     #' Generate an HTML table view of the data
     output$table <- renderDataTable({
       if (input$gene == "")
@@ -518,7 +529,7 @@ shinyServer(
         write.csv(getData(exprs(), input$gene), file)
       }
     )
-
+    
     #' Generate survival groups stratified by Histology, etc.
     output$survPlots <- renderUI({
       df <- pDatas()
@@ -558,7 +569,7 @@ shinyServer(
         })
       }
     })
-
+    
     output$svm <- renderTable({ 
       # input$file1 will be NULL initially. After the user selects
       # and uploads a file, it will be a data frame with 'name',
@@ -577,7 +588,7 @@ shinyServer(
           Sys.sleep(0.5)
         }
         upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, 
-                         quote=input$quote)
+                           quote=input$quote)
         if (input$svm == "gbm") {
           tcga <- gbm.tcga[["expr"]]
           row.names(tcga) <- tcga[,"Sample"]
@@ -614,5 +625,5 @@ shinyServer(
         svm.call
       })
     })
-
-})
+    
+  })
