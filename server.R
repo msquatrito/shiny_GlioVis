@@ -1,4 +1,5 @@
 library (shiny)
+# library (kernlab)
 library (survival)
 library (weights)
 library (shinyIncubator)
@@ -8,7 +9,7 @@ library (rCharts)
 library (shinysky)
 library (shinyBS)
 library (dplyr)
-# library (kernlab)
+
 
 source("helpers.R")
 
@@ -16,7 +17,7 @@ source("helpers.R")
 ############## Datasets  ##############
 #######################################
 gbm.tcga <- readRDS("data/TCGA.GBM.Rds")
-lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
+# lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
 rembrandt <- readRDS("data/Rembrandt.Rds")
 freije <- readRDS("data/Freije.Rds")
 gravendeel <- readRDS("data/Gravendeel.Rds")
@@ -33,6 +34,18 @@ shinyServer(
     # Return the requested dataset
     datasetInput <- reactive({
       switch(input$dataset, 
+             "TCGA GBM" = gbm.tcga,
+             "TCGA Lgg" = lgg.tcga,
+             "Rembrandt" = rembrandt,
+             "Gravendeel" = gravendeel,
+             "Phillips" = phillips,
+             "Murat" = murat,
+             "Freije" = freije)
+    })
+    
+    #' Switch the datset for the correlation
+    datasetInputCor <- reactive({
+      switch(input$datasetCor, 
              "TCGA GBM" = gbm.tcga,
              "TCGA Lgg" = lgg.tcga,
              "Rembrandt" = rembrandt,
@@ -59,15 +72,9 @@ shinyServer(
     
     # Text matching with the gene names list
     updateSelectizeInput(session, inputId = "gene", choices = gene_names, server = TRUE)
-    
-    observe({
-      # This will change the value of input$gene1, based on input$gene
-      updateSelectizeInput(session, "gene1", choices = gene_names, server = TRUE, selected = input$gene)
-      # This will change the value of input$gene2, based on input$gene
-      updateSelectizeInput(session, "gene2", choices = gene_names, server = TRUE, selected = input$gene) 
-    })
-    
-    
+    updateSelectizeInput(session, inputId = "geneCor", choices = gene_names, server = TRUE)
+    updateSelectizeInput(session, inputId = "gene2", choices = gene_names, server = TRUE) 
+
     # Return the requested plotType
     plotType <- reactive({
       switch(input$plotTypeSel, 
@@ -75,7 +82,7 @@ shinyServer(
              "Copy number" = "Copy number", 
              Subtype = "Subtype", 
              Grade = "Grade", 
-             Recurrence = "Type")
+             Recurrence = "Recurrence")
     }) 
     
     # When switching datasets, if the selected plot is not available it will choose the first plot of the list
@@ -89,7 +96,7 @@ shinyServer(
     
     # This will change the plot type available for a specific dataset
     observe({
-      updateSelectInput(session, inputId = "plotTypeSel", choices = datasetInput()[["plotType"]], selected = plotSelected()) 
+    updateSelectInput(session, inputId = "plotTypeSel", choices = datasetInput()[["plotType"]], selected = plotSelected()) 
     }, priority = 10)
     
     # Caption with gene and dataset
@@ -99,7 +106,7 @@ shinyServer(
       title <- paste(input$gene, "in", input$dataset, "dataset")
     })
     
-    #     # Help popup NOT WORKING YET
+#     # Help popup NOT WORKING YET
     output$help <- renderUI({ 
       helpPopup(title = "Help me pleaseeeeee", 
                 content = includeMarkdown("tools/help.Rmd"), 
@@ -107,14 +114,23 @@ shinyServer(
                 trigger = "click") 
     })
     
-    #     # Help popup alternative NOT WORKING YET
-    #         output$help <- renderUI({ 
-    #           helpModal(title = "Help me pleaseeeeee", link = "helpLink", content = includeMarkdown("tools/help.Rmd"))
-    #         })
+#     # Help popup alternative NOT WORKING YET
+#         output$help <- renderUI({ 
+#           helpModal(title = "Help me pleaseeeeee", link = "helpLink", content = includeMarkdown("tools/help.Rmd"))
+#         })
     
     # Return the available histology, to be used in the updateSelectInput for correlation and survival
     histo <- reactive({
       levels(datasetInput()[["pData"]][,"Histology"])
+    })
+
+    histoCor <- reactive({
+      levels(datasetInputCor()[["pData"]][,"Histology"])
+    })
+
+    observe({
+      # This will change the value of input$histologyCorrTable, based on histological group available for that dataset
+      updateSelectInput(session, inputId = "histologyCorrTable", choices = c("All", histoCor()), selected = "All")
     })
     
     # When switching datasets, if the selected histo is not available it will choose GBM (the last histo of the list)
@@ -125,7 +141,7 @@ shinyServer(
         tail(histo(), n=1)
       }
     })
-    
+
     # When switching datasets, if the selected histo is not available it will choose "All"
     histoCorrSelected <- reactive ({
       if (input$histologyCorr %in% histo()){
@@ -140,8 +156,6 @@ shinyServer(
       updateSelectInput(session, inputId = "histologySurv", choices = histo(), selected = histoSurvSelected())
       # This will change the value of input$histologyCorr, based on histological group available for that dataset
       updateSelectInput(session, inputId = "histologyCorr", choices = c("All", histo()), selected = histoCorrSelected())
-      # This will change the value of input$histologyCorrTable, based on histological group available for that dataset
-      updateSelectInput(session, inputId = "histologyCorrTable", choices = c("All", histo()), selected = "All")
     })
     
     
@@ -150,7 +164,7 @@ shinyServer(
     # gene, we'll want to mark that click as 'stale' so we don't try to use it
     # later. https://gist.github.com/trestletech/5929598
     currentClick <- list(click=NULL, stale=FALSE)
-    
+
     handleClick <- observe({
       if (!is.null(input$densityClick) && !is.null(input$densityClick$x)){
         currentClick$click <<- input$densityClick
@@ -228,7 +242,7 @@ shinyServer(
       surv <- survivalFml()
       kmPlot(cutoff, surv)
     })
-    
+
     #' Create a Kaplan Meier plot with cutoff based on quantiles
     output$survPlot <- renderPlot({
       if (input$gene == "" | input$histologySurv == "")
@@ -253,7 +267,7 @@ shinyServer(
     })
     
     #' Tukey post-hoc test
-    output$tukeyTest <- renderPrint({     
+    output$tukeyTest <- renderPrint(width = 800, {    
       if (input$gene == "" )
         return()
       validate(
@@ -275,7 +289,7 @@ shinyServer(
       tukey$Significance <- as.factor(starmaker(tukey$p.adj, p.levels = c(.001, .01, .05, 1), symbols=c("***", "**", "*", "ns")))
       tukey <- tukey[order(tukey$diff), ]
       tukey
-    })
+     })
     
     
     #' Pairwise t test
@@ -329,7 +343,7 @@ shinyServer(
     downloadPlotHeight <- reactive({
       input$downloadPlotHeight
     })
-    
+
     downloadPlotWidth <- reactive({
       input$downloadPlotWidth
     })
@@ -360,12 +374,12 @@ shinyServer(
       },      
       content = function(file) {
         pdf(file)
-        survivalPlot (exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, 
+        survivalPlot(exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, 
                       subtype = input$subtypeSurv, gcimp = input$gcimpSurv)
         dev.off()
       }
     )
-    
+
     #' Download the kmPlot
     output$downloadkmPlot <- downloadHandler(
       filename = function() {
@@ -380,44 +394,46 @@ shinyServer(
     
     #' Generate the correlation table ##  CURRENTLY TOO SLOW
     corr <- reactive ({
-      corr <- getCorr(exprs(), input$gene, input$histologyCorrTable)
+      corr <- getCorr(datasetInputCor()[["expr"]], input$geneCor, input$histologyCorrTable)
       corr <- corr[order(-abs(corr$r)), ]
       corr
     })
-    
+
     #' Generate an HTML table view of the the correlation table 
     output$corrData <- renderDataTable({
-      if (input$gene == "")
+      if (input$geneCor == "" | input$goCor == 0)
         return()
-      withProgress(session, min=1, max=5, {
-        setProgress(message = "Calculating, please wait",
-                    detail = "This takes forever...")
-        for (i in 1:5) {
-          setProgress(value = i)
-          Sys.sleep(0.5)
-        }          
-        corr.table <- suppressWarnings(corr())  # suppressWarnings  is used to prevent the warning messages in the LGG dataset  
-        if (input$sign == 0.01){
-          corr.table <- subset(corr.table, p <= 0.01)
-        } 
-        if (input$cor == "Positive"){
-          corr.table <- subset(corr.table, r > 0)
-          corr.table <- corr.table[order(-corr.table$r), ]
-        }
-        if (input$cor == "Negative"){
-          corr.table <- subset(corr.table, r < 0)
-          corr.table <- corr.table[order(corr.table$r), ]
-        } else {
-          corr.table <- subset(corr.table, p <= 0.05)
-        }
-        corr.table
+      isolate({  # https://groups.google.com/forum/#!searchin/shiny-discuss/submit$20button/shiny-discuss/3eXElZxZoaM/QtGCl-4qXzsJ
+        withProgress(session, min=1, max=5, {
+          setProgress(message = "Calculating, please wait",
+                      detail = "Be patient, this takes forever...")
+          for (i in 1:5) {
+            setProgress(value = i)
+            Sys.sleep(0.5)
+          }          
+          corr.table <- suppressWarnings(corr())  # suppressWarnings  is used to prevent the warning messages in the LGG dataset  
+          if (input$sign == 0.01){
+            corr.table <- subset(corr.table, p <= 0.01)
+          } 
+          if (input$cor == "Positive"){
+            corr.table <- subset(corr.table, r > 0)
+            corr.table <- corr.table[order(-corr.table$r), ]
+          }
+          if (input$cor == "Negative"){
+            corr.table <- subset(corr.table, r < 0)
+            corr.table <- corr.table[order(corr.table$r), ]
+          } else {
+            corr.table <- subset(corr.table, p <= 0.05)
+          }
+          corr.table
+        })
       })
     })
-    
+
     #' Download the correlation table 
     output$downloadCorrData <- downloadHandler(
       filename = function() {
-        paste(input$gene, "_", input$dataset, "_corrData.csv", sep="")
+        paste(input$geneCor, "_", input$datasetCor, "_corrData.csv", sep="")
       },
       content = function(file) {
         write.csv(corr(),file)
@@ -431,7 +447,7 @@ shinyServer(
              Histology = "Histology",
              Subtype = "Subtype")
     })
-    
+
     separateByInput <- reactive({
       switch(input$separateBy, 
              none = "none",
@@ -441,23 +457,26 @@ shinyServer(
     
     #' Generate the correlation plot
     output$corrPlot <-renderPlot({    
-      if (input$gene1 == "" | input$gene2 == "")
+      if (input$gene == "")
         return()
+      validate(
+        need(input$gene2 != "", "Please enter Gene 2")
+      )
       validate(
         need(input$histologyCorr %in% c("All",histo()),"")
       ) # Trying to avoid an error when switching datasets in case the choosen histology is not available.
-      myCorggPlot(exprs(), input$gene1, input$gene2, input$histologyCorr, input$subtype, 
-                  colorBy = colorByInput(), separateBy = separateByInput())
+      myCorggPlot(exprs(), input$gene, input$gene2, input$histologyCorr, input$subtype, 
+                   colorBy = colorByInput(), separateBy = separateByInput())
     })
     
     #' Generate a summary of the correlation test
     output$corrTest <-renderPrint({     
-      if (input$gene1 == "" | input$gene2 == "")
+      if (input$gene == "" | input$gene2 == "")
         return()
       validate(
         need(input$histologyCorr %in% c("All",histo()),"")
       ) # Trying to avoid an error when switching datasets in case the choosen histology is not available.
-      myCorrTest(exprs(), input$gene1, input$gene2, input$histologyCorr, input$subtype, separateBy = separateByInput())
+      myCorrTest(exprs(), input$gene, input$gene2, input$histologyCorr, input$subtype, separateBy = separateByInput())
     })
     
     #' Download the corrPlot
@@ -467,23 +486,23 @@ shinyServer(
       },
       content = function(file) {
         pdf(file)
-        myCorggPlot (exprs(), input$gene1, input$gene2, input$histologyCorr, input$subtype, 
+        myCorggPlot (exprs(), input$gene, input$gene2, input$histologyCorr, input$subtype, 
                      colorByInput(), separateByInput())
         dev.off()
       }
     )
     
-    #     #' Generate a summary of the dataset NOT SURE IS USEFUL
-    #     output$summary <- renderPrint({
-    #       if (input$gene == "" )
-    #         return()
-    #       data <- getData (exprs(), input$gene)
-    #       summary(data[,-c(1,7)])
-    #     })
-    
+#     #' Generate a summary of the dataset NOT SURE IS USEFUL
+#     output$summary <- renderPrint({
+#       if (input$gene == "" )
+#         return()
+#       data <- getData (exprs(), input$gene)
+#       summary(data[,-c(1,7)])
+#     })
+
     #' Generate a graphic summary of the dataset, using rCharts
     output$piePlots <- renderUI({
-      data <- pDatas()[,c("Histology","Grade","Type","Subtype")]
+      data <- pDatas()[,c("Histology","Grade","Recurrence","Subtype")]
       data <- data[,colSums(is.na(data)) < nrow(data)]
       plot_output_list <- lapply(names(data), function(i) {
         plotname <- paste("plot", i, sep="")
@@ -494,7 +513,7 @@ shinyServer(
     })
     
     observe ({                                                               
-      data <- pDatas()[,c("Histology","Grade","Type","Subtype")]
+      data <- pDatas()[,c("Histology","Grade","Recurrence","Subtype")]
       data <- data[,colSums(is.na(data)) < nrow(data)]
       # Call renderChart for each one. 
       for (i in names(data)) {                                                    
@@ -511,7 +530,7 @@ shinyServer(
         })
       }
     })
-    
+
     #' Generate an HTML table view of the data
     output$table <- renderDataTable({
       if (input$gene == "")
@@ -529,7 +548,7 @@ shinyServer(
         write.csv(getData(exprs(), input$gene), file)
       }
     )
-    
+
     #' Generate survival groups stratified by Histology, etc.
     output$survPlots <- renderUI({
       df <- pDatas()
@@ -569,7 +588,7 @@ shinyServer(
         })
       }
     })
-    
+
     output$svm <- renderTable({ 
       # input$file1 will be NULL initially. After the user selects
       # and uploads a file, it will be a data frame with 'name',
@@ -588,7 +607,7 @@ shinyServer(
           Sys.sleep(0.5)
         }
         upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, 
-                           quote=input$quote)
+                         quote=input$quote)
         if (input$svm == "gbm") {
           tcga <- gbm.tcga[["expr"]]
           row.names(tcga) <- tcga[,"Sample"]
@@ -625,5 +644,5 @@ shinyServer(
         svm.call
       })
     })
-    
-  })
+
+})

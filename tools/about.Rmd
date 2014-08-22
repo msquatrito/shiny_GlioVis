@@ -39,7 +39,7 @@ Kaplan–Meier survival analysis were completed using the ‘survival’ package
 
 Version 0.10 (08/01/2014)
 
-By: [Massimo Squatrito](m_squatrito@gmail.com) and [Robert Bowman]()
+By: [Massimo Squatrito](http://www.cnio.es/ing/grupos/plantillas/presentacion.asp?grupo=50008938) and [Robert Bowman](http://www.mskcc.org/research/lab/johanna-joyce/member/robert-bowman)
 
 Built using [Shiny](http://www.rstudio.com/shiny) by [RStudio](http://www.rstudio.com)
 
@@ -51,4 +51,9 @@ The GlioVis is licensed under the [AGPLv3](http://www.tldrlegal.com/l/AGPL3)
 
 As a summary, the AGPLv3 license requires, attribution, include copyright and license in copies of the software, state changes if you modify the code, and disclose all source code. 
 
-&copy; Massimo Squatrito (2014) 
+&copy; Massimo Squatrito (2014)  
+  
+### Funding
+
+<a href ="http://www.seveballesteros.com"><img src="seve.jpg" height = "135"  width = "405"></a>
+

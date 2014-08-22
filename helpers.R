@@ -1,7 +1,7 @@
 ############################################
 ############## my ggboxPlot  ##############
 ############################################
-ggboxPlot <- function(exprs, cna, gene, plotType, scale = FALSE, stat = FALSE, colBox = FALSE, colStrip = FALSE,...) {
+ggboxPlot <- function(exprs, cna, gene, plotType, scale = FALSE, stat = FALSE, colBox = FALSE, colStrip = FALSE, bw = FALSE, ...) {
   if (!gene%in%names(exprs)) {
     stop ("Incorrect gene entry or gene not available for this dataset")
   }
@@ -37,7 +37,10 @@ ggboxPlot <- function(exprs, cna, gene, plotType, scale = FALSE, stat = FALSE, c
     strip <- geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5)
   }
   p <- ggplot(data, aes(x=group, y = mRNA)) + ylab(ylab) + xlab("")
-  p <- p + box + strip  #+ theme_bw ()
+  p <- p + box + strip
+  if (bw) {
+    p <- p + theme_bw ()
+  }
   if (stat) {
     tukey <- data.frame(TukeyHSD(aov(mRNA ~ group, data = data))[[1]])
     tukey <<- tukey ##  see scoping rules http://shiny.rstudio.com/articles/scoping.html
@@ -48,6 +51,9 @@ ggboxPlot <- function(exprs, cna, gene, plotType, scale = FALSE, stat = FALSE, c
       geom_point() + geom_errorbar(width = 0.25) + 
       ylab("Differences in mean levels") + xlab("") + 
       geom_hline(xintercept = 0, colour="darkgray", linetype = "longdash") + coord_flip()
+    if (bw) {
+      t <- t + theme_bw ()
+    }
     grid.arrange(p, t, ncol=2, widths = c(3,2))
   } else {
     print(p) 
@@ -133,8 +139,8 @@ survivalPlot <- function (df, gene, group, cutoff, subtype, gcimp = FALSE) {
   if (group == "Non-tumor") {
     stop ("Sorry no survival data are available for this group") ## Need to throw an error aslo if  SEE REMBRANDT PROBLEM
   }
-  if (group == "GBM" & any(!is.na(df$Type))) {
-    df <- subset (df, Histology == "GBM" & Type == "Primary")
+  if (group == "GBM" & any(!is.na(df$Recurrence))) {
+    df <- subset (df, Histology == "GBM" & Recurrence == "Primary")
   } 
   if (subtype != "All") {
     df <- subset (df, Subtype == subtype)
@@ -180,7 +186,7 @@ survivalPlot <- function (df, gene, group, cutoff, subtype, gcimp = FALSE) {
          mark.time = FALSE)
     legend("topright", legend = c(paste(gene," High ", paste("(n=", surv$events[1]),", median=",surv$median[1],")", sep = ""), 
                                   paste(gene," Low ", paste("(n=", surv$events[2]),", median=",surv$median[2],")", sep = "")),
-           col= c("red", "blue"), lty = 1, cex = 0.8)
+           col= c("red", "blue"), lty = 1, cex = 1)
     text (tmax-10, 0.725, paste("HR = ",HR, " (", HR.lower, "-", HR.upper,")", sep=""), cex = 1)
     text (tmax-10, 0.65, paste (star.log, "Log-rank p value=", log.rank.p), cex = 1)
     text (tmax-10, 0.575, paste (star.mcox, "Wilcoxon p value=", mantle.cox.p), cex = 1)
@@ -199,7 +205,7 @@ survivalPlot <- function (df, gene, group, cutoff, subtype, gcimp = FALSE) {
                       paste("2nd ",paste("(n=", z$events[2]),", median=",z$median[2],")", sep = ""),
                       paste("3rd ",paste("(n=", z$events[3]),", median=",z$median[3],")", sep = ""),
                       paste("4th ",paste("(n=", z$events[4]),", median=",z$median[4],")", sep = "")), 
-           col= c(1:4), lty=1, cex=.8)
+           col= c(1:4), lty=1, cex=1)
   }
   
 }
@@ -367,7 +373,7 @@ kmPlot <- function (cutoff,surv){
          ylab="% Surviving", font.main = 1, cex.main = 1)
   legend("topright", c(paste("High expr. ", paste(" (n=", sTable$events[1]),", median=",sTable$median[1],")", sep = ""), 
                        paste("Low expr. ", paste(" (n=", sTable$events[2]),", median=",sTable$median[2],")", sep = "")), 
-         col= c("red", "blue"), lty = 1, cex = 1, box.lty = 0)
+         col= c("red", "blue"), lty = 1, cex = 1)
   text (smax-10, 0.725, paste("HR = ",HR, " (", HR.lower, "-", HR.upper,")", sep=""), cex = 1)
   text (smax-10, 0.65, paste ("Log-rank p value=", log.rank.p), cex = 1)
   text (smax-10, 0.575, paste ("Wilcoxon p value=", mantle.cox.p), cex = 1)
