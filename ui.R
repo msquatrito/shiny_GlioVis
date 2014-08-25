@@ -22,7 +22,7 @@ shinyUI(
 #                         background-repeat: repeat-x;
 #                       }')
 #                       ),
-              div(class = "span8",               
+              div(class = "span9",               
                       img(src = "GlioVis_logo_white.jpg", width = 750),
                       hr(),
                       p(class="lead","Welcome to", strong("GlioVis"),": a user friendly web based data visualization and analysis application for exploring Glioma datasets."),
@@ -54,7 +54,7 @@ shinyUI(
                                      br(),
                                      br(),
                                      selectInput(inputId = "dataset", label = h4("Dataset"),
-                                                 choices = c("TCGA GBM", "TCGA LGG", "Rembrandt","Gravendeel", "Phillips", "Murat", "Freije"),
+                                                 choices = c("TCGA GBM", "TCGA Lgg", "Rembrandt","Gravendeel", "Phillips", "Murat", "Freije"),
                                                  selected = "TCGA GBM", selectize = FALSE),
                                      br(),
                                      selectizeInput(inputId = "gene", label = h4("Gene"), choices = NULL, selected = NULL,
@@ -109,8 +109,6 @@ shinyUI(
                                      conditionalPanel(
                                        condition = "input.tab1 == 3",
                                        br(),
-#                                        selectizeInput(inputId = "gene1", label = h5("Gene 1"), choices ="", 
-#                                                       options = list(placeholder = "Enter gene 1", plugins = list('restore_on_backspace'))),
                                        selectizeInput(inputId = "gene2", label = h4("Gene 2"), choices ="", 
                                                       options = list(placeholder = "Enter gene 2, eg: SOCS2", plugins = list('restore_on_backspace'))),
                                        hr(),
@@ -227,7 +225,7 @@ shinyUI(
                                  p(class = "lead","Classify tumor samples based on mRNA expression profiles using Supported Vector Machine Learning"),
                                  p(strong("IMPORTANT:"),"Currently active only for GBM samples. Check the 'About' tab for more information."),
                                  p(strong("File input format:"), "Upload a .csv file with samples in rows and genes expression in columns.The first column should contain the sample ID and should be named 'Sample'"),
-                                 p(strong("File output format:"), ""),
+                                 p(strong("File output format:"), "Download a .csv file containing the subtype call with the probability model."),
                                  br(),
                                  sidebarLayout(
                                    sidebarPanel(width = 3,
@@ -240,10 +238,16 @@ shinyUI(
                                                 radioButtons(inputId = "sep", label = "Separator",  
                                                              choices = c(Comma = ",", Semicolon = ";", Tab="\t"), selected = ","),
                                                 radioButtons(inputId = "quote", label = "Quote", 
-                                                             choices = c(None = "", "Double Quote" = '"', "Single Quote" = "'"), selected = '"')
+                                                             choices = c(None = "", "Double Quote" = '"', "Single Quote" = "'"), selected = '"'),
+                                                hr(),
+                                                conditionalPanel(
+                                                  condition = "output.svm",
+                                                  downloadButton(outputId = "downloadSvm", label = "Download data"),
+                                                  br()
+                                                )
                                    ),
                                    mainPanel(
-                                     tableOutput(outputId = "svm")
+                                     dataTableOutput(outputId = "svm")
                                    )
                                  )
                         ),
@@ -254,7 +258,7 @@ shinyUI(
                                  sidebarLayout(
                                    sidebarPanel(width = 3,
                                                 selectInput(inputId = "datasetCor", label = h4("Dataset"),
-                                                            choices = c("TCGA GBM", "TCGA LGG", "Rembrandt","Gravendeel", "Phillips", "Murat", "Freije"),
+                                                            choices = c("TCGA GBM", "TCGA Lgg", "Rembrandt","Gravendeel", "Phillips", "Murat", "Freije"),
                                                             selected = "TCGA GBM", selectize = FALSE),
                                                 br(),
                                                 selectInput(inputId = "histologyCorrTable", label = h4("Histology:"), choices = ""),
@@ -266,17 +270,16 @@ shinyUI(
                                                 br(),
                                                 selectInput(inputId = "sign", label = h5("Signficance:"), choices = c(0.05, 0.01)),
                                                 br(),
-                                                actionButton(inputId = "goCor", label = "Get data", styleclass = "primary") # Not working correctly, the second time 
+                                                actionButton(inputId = "goCor", label = "Get data", styleclass = "primary"), # Not working correctly, the second time 
                                                                                                                             # it triggers after the gene si selected
                                                                                                                             # probably need to use isolate()
+                                                br(),
+                                                conditionalPanel(
+                                                  condition = "output.corrData",
+                                                  downloadButton(outputId = "downloadCorrData", label = "Download data")
+                                                )
                                    ),
                                    mainPanel(
-                                     conditionalPanel(
-                                       condition = "output.corrData",
-                                       downloadButton(outputId = "downloadCorrData", label = "Download data"),
-                                       br()
-                                     ),
-                                     br(),
                                      dataTableOutput(outputId = "corrData")
                                    )
                                  )
@@ -287,6 +290,5 @@ shinyUI(
              tabPanel(title = "About", icon = icon("info-circle"), 
                       includeMarkdown("tools/about.Rmd")
                       )
-
   )
 )

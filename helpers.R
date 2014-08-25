@@ -36,18 +36,20 @@ ggboxPlot <- function(exprs, cna, gene, plotType, scale = FALSE, stat = FALSE, c
   } else {
     strip <- geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5)
   }
-  p <- ggplot(data, aes(x=group, y = mRNA)) + ylab(ylab) + xlab("")
-  p <- p + box + strip
+  p <- ggplot(data, aes(x=group, y = mRNA)) + ylab(ylab) + xlab("") + theme(legend.position = "none")
+  p <- p + box + strip 
   if (bw) {
-    p <- p + theme_bw ()
+    p <- p + theme_bw () + theme(legend.position = "none")
   }
   if (stat) {
     tukey <- data.frame(TukeyHSD(aov(mRNA ~ group, data = data))[[1]])
     tukey <<- tukey ##  see scoping rules http://shiny.rstudio.com/articles/scoping.html
     tukey$Significance <- as.factor(starmaker(tukey$p.adj,p.levels=c(.001, .01, .05, 1), 
                                               symbols=c("***", "**", "*", "ns")))
+    tukey$comparison <- row.names(tukey)
+    tukey$comparison <- factor(tukey$comparison, levels = tukey$comparison[order(tukey$diff)])
     
-    t <- ggplot(tukey, aes(row.names(tukey), diff, ymin = lwr, ymax= upr, colour = Significance)) +
+    t <- ggplot(tukey, aes(comparison, diff, ymin = lwr, ymax= upr, colour = Significance)) +
       geom_point() + geom_errorbar(width = 0.25) + 
       ylab("Differences in mean levels") + xlab("") + 
       geom_hline(xintercept = 0, colour="darkgray", linetype = "longdash") + coord_flip()
@@ -136,13 +138,10 @@ survivalPlot <- function (df, gene, group, cutoff, subtype, gcimp = FALSE) {
     stop ("Incorrect gene entry or gene not available for this dataset")
   }
   df <- subset (df, Histology == group & Histology != "Non-tumor") 
-  if (group == "Non-tumor") {
-    stop ("Sorry no survival data are available for this group") ## Need to throw an error aslo if  SEE REMBRANDT PROBLEM
-  }
   if (group == "GBM" & any(!is.na(df$Recurrence))) {
     df <- subset (df, Histology == "GBM" & Recurrence == "Primary")
   } 
-  if (subtype != "All") {
+  if (group == "GBM" & subtype != "All") {
     df <- subset (df, Subtype == subtype)
   }
   if (gcimp){

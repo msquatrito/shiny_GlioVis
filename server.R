@@ -1,5 +1,4 @@
 library (shiny)
-# library (kernlab)
 library (survival)
 library (weights)
 library (shinyIncubator)
@@ -10,14 +9,13 @@ library (shinysky)
 library (shinyBS)
 library (dplyr)
 
-
 source("helpers.R")
 
 #######################################
 ############## Datasets  ##############
 #######################################
 gbm.tcga <- readRDS("data/TCGA.GBM.Rds")
-# lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
+lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
 rembrandt <- readRDS("data/Rembrandt.Rds")
 freije <- readRDS("data/Freije.Rds")
 gravendeel <- readRDS("data/Gravendeel.Rds")
@@ -249,7 +247,10 @@ shinyServer(
         return()
       validate(
         need(input$histologySurv %in% histo(),"")
-      ) # Trying to avoid an error when switching datasets in case the choosen histology is not available.
+      )# Trying to avoid an error when switching datasets in case the choosen histology is not available.
+      validate(
+        need(input$histologySurv != "Non-tumor","Sorry, no survival data are available for this group")
+      )
       survivalPlot (exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, subtype = input$subtypeSurv, 
                     gcimp = input$gcimpSurv)
     })
@@ -311,7 +312,7 @@ shinyServer(
         data <- data.frame(mRNA, group)
         data <- na.omit(data)
       }
-      pttest <- pairwise.t.test(mRNA, group, p.adj = "bonferroni", paired = FALSE)[[3]]
+      pttest <- pairwise.t.test(mRNA, group, na.rm= TRUE, p.adj = "bonferroni", paired = FALSE)[[3]]
       pttest
     })
     
@@ -433,7 +434,7 @@ shinyServer(
     #' Download the correlation table 
     output$downloadCorrData <- downloadHandler(
       filename = function() {
-        paste(input$geneCor, "_", input$datasetCor, "_corrData.csv", sep="")
+        paste(input$geneCor, input$datasetCor, input$histologyCorrTable, "corrData.csv", sep="_")
       },
       content = function(file) {
         write.csv(corr(),file)
@@ -491,14 +492,6 @@ shinyServer(
         dev.off()
       }
     )
-    
-#     #' Generate a summary of the dataset NOT SURE IS USEFUL
-#     output$summary <- renderPrint({
-#       if (input$gene == "" )
-#         return()
-#       data <- getData (exprs(), input$gene)
-#       summary(data[,-c(1,7)])
-#     })
 
     #' Generate a graphic summary of the dataset, using rCharts
     output$piePlots <- renderUI({
@@ -564,7 +557,7 @@ shinyServer(
       do.call(tagList, plot_output_list)
     })  
     
-    observe ({   
+    observe({   
       df <- pDatas()
       df <- df[,colSums(is.na(df)) < nrow(df)] # Removing unavailable (all NA) groups
       df <- droplevels.data.frame(subset(df, Histology!="Non-tumor")) # Exclude normal sample, not displaying properly
@@ -589,60 +582,83 @@ shinyServer(
       }
     })
 
-    output$svm <- renderTable({ 
+    #' Reactive function to generate subtype call to pass to data table and download handler
+    svm.call <- reactive ({
       # input$file1 will be NULL initially. After the user selects
       # and uploads a file, it will be a data frame with 'name',
       # 'size', 'type', and 'datapath' columns. The 'datapath'
       # column will contain the local filenames where the data can
       # be found.
       inFile <- input$upFile
+      upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, 
+                         quote=input$quote)
+      if (input$svm == "gbm") {
+      tcga <- gbm.tcga[["expr"]]
+      row.names(tcga) <- tcga[,"Sample"]
+      TCGA.exp <- data.frame(t(tcga[,-c(1:8)]))
+      row.names(upData) <- upData[,"Sample"]
+      upData <- upData [,-1]
+      df.exp <-t(upData)
+      genes <-intersect(row.names(TCGA.exp),row.names(df.exp))  # common genes of the two datasets
+      ## Subset the initial TCGA matrix to only contain common genes
+      TCGA.1 <- TCGA.exp[genes,]
+      TCGA.1 <- TCGA.1[!is.na(TCGA.1[,1]),]  #Check for NA's
+      TCGA.train <- TCGA.1 - rowMeans(TCGA.1)
+      ## Subset the inputDf matrix to only contain common genes
+      df.1 <- df.exp[genes,]
+      df.1 <- df.1[!is.na(df.1[,1]),]
+      df.learn <- df.1- rowMeans(df.1)
+      Training <- as.factor(as.character(tcga$Subtype))
+      require(kernlab)
+      svm.TCGA <- ksvm(t(TCGA.train), #Training matrix
+                       Training, # "Truth" factor
+                       cross=10, # 10 fold cross validation to learn which SVM is best
+                       kernel="vanilladot",  # vanilladot kernel keeps things simple
+                       family="multinomial", # we are predicting 5 classes
+                       prob.model=TRUE,  # We want a probability model included so we can give each predicted sample a score, not just a class
+                       scale=FALSE)  # We already scaled before by mean-centering the data.
+      subtype.call      <- as.matrix(predict(svm.TCGA, t(df.learn)))
+      prob      <- as.matrix(predict(svm.TCGA, t(df.learn ), type="probabilities"))
+      svm.call       <- data.frame(subtype.call ,prob)
+      rownames(svm.call) <- rownames(t(df.learn))
+      svm.call[,"Sample"] <- rownames(svm.call)
+      svm.call}
+      else if (input$svm == "lgg") {
+        return(NULL) # LGG subtype not yet active
+      }
+      svm.call
+    })
+
+    #' Rerndering the subtype call as a data table
+    output$svm <- renderDataTable({ 
+      inFile <- input$upFile
       if (is.null(inFile))
         return(NULL)
       # Wrap the entire expensive operation with withProgress 
       withProgress(session, min = 1, max = 5, {
         setProgress(message = "Calculating, please wait",
-                    detail = "Be patients, it's worth to...")
+                    detail = "Be patients, switching to another tab will crash GlioVis ...")
         for (i in 1:5) {
           setProgress(value = i)
           Sys.sleep(0.5)
         }
-        upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, 
-                         quote=input$quote)
         if (input$svm == "gbm") {
-          tcga <- gbm.tcga[["expr"]]
-          row.names(tcga) <- tcga[,"Sample"]
-          TCGA.exp <- data.frame(t(tcga[,-c(1:8)]))
-          row.names(upData) <- upData[,"Sample"]
-          upData <- upData [,-1]
-          df.exp <-t(upData)
-          genes <-intersect(row.names(TCGA.exp),row.names(df.exp))  # common genes of the two datasets
-          ## Subset the initial TCGA matrix to only contain common genes
-          TCGA.1 <- TCGA.exp[genes,]
-          TCGA.1 <- TCGA.1[!is.na(TCGA.1[,1]),]  #Check for NA's
-          TCGA.train <- TCGA.1 - rowMeans(TCGA.1)
-          ## Subset the inputDf matrix to only contain common genes
-          df.1 <- df.exp[genes,]
-          df.1 <- df.1[!is.na(df.1[,1]),]
-          df.learn <- df.1- rowMeans(df.1)
-          Training <- as.factor(as.character(tcga$Subtype))
-          svm.TCGA <- ksvm(t(TCGA.train), #Training matrix
-                           Training, # "Truth" factor
-                           cross=10, # 10 fold cross validation to learn which SVM is best
-                           kernel="vanilladot",  # vanilladot kernel keeps things simple
-                           family="multinomial", # we are predicting 4 classes
-                           prob.model=TRUE,  # We want a probability model included so we can give each predicted sample a score, not just a class
-                           scale=FALSE)  # We already scaled before by mean-centering the data.
-          subtype.call      <- as.matrix(predict(svm.TCGA, t(df.learn)))
-          prob      <- as.matrix(predict(svm.TCGA, t(df.learn ), type="probabilities"))
-          svm.call       <- data.frame(subtype.call ,prob)
-          rownames(svm.call) <- rownames(t(df.learn))
-          svm.call[,"Sample"] <- rownames(svm.call)
-          svm.call
+          svm <- svm.call()
         } else if (input$svm == "lgg") {
           return(NULL) # LGG subtype not yet active
         }
-        svm.call
+        svm
       })
     })
+
+    #' Download the subtype call
+    output$downloadSvm <- downloadHandler(
+      filename = function() {
+        paste("My_SubtypeCall.csv", sep="")
+      },
+      content = function(file) {
+        write.csv(svm.call(), file)
+      }
+    )
 
 })
