@@ -32,8 +32,9 @@ References:
 8 [Murat A et al. 2008](http://www.ncbi.nlm.nih.gov/pubmed/18565887)
 
 ### Data processing  
-Affymetrix expression array analyses were completed in R using the [Bioconductor](http://bioconductor.org) suite. The ‘affy’ package was used for robust multi-array average normalization followed by quantile normalization. RNA-seq data (TCGA Lgg dataset) and copy number alteration (TCGA GBM and Lgg datasets) were downloaded from the [cBioPortal](http://www.cbioportal.org/public-portal/index.do).  
-Kaplan–Meier survival analysis were completed using the ‘survival’ package in R. Hazard ratios were determined utilizing the ‘coxph’ function from the ‘survival’ package.
+* Affymetrix expression array analyses were completed in R using the [Bioconductor](http://bioconductor.org) suite. The [‘affy’](http://www.bioconductor.org/packages/release/bioc/manuals/affy/man/affy.pdf) package was used for robust multi-array average normalization followed by quantile normalization. RNA-seq data (TCGA Lgg dataset) and copy number alteration (TCGA GBM and Lgg datasets) were downloaded from the [cBioPortal](http://www.cbioportal.org/public-portal/index.do).  
+* Kaplan–Meier survival analysis were completed using the [‘survival’](http://cran.r-project.org/web/packages/survival/survival.pdf) package in R. Hazard ratios were determined utilizing the ‘coxph’ function from the ‘survival’ package. To generate HR plot we partially use some code previously describend in [*Cutoff finder*](http://molpath.charite.de/cutoff/index.jsp).  
+* Subtype call are generated applying a Support Vector Machine algorithm, performing a linear Kernel with 10-fold cross validation, using the ‘ksvm’ function of the [‘kernlab’](http://cran.r-project.org/web/packages/kernlab/kernlab.pdf) package. For GBM samples clasification we uses 5 subtypes (Classical, Mesenchymal, Neural, Proneural, G-CIMP) as defined in [Brennan C. et al. 2013](http://www.ncbi.nlm.nih.gov/pubmed/24120142).
 
 ### App info
 
@@ -51,7 +52,7 @@ The GlioVis is licensed under the [AGPLv3](http://www.tldrlegal.com/l/AGPL3)
 
 As a summary, the AGPLv3 license requires, attribution, include copyright and license in copies of the software, state changes if you modify the code, and disclose all source code. 
 
-&copy; Massimo Squatrito (2014)  
+&copy; Massimo Squatrito (2014) <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /></a> 
   
 ### Funding
 

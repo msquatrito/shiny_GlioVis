@@ -8,34 +8,57 @@ library (rCharts)
 library (shinysky)
 library (shinyBS)
 library (dplyr)
-
+source("helpers.R")
 
 shinyUI(
   
   navbarPage(title = "GlioVis", windowTitle = "GlioVis - Visualization Tools for Glioma Datasets", fluid = TRUE,
-             
+#              theme = "default.css",
+                       
              tabPanel(title = "Home", icon = icon("home"),
-                      div(class = "outer", 
-#                       tags$head(
-#                         tags$style(type="text/css",'body {
-#                         background-image: url("gradient_inv.jpg");
-#                         background-repeat: repeat-x;
-#                       }')
-#                       ),
-              div(class = "span9",               
-                      img(src = "GlioVis_logo_white.jpg", width = 750),
-                      hr(),
-                      p(class="lead","Welcome to", strong("GlioVis"),": a user friendly web based data visualization and analysis application for exploring Glioma datasets."),
-                      br(),
-                      strong("Available datasets:"),                   
-                      source("tools/datsets.table.R",local = TRUE)$value,
-                      br(),br(),
-                      p(strong("Please cite:"), a("Bowman R. and Squatrito M.", href="", target="_blank"), " (manuscript in preparation) when publishing results based on GlioVis."),
-                      hr(),
-                      tags$blockquote(# class="pull-right",
-                        tags$p("No great discovery was ever made without a bold guess."), 
-                        tags$small("Isaac Newton"))
-              )
+                      div(class = "home",
+                          div(class = "outer", 
+                              column(width = 9, offset = 2,
+                                     tags$style(type="text/css", 'h4.home {color: #488e91; font-style: italic;}',
+                                                                 'p.home {font-size: 16px;}',
+                                                                 'ol {font-size: 16px;}'),
+                                     img(src = "GlioVis_logo_white.jpg", width = 750),
+                                     hr(),
+                                     p(class = "lead", "Welcome to", strong("GlioVis"),": a user friendly web based data visualization and analysis application for exploring Glioma datasets."),
+                                     h4(class = "home", "How does it work?"),
+                                     p(class = "home"," GlioVis is very easy to use:"),
+                                     tags$ol(
+                                       tags$li('Select the "Explore" tab'), 
+                                       tags$li("Choose a dataset"), 
+                                       tags$li("Enter a Gene Symbol"),
+                                       tags$li("Select one of the available plots (through the dropdown menu or the specific tab)")
+                                     ),
+                                     p(class = "home", "Available datasets:"),                   
+                                     source("tools/datsets.table.R",local = TRUE)$value,
+                                     br(),
+                                     h4(class = "home", "Which gene ID can I use?"),
+                                     p(class = "home",'Currently only', a("HGNC-approved", href="http://www.genenames.org"), 'protein-coding "Gene Symbols" are supported. Non-coding RNA (miRNA, lncRNA, etc.) are not available.'),
+                                     p(class = "home"),
+                                     h4(class = "home", "Can I download the plots?"),
+                                     p(class = "home",'Yes, all the plots can be downloaded as .pdf files. More file type options are available for the boxplots.'),
+                                     p(class = "home"),
+                                     h4(class = "home", "Can I download the data?"),
+                                     p(class = "home",'Yes, it is', strong("highly recommended"), 'for reproducibility issue. Data can be downloaded at "Explore/Data/Download Table".'),
+                                     p(class = "home"),
+                                     h4(class = "home", "What other tools are available?"),
+                                     p(class = "home",'SubtypeME..... CorrelateME.'),
+                                     p(class = "home"),
+                                     p(strong("Please cite:"), a("Bowman R. and Squatrito M.", href="#addRef", target="_blank"), " (manuscript in preparation) when publishing results based on GlioVis."),
+                                     hr(),
+                                     tags$blockquote(# class="pull-right",
+                                       tags$p("No great discovery was ever made without a bold guess."), 
+                                       tags$small("Isaac Newton")),
+                                     br(),
+                                     includeHTML("tools/twitter.html"), # for some reason showing only on browser
+                                     includeHTML("tools/linkedin.html"),
+                                     includeHTML("tools/facebook.html")
+                              )
+                          )
                       )
                       
              ),
@@ -64,6 +87,9 @@ shinyUI(
                                        condition = "input.tab1 == 1",
                                        br(),
                                        selectInput(inputId = "plotTypeSel", label = h4("Plot type"), choices = "", selectize = FALSE),
+                                       br(),
+                                       helpPopup(title = "Help me pleaseeeeee", content = includeMarkdown("tools/help.Rmd"), 
+                                                 placement = "bottom", trigger = "click"),
                                        hr(),
                                        h5("Plot options:"),
                                        checkboxInput(inputId = "scale", label = "Scale y axis", value = FALSE),
@@ -132,12 +158,7 @@ shinyUI(
                                      ),
                                      bsTooltip("dataset", "Choose a dataset", "right", trigger="hover"),
                                      bsTooltip("gene", "Enter gene name", "right", trigger="hover"),
-                                     bsTooltip("plotTypeSel", "Select one of the available plot for the specified dataset", "right", trigger="hover"),
-                                     bsPopover(id = "helpLink", title =  "Help", 
-                                               content = "I am just trying to help here. I have to see if I can include a Rmd file ", 
-                                               trigger="hover", placement="bottom")
-                                     #         helpPopup(title = "Help me pleaseeeeee", content = includeMarkdown("tools/help.Rmd"), 
-                                     #                   placement = "bottom", trigger = "click")
+                                     bsTooltip("plotTypeSel", "Select one of the available plot for the specified dataset", "right", trigger="hover")
                                      #         uiOutput("help")
                         ),
                         
@@ -147,7 +168,7 @@ shinyUI(
                           h3(textOutput(outputId = "caption")),
                           
                           tabsetPanel(id = "tab1",
-                                      
+
                             tabPanel(title = "Box plots", icon = icon("bar-chart-o"), id = "plots", value = 1,
                                        plotOutput(outputId = "plot"),
                                        br(),
@@ -173,17 +194,19 @@ shinyUI(
                                                 plotOutput(outputId = "survPlot", width = 500 , height = 400)
                                        ),
                                        tabPanel(title = "HR plot", value = "hr",
-                                                wellPanel(
-                                                  helpText(HTML("<b>IMPORTANT: </b> Currently active only for GBM samples.")),
-                                                  helpText(HTML("<b>Note: </b> This is an interactive plot, click on a specific mRNA expression value 
+                                                column(width = 9, offset = 1, 
+                                                       wellPanel(
+                                                         helpText(HTML("<b>IMPORTANT: </b> Currently active only for GBM samples.")),
+                                                         helpText(HTML("<b>Note: </b> This is an interactive plot, click on a specific mRNA expression value 
                                               to update the survival plot. The blue line represents the current selection.")),
-                                                  br(),
-                                                  checkboxInput(inputId = "quantile", label = "Show quantiles", value = TRUE),
-                                                  checkboxInput(inputId = "gcimp", label = "Exclude G-CIMP samples", value = FALSE),
-                                                  plotOutput(outputId = "hazardPlot", clickId = "densityClick", width = 500 , height = 400)
-                                                ),
-                                                plotOutput(outputId = "kmPlot", width = 500 , height = 400),
-                                                downloadButton(outputId = "downloadkmPlot", label = "Download")
+                                                         br(),
+                                                         checkboxInput(inputId = "quantile", label = "Show quantiles", value = TRUE),
+                                                         checkboxInput(inputId = "gcimp", label = "Exclude G-CIMP samples", value = FALSE),
+                                                         plotOutput(outputId = "hazardPlot", clickId = "densityClick", width = 500 , height = 400)
+                                                       ),
+                                                       plotOutput(outputId = "kmPlot", width = 500 , height = 400),
+                                                       downloadButton(outputId = "downloadkmPlot", label = "Download")
+                                                )
                                                 
                                        )
                                      )
@@ -287,8 +310,16 @@ shinyUI(
                       )
              ),
              
-             tabPanel(title = "About", icon = icon("info-circle"), 
-                      includeMarkdown("tools/about.Rmd")
+             tabPanel(title = "About", icon = icon("info-circle"),
+                      div(class="about",
+#                           tags$style(type="text/css", '.about {
+#                                         background-image: url("gradient_inv.jpg");
+#                                         background-repeat: no-repeat;
+#                                         background-position: right top;
+#                                         margin-right: 200px;
+#                                       }'),
+                          includeMarkdown("tools/about.Rmd")
                       )
+             )
   )
 )

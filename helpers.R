@@ -2,9 +2,6 @@
 ############## my ggboxPlot  ##############
 ############################################
 ggboxPlot <- function(exprs, cna, gene, plotType, scale = FALSE, stat = FALSE, colBox = FALSE, colStrip = FALSE, bw = FALSE, ...) {
-  if (!gene%in%names(exprs)) {
-    stop ("Incorrect gene entry or gene not available for this dataset")
-  }
    mRNA <- exprs[ ,gene] 
   if (scale) {
     mRNA <- scale(mRNA)

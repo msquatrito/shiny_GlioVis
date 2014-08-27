@@ -26,6 +26,7 @@ HTML('<style type="text/css">
      <th class="tg-eccc">Plots</th>
      <th class="tg-031e"></th>
      <th class="tg-031e"></th>
+     <th class="tg-031e"></th>
      </tr>
      <tr>
      <td class="tg-031e"></td>
@@ -38,6 +39,7 @@ HTML('<style type="text/css">
      <td class="tg-hgcj">Copy Number</td>
      <td class="tg-hgcj">Subtype</td>
      <td class="tg-hgcj">Recurrence</td>
+     <td class="tg-hgcj">Correlation</td>
      <td class="tg-hgcj">Survival</td>
      </tr>
      <tr>
@@ -48,6 +50,7 @@ HTML('<style type="text/css">
      <td class="tg-9fhq"></td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
@@ -65,6 +68,7 @@ HTML('<style type="text/css">
      <td class="tg-eoji">-</td>
      <td class="tg-eoji">-</td>
      <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
      </tr>
      <tr>
      <td class="tg-0a3w">Rembrandt</td>
@@ -75,6 +79,7 @@ HTML('<style type="text/css">
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
@@ -91,6 +96,7 @@ HTML('<style type="text/css">
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">-</td>
      <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
      </tr>
      <tr>
      <td class="tg-0a3w">Phillips</td>
@@ -101,6 +107,7 @@ HTML('<style type="text/css">
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
@@ -117,6 +124,7 @@ HTML('<style type="text/css">
      <td class="tg-g74p">✔</td>
      <td class="tg-g74p">✔</td>
      <td class="tg-g74p">✔</td>
+     <td class="tg-g74p">✔</td>
      </tr>
      <tr>
      <td class="tg-0a3w">Freije</td>
@@ -129,6 +137,7 @@ HTML('<style type="text/css">
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
      </tr>
      </table>')

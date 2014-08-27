@@ -204,6 +204,9 @@ shinyServer(
     output$hazardPlot <- renderPlot({        
       if (input$gene == "")
         return()
+      validate(
+        need(histoSurvSelected()  == "GBM", "Interactive HR plot currently available only for GBM samples")
+      )
       # Wrap the entire expensive operation with withProgress 
       withProgress(session, min = 1, max = 5, {
         setProgress(message = "Calculating, please wait",
@@ -236,6 +239,9 @@ shinyServer(
     output$kmPlot <- renderPlot({
       if (input$gene == "")
         return()
+      validate(
+        need(histoSurvSelected()  == "GBM","Interactive HR plot currently available only for GBM samples")
+      )
       cutoff <- getCutoff()
       surv <- survivalFml()
       kmPlot(cutoff, surv)
@@ -262,6 +268,9 @@ shinyServer(
       validate(
         need(plotType() %in% datasetInput()[["plotType"]],"")
       ) # Trying to avoid an error when switching datasets in case the plotType is not available.
+      validate(
+        need(input$gene %in% names(exprs()),"Gene not available for this dataset")
+      ) # Not all genes are available for all the dataset
       ggboxPlot(exprs = exprs(), cna = cnas(), gene = input$gene, plotType = plotType(), scale = input$scale, 
                 stat = input$stat, colBox = input$colBox, colStrip = input$colStrip, bw = input$bw) 
       # I needed to create the ggboxPlot function (see helper file) to use it in the output$downloadPlot .... OTHER WAY TO DO IT??
