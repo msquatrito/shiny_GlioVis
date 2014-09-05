@@ -59,7 +59,7 @@ HTML('<style type="text/css">
      <tr>
      <td class="tg-031e">TCGA LGG</td>
      <td class="tg-s6z2">0</td>
-     <td class="tg-s6z2">268</td>
+     <td class="tg-s6z2">463</td>
      <td class="tg-s6z2">0</td>
      <td class="tg-s6z2"></td>
      <td class="tg-eoji">✔</td>

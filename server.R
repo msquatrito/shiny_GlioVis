@@ -202,8 +202,11 @@ shinyServer(
     
     #' Render a plot to show the the Hazard ratio for the gene's expression values
     output$hazardPlot <- renderPlot({        
-      if (input$gene == "")
-        return()
+#       if (input$gene == "")
+#         return()
+      validate(
+        need(input$gene != "", "Please, enter a gene name in the panel on the left")
+      )
       validate(
         need(histoSurvSelected()  == "GBM", "Interactive HR plot currently available only for GBM samples")
       )
@@ -237,8 +240,11 @@ shinyServer(
     
     #' Create a Kaplan Meier plot on the HR cutoff
     output$kmPlot <- renderPlot({
-      if (input$gene == "")
-        return()
+#       if (input$gene == "")
+#         return()
+      validate(
+        need(input$gene != "", "Please, enter a gene name in the panel on the left")
+      )
       validate(
         need(histoSurvSelected()  == "GBM","Interactive HR plot currently available only for GBM samples")
       )
@@ -249,8 +255,11 @@ shinyServer(
 
     #' Create a Kaplan Meier plot with cutoff based on quantiles
     output$survPlot <- renderPlot({
-      if (input$gene == "" | input$histologySurv == "")
-        return()
+#       if (input$gene == "" | input$histologySurv == "")
+#         return()
+      validate(
+        need(input$gene != "", "Please, enter a gene name in the panel on the left")
+      )
       validate(
         need(input$histologySurv %in% histo(),"")
       )# Trying to avoid an error when switching datasets in case the choosen histology is not available.
@@ -263,8 +272,9 @@ shinyServer(
     
     #' Create the selected plot
     output$plot <- renderPlot({     
-      if (input$gene == "" )
-        return()
+      validate(
+        need(input$gene != "", "Please, enter a gene name in the panel on the left")
+      )
       validate(
         need(plotType() %in% datasetInput()[["plotType"]],"")
       ) # Trying to avoid an error when switching datasets in case the plotType is not available.
@@ -284,6 +294,9 @@ shinyServer(
         need(plotType() %in% datasetInput()[["plotType"]],"")
       ) # Trying to avoid an error when switching datasets in case the plotType is not available.
       mRNA <- exprs()[ ,input$gene]
+      if (input$scale) {
+        mRNA <- scale(mRNA)
+      }
       if (plotType() == "Copy number") {
         group <- cnas()[ ,input$gene]
         group <- factor(group, levels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp"))
@@ -310,6 +323,9 @@ shinyServer(
         need(plotType() %in% datasetInput()[["plotType"]],"")
       ) # Trying to avoid an error when switching datasets in case the plotType is not available.
       mRNA <- exprs()[ ,input$gene]
+      if (input$scale) {
+        mRNA <- scale(mRNA)
+      }
       if (plotType() == "Copy number") {
         group <- cnas()[ ,input$gene]
         group <- factor(group, levels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp"))
@@ -321,7 +337,7 @@ shinyServer(
         data <- data.frame(mRNA, group)
         data <- na.omit(data)
       }
-      pttest <- pairwise.t.test(mRNA, group, na.rm= TRUE, p.adj = "bonferroni", paired = FALSE)[[3]]
+      pttest <- pairwise.t.test(data$mRNA, data$group, na.rm= TRUE, p.adj = "bonferroni", paired = FALSE)[[3]]
       pttest
     })
     
@@ -467,8 +483,11 @@ shinyServer(
     
     #' Generate the correlation plot
     output$corrPlot <-renderPlot({    
-      if (input$gene == "")
-        return()
+#       if (input$gene == "")
+#         return()
+      validate(
+        need(input$gene != "", "Please, enter a gene name in the panel on the left")
+      )
       validate(
         need(input$gene2 != "", "Please enter Gene 2")
       )
@@ -508,7 +527,7 @@ shinyServer(
       data <- data[,colSums(is.na(data)) < nrow(data)]
       plot_output_list <- lapply(names(data), function(i) {
         plotname <- paste("plot", i, sep="")
-        chartOutput(plotname, "highcharts")
+        chartOutput(plotname, "nvd3") # "highcharts" for h plots
       })
       # Convert the list to a tagList - this is necessary for the list of items to display properly.
       do.call(tagList, plot_output_list)
@@ -527,18 +546,34 @@ shinyServer(
           plotname <- paste("plot", my_i, sep="")
           output[[plotname]] <- renderChart2({
             plotData <- data.frame(table(data[, my_i]))
-            hPlot(x = "Var1", y = "Freq", data = plotData, type = "pie", title = my_i)
+#             h <- hPlot(x = "Var1", y = "Freq",  data = plotData, type = 'pie', title = my_i)
+#             h$addParams(height = 400, width = 400) # It changes the size of the pie too
+#             h 
+            n1 <- nPlot(x = "Var1", y = "Freq", data = plotData, type = "pieChart")
+            n1$addParams(height = 400, width = 400)      
+#             n1$chart(showLegend = FALSE)
+            n1
           })
         })
       }
     })
 
     #' Generate an HTML table view of the data
+    dataTable <- reactive({
+      mRNA <- exprs()[ , input$gene]
+      data <- cbind(pDatas(),mRNA)
+      if (input$dataset == "TCGA GBM" | input$dataset == "TCGA Lgg") {
+        CN_status <- cnas()[,input$gene]
+        data <-cbind(data, CN_status)
+      } 
+      data
+    })
+
+    #' Generate an HTML table view of the data
     output$table <- renderDataTable({
       if (input$gene == "")
         return(pDatas())
-      data <- getData(exprs(), input$gene)
-      data.frame(data)
+      dataTable()
     })
     
     #' Download the data
@@ -547,7 +582,7 @@ shinyServer(
         paste(input$gene, "_", input$dataset, ".csv", sep="")
       },
       content = function(file) {
-        write.csv(getData(exprs(), input$gene), file)
+        write.csv(dataTable(), file)
       }
     )
 

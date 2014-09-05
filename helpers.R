@@ -358,6 +358,8 @@ kmPlot <- function (cutoff,surv){
   sDiff.mcox <- survdiff(surv,rho = 1)
   log.rank.p <- round(1 - pchisq(sDiff.log$chi, df = 1), 4)
   mantle.cox.p <- round(1 - pchisq(sDiff.mcox$chi, df = 1), 4)
+  star.log <- starmaker(log.rank.p)
+  star.mcox <- starmaker(mantle.cox.p)
   model <- summary(coxph(surv))
   HR <- round(model$conf.int[1],2)
   HR.lower <- round(model$conf.int[3],2)
@@ -371,17 +373,10 @@ kmPlot <- function (cutoff,surv){
                        paste("Low expr. ", paste(" (n=", sTable$events[2]),", median=",sTable$median[2],")", sep = "")), 
          col= c("red", "blue"), lty = 1, cex = 1)
   text (smax-10, 0.725, paste("HR = ",HR, " (", HR.lower, "-", HR.upper,")", sep=""), cex = 1)
-  text (smax-10, 0.65, paste ("Log-rank p value=", log.rank.p), cex = 1)
-  text (smax-10, 0.575, paste ("Wilcoxon p value=", mantle.cox.p), cex = 1)
+  text (smax-10, 0.65, paste (star.log, "Log-rank p value=", log.rank.p), cex = 1)
+  text (smax-10, 0.575, paste (star.mcox, "Wilcoxon p value=", mantle.cox.p), cex = 1)
 }
 
-
-######################################
-############## getData  #############
-######################################
-getData <- function (df, gene){
-  data <- df[ ,c(names(df)[1:7], gene)]
-}
 
 
 ############################################################################

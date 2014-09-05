@@ -10,54 +10,45 @@ library (shinyBS)
 library (dplyr)
 source("helpers.R")
 
-shinyUI(
-  
-  navbarPage(title = "GlioVis", windowTitle = "GlioVis - Visualization Tools for Glioma Datasets", fluid = TRUE,
+shinyUI(  
+  navbarPage(title = "GlioVis", windowTitle = "GlioVis - Visualization Tools for Glioma Datasets", fluid = TRUE, 
+             footer = includeHTML("tools/footer.html"),
 #              theme = "default.css",
                        
              tabPanel(title = "Home", icon = icon("home"),
-                      div(class = "home",
+                      div(id = "home",
                           div(class = "outer", 
-                              column(width = 9, offset = 2,
-                                     tags$style(type="text/css", 'h4.home {color: #488e91; font-style: italic;}',
-                                                                 'p.home {font-size: 16px;}',
-                                                                 'ol {font-size: 16px;}'),
-                                     img(src = "GlioVis_logo_white.jpg", width = 750),
-                                     hr(),
-                                     p(class = "lead", "Welcome to", strong("GlioVis"),": a user friendly web based data visualization and analysis application for exploring Glioma datasets."),
-                                     h4(class = "home", "How does it work?"),
-                                     p(class = "home"," GlioVis is very easy to use:"),
-                                     tags$ol(
-                                       tags$li('Select the "Explore" tab'), 
-                                       tags$li("Choose a dataset"), 
-                                       tags$li("Enter a Gene Symbol"),
-                                       tags$li("Select one of the available plots (through the dropdown menu or the specific tab)")
-                                     ),
-                                     p(class = "home", "Available datasets:"),                   
-                                     source("tools/datsets.table.R",local = TRUE)$value,
-                                     br(),
-                                     h4(class = "home", "Which gene ID can I use?"),
-                                     p(class = "home",'Currently only', a("HGNC-approved", href="http://www.genenames.org"), 'protein-coding "Gene Symbols" are supported. Non-coding RNA (miRNA, lncRNA, etc.) are not available.'),
-                                     p(class = "home"),
-                                     h4(class = "home", "Can I download the plots?"),
-                                     p(class = "home",'Yes, all the plots can be downloaded as .pdf files. More file type options are available for the boxplots.'),
-                                     p(class = "home"),
-                                     h4(class = "home", "Can I download the data?"),
-                                     p(class = "home",'Yes, it is', strong("highly recommended"), 'for reproducibility issue. Data can be downloaded at "Explore/Data/Download Table".'),
-                                     p(class = "home"),
-                                     h4(class = "home", "What other tools are available?"),
-                                     p(class = "home",'SubtypeME..... CorrelateME.'),
-                                     p(class = "home"),
-                                     p(strong("Please cite:"), a("Bowman R. and Squatrito M.", href="#addRef", target="_blank"), " (manuscript in preparation) when publishing results based on GlioVis."),
-                                     hr(),
-                                     tags$blockquote(# class="pull-right",
-                                       tags$p("No great discovery was ever made without a bold guess."), 
-                                       tags$small("Isaac Newton")),
-                                     br(),
-                                     includeHTML("tools/twitter.html"), # for some reason showing only on browser
-                                     includeHTML("tools/linkedin.html"),
-                                     includeHTML("tools/facebook.html")
-                              )
+                              img(src = "GlioVis_logo_trasnparent.gif", width = 750),
+                              hr(),
+                              p(class = "lead", "Welcome to", strong("GlioVis"),": a user friendly web based data visualization and analysis application for exploring Glioma datasets."),
+                              h4(class = "outer", "How does it work?"),
+                              p(class = "outer"," GlioVis is very easy to use:"),
+                              tags$ol(
+                                tags$li('Select the "Explore" tab'), 
+                                tags$li("Choose a dataset"), 
+                                tags$li("Enter a Gene Symbol"),
+                                tags$li("Select one of the available plots (through the dropdown menu or the specific tab)")
+                              ),
+                              p(class = "outer", "Available datasets:"),                   
+                              source("tools/datsets.table.R",local = TRUE)$value,
+                              br(),
+                              h4(class = "outer", "Which gene ID can I use?"),
+                              p(class = "outer",'Currently only', a("HGNC-approved", href="http://www.genenames.org"), 'protein-coding "Gene Symbols" are supported. Non-coding RNA (miRNA, lncRNA, etc.) are not available.'),
+                              h4(class = "outer", "Can I download the plots?"),
+                              p(class = "outer",'Yes, all the plots can be downloaded as .pdf files. More file type options are available for the boxplots.'),
+                              h4(class = "outer", "Can I download the data?"),
+                              p(class = "outer",'Yes, it is', strong("highly recommended"), 'for reproducibility issue. Data can be downloaded at "Explore/Data/Download Table".'),
+                              h4(class = "outer", "What other tools are available?"),
+                              p(class = "outer",'SubtypeME: Classify tumor samples based on mRNA expression profiles.'),
+                              p(class = "outer",'CorrelateME: Correlate expression of a gene with all the genes in the dataset.'),
+                              h4(class = "outer", "Can I use GlioVis results for my publication?"),
+                              p(class = "outer", strong("Of course!"), 'If you do so, please cite:',a("Bowman R. and Squatrito M.", href="#addRef", target="_blank"), " (manuscript in preparation)."),
+                              hr(), br(),
+                              tags$blockquote(class="pull-right",
+                                              tags$p("No great discovery was ever made without a bold guess."), 
+                                              tags$small("Isaac Newton")),
+                              br(),br(),br(),br(),
+                              includeHTML("tools/share.html")
                           )
                       )
                       
@@ -130,7 +121,14 @@ shinyUI(
                                        selectInput(inputId = "cutoff", label = h5("Select cutoff:"), 
                                                    choices = c("median", "lower quartile", "upper quartile", "quartiles")),
                                        hr(),
-                                       downloadButton(outputId = "downloadsurvPlot", label = "Download")
+                                       conditionalPanel(
+                                         condition = "input.tab1 == 2 & input.tabSurv == 'km'",
+                                         downloadButton(outputId = "downloadsurvPlot", label = "Download")
+                                       ),
+                                       conditionalPanel(
+                                         condition = "input.tab1 == 2 & input.tabSurv == 'hr'",
+                                         downloadButton(outputId = "downloadkmPlot", label = "Download")
+                                       )
                                      ),
                                      conditionalPanel(
                                        condition = "input.tab1 == 3",
@@ -155,11 +153,11 @@ shinyUI(
                                                     choices = c("None" = "none", "Histology" = "Histology", "Subtype" = "Subtype")),
                                        hr(),
                                        downloadButton(outputId = "downloadcorrPlot", label = "Download plot")
-                                     ),
-                                     bsTooltip("dataset", "Choose a dataset", "right", trigger="hover"),
-                                     bsTooltip("gene", "Enter gene name", "right", trigger="hover"),
-                                     bsTooltip("plotTypeSel", "Select one of the available plot for the specified dataset", "right", trigger="hover")
-                                     #         uiOutput("help")
+                                     )
+#                                      bsTooltip("dataset", "Choose a dataset", "right", trigger="hover"),
+#                                      bsTooltip("gene", "Enter gene name", "right", trigger="hover"),
+#                                      bsTooltip("plotTypeSel", "Select one of the available plot for the specified dataset", "right", trigger="hover")
+#                                      #         uiOutput("help")
                         ),
                         
                         
@@ -194,7 +192,7 @@ shinyUI(
                                                 plotOutput(outputId = "survPlot", width = 500 , height = 400)
                                        ),
                                        tabPanel(title = "HR plot", value = "hr",
-                                                column(width = 9, offset = 1, 
+                                                column(width = 9,  
                                                        wellPanel(
                                                          helpText(HTML("<b>IMPORTANT: </b> Currently active only for GBM samples.")),
                                                          helpText(HTML("<b>Note: </b> This is an interactive plot, click on a specific mRNA expression value 
@@ -204,8 +202,7 @@ shinyUI(
                                                          checkboxInput(inputId = "gcimp", label = "Exclude G-CIMP samples", value = FALSE),
                                                          plotOutput(outputId = "hazardPlot", clickId = "densityClick", width = 500 , height = 400)
                                                        ),
-                                                       plotOutput(outputId = "kmPlot", width = 500 , height = 400),
-                                                       downloadButton(outputId = "downloadkmPlot", label = "Download")
+                                                       plotOutput(outputId = "kmPlot", width = 500 , height = 400)
                                                 )
                                                 
                                        )
@@ -231,8 +228,8 @@ shinyUI(
                                        ),
                                        tabPanel(title = "Summary plots",
                                                 splitLayout(
-                                                  uiOutput(outputId = "piePlots", inline = TRUE),# inline = TRUE not working
-                                                  uiOutput(outputId = "survPlots", inline = TRUE)
+                                                  uiOutput(outputId = "survPlots", inline = TRUE),# inline = TRUE not working
+                                                  uiOutput(outputId = "piePlots", inline = TRUE) 
                                                 )
                                        )
                                      )
@@ -294,7 +291,7 @@ shinyUI(
                                                 selectInput(inputId = "sign", label = h5("Signficance:"), choices = c(0.05, 0.01)),
                                                 br(),
                                                 actionButton(inputId = "goCor", label = "Get data", styleclass = "primary"), # Not working correctly, the second time 
-                                                                                                                            # it triggers after the gene si selected
+                                                                                                                            # it triggers after the gene is selected
                                                                                                                             # probably need to use isolate()
                                                 br(),
                                                 conditionalPanel(
