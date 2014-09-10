@@ -11,11 +11,12 @@ library (dplyr)
 source("helpers.R")
 
 shinyUI(  
+  
   navbarPage(title = "GlioVis", windowTitle = "GlioVis - Visualization Tools for Glioma Datasets", fluid = TRUE, 
              footer = includeHTML("tools/footer.html"),
-#              theme = "default.css",
-                       
+#              theme = "default.css",      
              tabPanel(title = "Home", icon = icon("home"),
+                      tags$head(includeScript("tools/google-analytics.js")),
                       div(id = "home",
                           div(class = "outer", 
                               img(src = "GlioVis_logo_trasnparent.gif", width = 750),
@@ -68,7 +69,7 @@ shinyUI(
                                      br(),
                                      br(),
                                      selectInput(inputId = "dataset", label = h4("Dataset"),
-                                                 choices = c("TCGA GBM", "TCGA Lgg", "Rembrandt","Gravendeel", "Phillips", "Murat", "Freije"),
+                                                 choices = c("TCGA GBM", "Rembrandt","Gravendeel", "Phillips", "Murat", "Freije"),
                                                  selected = "TCGA GBM", selectize = FALSE),
                                      br(),
                                      selectizeInput(inputId = "gene", label = h4("Gene"), choices = NULL, selected = NULL,
@@ -118,9 +119,20 @@ shinyUI(
                                                      choices = c("All", "Classical", "Mesenchymal", "Neural", "Proneural","G-CIMP"))
                                        ),
                                        hr(),
-                                       selectInput(inputId = "cutoff", label = h5("Select cutoff:"), 
-                                                   choices = c("median", "lower quartile", "upper quartile", "quartiles")),
-                                       hr(),
+                                       conditionalPanel(
+                                         condition = "input.tab1 == 2 & input.tabSurv == 'km'",
+                                         selectInput(inputId = "cutoff", label = h5("Select cutoff:"), 
+                                                     choices = c("Use a specific mRNA value", "median", "lower quartile", "upper quartile", "quartiles"),
+                                                     selected = "median"),
+                                         conditionalPanel(
+                                           condition = "input.cutoff == 'Use a specific mRNA value'",
+                                           br(),
+                                           uiOutput("numericCutoff"),
+                                           plotOutput(outputId = "boxmRNA", width = 225 , height = 50),
+                                           helpText("mRNA expression range")
+                                         ),
+                                         hr()
+                                       ),
                                        conditionalPanel(
                                          condition = "input.tab1 == 2 & input.tabSurv == 'km'",
                                          downloadButton(outputId = "downloadsurvPlot", label = "Download")
@@ -199,7 +211,6 @@ shinyUI(
                                               to update the survival plot. The blue line represents the current selection.")),
                                                          br(),
                                                          checkboxInput(inputId = "quantile", label = "Show quantiles", value = TRUE),
-                                                         checkboxInput(inputId = "gcimp", label = "Exclude G-CIMP samples", value = FALSE),
                                                          plotOutput(outputId = "hazardPlot", clickId = "densityClick", width = 500 , height = 400)
                                                        ),
                                                        plotOutput(outputId = "kmPlot", width = 500 , height = 400)
@@ -278,7 +289,7 @@ shinyUI(
                                  sidebarLayout(
                                    sidebarPanel(width = 3,
                                                 selectInput(inputId = "datasetCor", label = h4("Dataset"),
-                                                            choices = c("TCGA GBM", "TCGA Lgg", "Rembrandt","Gravendeel", "Phillips", "Murat", "Freije"),
+                                                            choices = c("TCGA GBM", "Rembrandt","Gravendeel", "Phillips", "Murat", "Freije"),
                                                             selected = "TCGA GBM", selectize = FALSE),
                                                 br(),
                                                 selectInput(inputId = "histologyCorrTable", label = h4("Histology:"), choices = ""),

@@ -15,7 +15,7 @@ source("helpers.R")
 ############## Datasets  ##############
 #######################################
 gbm.tcga <- readRDS("data/TCGA.GBM.Rds")
-lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
+# lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
 rembrandt <- readRDS("data/Rembrandt.Rds")
 freije <- readRDS("data/Freije.Rds")
 gravendeel <- readRDS("data/Gravendeel.Rds")
@@ -28,12 +28,14 @@ gene_names <- readRDS("data/gene_names.Rds")
 #######################################
 shinyServer(
   function(input, output, session) {
+    
     options(shiny.maxRequestSize=30*1024^2)    
+    
     # Return the requested dataset
     datasetInput <- reactive({
       switch(input$dataset, 
              "TCGA GBM" = gbm.tcga,
-             "TCGA Lgg" = lgg.tcga,
+#              "TCGA Lgg" = lgg.tcga,
              "Rembrandt" = rembrandt,
              "Gravendeel" = gravendeel,
              "Phillips" = phillips,
@@ -45,7 +47,7 @@ shinyServer(
     datasetInputCor <- reactive({
       switch(input$datasetCor, 
              "TCGA GBM" = gbm.tcga,
-             "TCGA Lgg" = lgg.tcga,
+#              "TCGA Lgg" = lgg.tcga,
              "Rembrandt" = rembrandt,
              "Gravendeel" = gravendeel,
              "Phillips" = phillips,
@@ -105,17 +107,12 @@ shinyServer(
     })
     
 #     # Help popup NOT WORKING YET
-    output$help <- renderUI({ 
-      helpPopup(title = "Help me pleaseeeeee", 
-                content = includeMarkdown("tools/help.Rmd"), 
-                placement = "right", 
-                trigger = "click") 
-    })
-    
-#     # Help popup alternative NOT WORKING YET
-#         output$help <- renderUI({ 
-#           helpModal(title = "Help me pleaseeeeee", link = "helpLink", content = includeMarkdown("tools/help.Rmd"))
-#         })
+#     output$help <- renderUI({ 
+#       helpPopup(title = "Help me pleaseeeeee", 
+#                 content = includeMarkdown("tools/help.Rmd"), 
+#                 placement = "right", 
+#                 trigger = "click") 
+#     })
     
     # Return the available histology, to be used in the updateSelectInput for correlation and survival
     histo <- reactive({
@@ -187,7 +184,7 @@ shinyServer(
     # Extract the relevant GBM expression values.
     geneExp <- reactive({
       df <- subset(exprs(), Histology == "GBM")
-      if (input$gcimp){
+      if (input$gcimpSurv){
         df <- subset(exprs(), Subtype != "G-CIMP")
       }
       geneExp <- df[ ,input$gene]
@@ -197,7 +194,7 @@ shinyServer(
     
     # Extract the Hazard ratios for the input gene.
     HR <- reactive ({
-      HR <- getHR(exprs(), input$gene, input$gcimp)
+      HR <- getHR(exprs(), input$gene, input$gcimpSurv)
     })
     
     #' Render a plot to show the the Hazard ratio for the gene's expression values
@@ -228,7 +225,7 @@ shinyServer(
     # A reactive survival formula
     survivalFml <- reactive({
       df <- subset (exprs(), Histology == "GBM")
-      if (input$gcimp){
+      if (input$gcimpSurv){
         df <- subset (exprs(), Subtype != "G-CIMP")
       }
       # Create the groups based on which samples are above/below the cutoff
@@ -253,6 +250,51 @@ shinyServer(
       kmPlot(cutoff, surv)
     })
 
+    #' Create a slider for the manual cutoff    
+    mRNAsurv <- reactive({
+      df <- subset(exprs(), Histology == input$histologySurv & !is.na(status))
+      if (input$histologySurv == "GBM" & input$subtypeSurv != "All") {
+        df <- subset (df, Subtype == input$subtypeSurv)
+      }
+      if (input$gcimpSurv){
+        df <- subset (df, Subtype != "G-CIMP")
+      }
+      mRNA <- df[ ,input$gene]
+      mRNA.values <- round(mRNA[!is.na(mRNA)],2)
+      mRNA.values <- sort(mRNA.values[mRNA.values != min(mRNA.values) & mRNA.values != max(mRNA.values)]) # Generate a a vector of continuos values, excluding the first an last value
+    })
+    
+    output$boxmRNA <- renderPlot({
+      validate(
+        need(input$gene != "", "")
+      )
+      validate(
+        need(input$histologySurv %in% histo(),"")
+      )
+      validate(
+        need(input$histologySurv != "Non-tumor","")
+      )
+      mRNA <- mRNAsurv()
+      ymin <-min(mRNA)
+      par(mar = c(0,0,0,0)) 
+      plot(0, 0, type = "n", xlim = range(mRNA), ylim = c(ymin - 0.4, ymin + 0.4), ylab ="", xlab = "", axes = FALSE)
+      points(x = mRNA, y = rep(ymin, length(mRNA)), pch="|")
+    }, bg = "transparent")
+
+    output$numericCutoff <- renderUI({
+      validate(
+        need(input$gene != "", "")
+      )
+      validate(
+        need(input$histologySurv %in% histo(),"")
+      )
+      validate(
+        need(input$histologySurv != "Non-tumor","")
+      )
+      #generate the slider
+      sliderInput(inputId = "mInput",label = NULL, min = min(mRNAsurv()), max = max(mRNAsurv()), value = median(mRNAsurv()))
+    })
+
     #' Create a Kaplan Meier plot with cutoff based on quantiles
     output$survPlot <- renderPlot({
 #       if (input$gene == "" | input$histologySurv == "")
@@ -262,12 +304,12 @@ shinyServer(
       )
       validate(
         need(input$histologySurv %in% histo(),"")
-      )# Trying to avoid an error when switching datasets in case the choosen histology is not available.
+      ) # Trying to avoid an error when switching datasets in case the choosen histology is not available.
       validate(
         need(input$histologySurv != "Non-tumor","Sorry, no survival data are available for this group")
       )
-      survivalPlot (exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, subtype = input$subtypeSurv, 
-                    gcimp = input$gcimpSurv)
+      survivalPlot (exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, numeric = input$mInput,
+                    subtype = input$subtypeSurv, gcimp = input$gcimpSurv)
     })
     
     #' Create the selected plot
@@ -488,11 +530,16 @@ shinyServer(
       validate(
         need(input$gene != "", "Please, enter a gene name in the panel on the left")
       )
-      validate(
+      validate( 
         need(input$gene2 != "", "Please enter Gene 2")
       )
+      if (input$dataset == "TCGA Lgg") {
+        validate(
+          need(input$colorBy != "Subtype" & input$separateBy != "Subtype", "Subtype available for GBM samples only")
+        ) 
+      }
       validate(
-        need(input$histologyCorr %in% c("All",histo()),"")
+        need(plotType() %in% datasetInput()[["plotType"]],"")
       ) # Trying to avoid an error when switching datasets in case the choosen histology is not available.
       myCorggPlot(exprs(), input$gene, input$gene2, input$histologyCorr, input$subtype, 
                    colorBy = colorByInput(), separateBy = separateByInput())
@@ -505,6 +552,11 @@ shinyServer(
       validate(
         need(input$histologyCorr %in% c("All",histo()),"")
       ) # Trying to avoid an error when switching datasets in case the choosen histology is not available.
+      if (input$dataset == "TCGA Lgg") {
+        validate(
+          need(input$colorBy != "Subtype" & input$separateBy != "Subtype", "Subtype available for GBM samples only")
+        ) 
+      }
       myCorrTest(exprs(), input$gene, input$gene2, input$histologyCorr, input$subtype, separateBy = separateByInput())
     })
     
@@ -628,7 +680,7 @@ shinyServer(
 
     #' Reactive function to generate subtype call to pass to data table and download handler
     svm.call <- reactive ({
-      # input$file1 will be NULL initially. After the user selects
+      # input$upFile will be NULL initially. After the user selects
       # and uploads a file, it will be a data frame with 'name',
       # 'size', 'type', and 'datapath' columns. The 'datapath'
       # column will contain the local filenames where the data can

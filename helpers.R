@@ -66,7 +66,7 @@ ggboxPlot <- function(exprs, cna, gene, plotType, scale = FALSE, stat = FALSE, c
 ## Get HR ##
 ############
 getHR <- function (df, gene, gcimp = FALSE) {
-  df <- subset (df, Histology == "GBM")
+  df <- subset (df, Histology == "GBM"  & !is.na(status)) # GBM patient with survival data
   if (gcimp){
     df <- subset (df, Subtype != "G-CIMP")
   }
@@ -77,8 +77,7 @@ getHR <- function (df, gene, gcimp = FALSE) {
   surv.status <- df[ ,"status"]
   surv.time <- df[ ,"survival"]
   my.Surv <- Surv(surv.time, surv.status == 1)
-  mRNA.values <- mRNA[which(surv.status != "NA")] # mRNA expression in patient with survival data
-  mRNA.values <- mRNA.values[!is.na(mRNA.values)]
+  mRNA.values <- mRNA[!is.na(mRNA)]
   mRNA.values <- sort(mRNA.values[mRNA.values != min(mRNA.values) & mRNA.values != max(mRNA.values)]) # Generate a a vector of continuos values, excluding the first an last value
   scan.surv <-function(i,conf.level=95) {
     log.rank <- survdiff(my.Surv ~ mRNA <= i, data = df, rho = 0)
@@ -130,11 +129,11 @@ hazardPlot <- function (HRdata, quantile) {
 ###################
 ## Survival plot ##
 ###################
-survivalPlot <- function (df, gene, group, cutoff, subtype, gcimp = FALSE) {
+survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FALSE) {
   if (!gene%in%names(df)) {
     stop ("Incorrect gene entry or gene not available for this dataset")
   }
-  df <- subset (df, Histology == group & Histology != "Non-tumor") 
+  df <- subset (df, Histology == group & Histology != "Non-tumor" & !is.na(status)) 
   if (group == "GBM" & any(!is.na(df$Recurrence))) {
     df <- subset (df, Histology == "GBM" & Recurrence == "Primary")
   } 
@@ -144,16 +143,24 @@ survivalPlot <- function (df, gene, group, cutoff, subtype, gcimp = FALSE) {
   if (gcimp){
     df <- subset (df, Subtype != "G-CIMP")
   }
+  
   mRNA <- df[ ,gene]
-  surv.status <-df[ ,"status"]
+  surv.status <- df[ ,"status"]
   surv.time <- df[ ,"survival"]
-  smax <- max(surv.time, na.rm=TRUE)
+  smax <- max(surv.time, na.rm = TRUE)
   tmax <- smax-(25*smax)/100
-  my.Surv <- Surv(surv.time, surv.status== 1)
   mRNA.q <- quantile(mRNA, probs=c(0.25, 0.5, 0.75), na.rm = TRUE)
-  main <- paste("Histology: ", group, 
-                "; Subtype: ", subtype,
-                "; Cutoff: ", cutoff, sep = "")
+  
+  if(cutoff == "Use a specific mRNA value") {
+    main <- paste("Histology: ", group, 
+                  "; Subtype: ", subtype,
+                  "; Cutoff: ", numeric, sep = "") 
+  } else {
+    main <- paste("Histology: ", group, 
+                  "; Subtype: ", subtype,
+                  "; Cutoff: ", cutoff, sep = "")
+  }
+  
   if (cutoff != "quartiles") {
     if (cutoff == "median") {
       cut <- mRNA.q[2]
@@ -161,14 +168,18 @@ survivalPlot <- function (df, gene, group, cutoff, subtype, gcimp = FALSE) {
       cut <- mRNA.q [1]
     } else if (cutoff == "upper quartile") {
       cut <- mRNA.q [3]
+    } else if (cutoff == "Use a specific mRNA value") {
+      cut <- as.numeric(numeric)
     }
+    
     f<-function(x) ifelse(x >= cut, c("high"),c("low"))
-    mRNA <- f(mRNA)
-    expr.surv <- survfit(my.Surv ~ mRNA, data = df, conf.type = "none")
-    log.rank <- survdiff(my.Surv ~ mRNA, data = df, rho = 0)
-    mantle.cox <- survdiff(my.Surv~ mRNA, data = df, rho = 1)
+    strat <- f(mRNA)
+    my.Surv <- Surv(time = surv.time, event = surv.status== 1)
+    expr.surv <- survfit(my.Surv ~ strat, conf.type = "none")
+    log.rank <- survdiff(my.Surv ~ strat, rho = 0)
+    mantle.cox <- survdiff(my.Surv~ strat, rho = 1)
     surv <- data.frame(summary(expr.surv)$table)
-    model <- summary(coxph(my.Surv ~ mRNA, data = df))
+    model <- summary(coxph(my.Surv ~ strat))
     HR <- round(model$conf.int[1],2)
     HR.lower <- round(model$conf.int[3],2)
     HR.upper <- round(model$conf.int[4],2)
@@ -236,9 +247,9 @@ getCorr <- function (df, gene, histology) {
 ############## 2 genes correlation plot ##############
 ######################################################
 myCorggPlot <- function (df, gene1, gene2, histo = "All", subtype = "All", colorBy = "none", separateBy = "none",...) {
-  if (!gene1%in%names(df) | !gene2%in%names(df)) {
-    stop ("Incorrect gene entry or gene not available for this dataset")
-  }
+#   if (!gene1%in%names(df) | !gene2%in%names(df)) {
+#     stop ("Incorrect gene entry or gene not available for this dataset")
+#   }
   if (histo != "All") {
     df <- subset (df, Histology == histo)
   } else {
@@ -248,7 +259,7 @@ myCorggPlot <- function (df, gene1, gene2, histo = "All", subtype = "All", color
     df <- subset (df, Subtype == subtype)
   }
   #  empy plot to used in grid.arrange 
-  empty <- ggplot()+geom_point(aes(1,1), colour="white") +
+  empty <- ggplot() + geom_point(aes(1,1), colour="white") + 
     theme(plot.background = element_blank(), panel.grid.major = element_blank(), 
       panel.grid.minor = element_blank(), panel.border = element_blank(), 
       panel.background = element_blank(), axis.title.x = element_blank(),
@@ -260,43 +271,26 @@ myCorggPlot <- function (df, gene1, gene2, histo = "All", subtype = "All", color
   aes_top <- aes_string(x = gene1)
   aes_right <- aes_string(x = gene2)
   # scatterplot of x and y variables
-  scatter <- ggplot(df,mapping = aes_scatter) + theme(legend.position=c(1,1),legend.justification=c(1,1))
-  #marginal density of x - plot on top
-  plot_top <- ggplot(df, mapping = aes_top) + theme(legend.position = "none",axis.title.x = element_blank())
-  #marginal density of y - plot on the right
+  scatter <- ggplot(df,mapping = aes_scatter) + theme(legend.position=c(1,1),legend.justification=c(1,1)) 
+  # marginal density of x - plot on top
+  plot_top <- ggplot(df, mapping = aes_top) + theme(legend.position = "none", axis.title.x = element_blank())
+  # marginal density of y - plot on the right
   plot_right <- ggplot(df, mapping = aes_right) + coord_flip() + theme(legend.position = "none",axis.title.y = element_blank())
   
-  if (colorBy == "Histology") {
-    scatter <- scatter + 
-      geom_point(aes(color = Histology), alpha=.5) + 
-      geom_smooth(aes(color = Histology), method = "lm", se = TRUE)
-    plot_top <- plot_top + geom_density(aes(color = Histology), alpha=.5) 
-    plot_right <- plot_right + geom_density(aes(color = Histology), alpha=.5)
-  } else if (colorBy == "Subtype") {
-    scatter <- scatter + 
-      geom_point(aes(color = Subtype),alpha=.5) + 
-      geom_smooth(aes(color = Subtype), method = "lm", se = TRUE)
-    plot_top <- plot_top + geom_density(aes(color = Subtype), alpha=.5) 
-    plot_right <- plot_right + geom_density(aes(color = Subtype), alpha=.5)
-  } else {
-    scatter <- scatter + 
-      geom_point(alpha=.5) + 
-      geom_smooth(method = "lm", se = TRUE)
+  if (colorBy != "none") {
+    col <- aes_string(color = colorBy)
+    scatter <- scatter + geom_point(col, alpha=.5) + geom_smooth(col, method = "lm", se = TRUE) + geom_rug(col, alpha = 0.1)
+    plot_top <- plot_top + geom_density(col, alpha=.5) 
+    plot_right <- plot_right + geom_density(col, alpha=.5)
+  }  else {
+    scatter <- scatter + geom_point(alpha=.5) + geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1)
     plot_top <- plot_top + geom_density(alpha=.5) 
     plot_right <- plot_right + geom_density(alpha=.5)
   }
   
-  if (separateBy == "Histology") {
-    scatter <- ggplot(df,mapping = aes_scatter) + 
-      geom_point(aes(color = Histology), alpha=.5) + 
-      geom_smooth(aes(color = Histology), method = "lm", se = TRUE) +
-      facet_wrap (~ Histology)
-  } else if (separateBy == "Subtype") {
-    scatter <- ggplot(df,mapping = aes_scatter) + 
-      geom_point(aes(color = Subtype),alpha=.5) + 
-      geom_smooth(aes(color = Subtype), method = "lm", se = TRUE) +
-      facet_wrap (~ Subtype)  
-  } else {
+  if (separateBy != "none") {
+    scatter <- scatter + theme(legend.position = "none") + facet_wrap(as.formula(paste("~", separateBy)))
+  }  else {
     scatter <- scatter
   }
   
