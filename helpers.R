@@ -1,35 +1,32 @@
 ############################################
 ############## my ggboxPlot  ##############
 ############################################
-ggboxPlot <- function(exprs, cna, gene, plotType, scale = FALSE, stat = FALSE, colBox = FALSE, colStrip = FALSE, bw = FALSE, ...) {
-   mRNA <- exprs[ ,gene] 
+ggboxPlot <- function(exprs, cna, gene, plotType, scale = FALSE, 
+                      stat = FALSE, colBox = FALSE, colStrip = FALSE, bw = FALSE, ...) {
+  mRNA <- exprs[ ,gene] 
   if (scale) {
     mRNA <- scale(mRNA)
     ylab <- "Normalized mRNA expression"
-  } else if (!scale){
+  } else {
     mRNA <- mRNA
     ylab <- "mRNA expression (log2)"
   }
   if (plotType == "Copy number") {
     group <- cna[, gene]
-    group <- factor(group, levels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp")) # I should have done this directly on all the cna in the Rds file
-    group <- droplevels(group)
+    group <- factor(group, levels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp"))
   } else {
     group <- exprs[ ,plotType]
   }
-  if (any(!is.na(group))) {
-  data <- data.frame(mRNA,group)
-  data <- na.omit(data)
-  n.class <- length(levels (group)) #  Not used yet
+  data <- data.frame(mRNA, group)
+  data <- na.omit(data) 
+  n.class <- length(levels(group)) #  Not used yet
   if (colBox) {
     box <- geom_boxplot(aes(fill = group), outlier.size = 0) # It works but not the right way to approach this issue
   } else {
     box <- geom_boxplot(outlier.size = 0)
   }
   if (colStrip) {
-    strip <- geom_jitter(position = position_jitter(width = .2), 
-                         aes(colour = group), size = 2, alpha = 0.75)
-#       theme(legend.position = "none")
+    strip <- geom_jitter(position = position_jitter(width = .2), aes(colour = group), size = 2, alpha = 0.75)
   } else {
     strip <- geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5)
   }
@@ -44,9 +41,8 @@ ggboxPlot <- function(exprs, cna, gene, plotType, scale = FALSE, stat = FALSE, c
     tukey$Significance <- as.factor(starmaker(tukey$p.adj,p.levels=c(.001, .01, .05, 1), 
                                               symbols=c("***", "**", "*", "ns")))
     tukey$comparison <- row.names(tukey)
-    tukey$comparison <- factor(tukey$comparison, levels = tukey$comparison[order(tukey$diff)])
     
-    t <- ggplot(tukey, aes(comparison, diff, ymin = lwr, ymax= upr, colour = Significance)) +
+    t <- ggplot(tukey, aes(reorder(comparison, diff), diff, ymin = lwr, ymax= upr, colour = Significance)) +
       geom_point() + geom_errorbar(width = 0.25) + 
       ylab("Differences in mean levels") + xlab("") + 
       geom_hline(xintercept = 0, colour="darkgray", linetype = "longdash") + coord_flip()
@@ -56,9 +52,6 @@ ggboxPlot <- function(exprs, cna, gene, plotType, scale = FALSE, stat = FALSE, c
     grid.arrange(p, t, ncol=2, widths = c(3,2))
   } else {
     print(p) 
-  }
-  } else {
-    stop (paste(plotType, "not available for this dataset"))
   }
 }
 
@@ -70,15 +63,13 @@ getHR <- function (df, gene, gcimp = FALSE) {
   if (gcimp){
     df <- subset (df, Subtype != "G-CIMP")
   }
-  if (!gene%in%names(df)) {
-    stop ("Incorrect gene entry or gene not available for this dataset")
-  }
   mRNA <- df[ ,gene]
   surv.status <- df[ ,"status"]
   surv.time <- df[ ,"survival"]
   my.Surv <- Surv(surv.time, surv.status == 1)
   mRNA.values <- mRNA[!is.na(mRNA)]
-  mRNA.values <- sort(mRNA.values[mRNA.values != min(mRNA.values) & mRNA.values != max(mRNA.values)]) # Generate a a vector of continuos values, excluding the first an last value
+  # Generate a a vector of continuos values, excluding the first an last value
+  mRNA.values <- sort(mRNA.values[mRNA.values != min(mRNA.values) & mRNA.values != max(mRNA.values)]) 
   scan.surv <-function(i,conf.level=95) {
     log.rank <- survdiff(my.Surv ~ mRNA <= i, data = df, rho = 0)
     model <- summary(coxph(my.Surv ~ mRNA <= i))
@@ -89,7 +80,8 @@ getHR <- function (df, gene, gcimp = FALSE) {
   }
   HRdata <- data.frame (t(sapply(mRNA.values, scan.surv)))
   HRdata <- data.frame (sapply(HRdata,unlist))
-  HRdata <- subset(HRdata, HRdata[,5] >= 15 & HRdata[,6] >= 15) # Exclude groups with less than 15 samples. ARBITRARY
+  # Exclude groups with less than 15 samples. ARBITRARY
+  HRdata <- subset(HRdata, HRdata[,5] >= 15 & HRdata[,6] >= 15) 
 }
 
 ##########################################
@@ -130,9 +122,9 @@ hazardPlot <- function (HRdata, quantile) {
 ## Survival plot ##
 ###################
 survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FALSE) {
-  if (!gene%in%names(df)) {
-    stop ("Incorrect gene entry or gene not available for this dataset")
-  }
+#   if (!gene%in%names(df)) {
+#     stop ("Incorrect gene entry or gene not available for this dataset")
+#   }
   df <- subset (df, Histology == group & Histology != "Non-tumor" & !is.na(status)) 
   if (group == "GBM" & any(!is.na(df$Recurrence))) {
     df <- subset (df, Histology == "GBM" & Recurrence == "Primary")
@@ -147,6 +139,7 @@ survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FAL
   mRNA <- df[ ,gene]
   surv.status <- df[ ,"status"]
   surv.time <- df[ ,"survival"]
+  my.Surv <- Surv(time = surv.time, event = surv.status== 1)
   smax <- max(surv.time, na.rm = TRUE)
   tmax <- smax-(25*smax)/100
   mRNA.q <- quantile(mRNA, probs=c(0.25, 0.5, 0.75), na.rm = TRUE)
@@ -174,7 +167,6 @@ survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FAL
     
     f<-function(x) ifelse(x >= cut, c("high"),c("low"))
     strat <- f(mRNA)
-    my.Surv <- Surv(time = surv.time, event = surv.status== 1)
     expr.surv <- survfit(my.Surv ~ strat, conf.type = "none")
     log.rank <- survdiff(my.Surv ~ strat, rho = 0)
     mantle.cox <- survdiff(my.Surv~ strat, rho = 1)
@@ -247,9 +239,9 @@ getCorr <- function (df, gene, histology) {
 ############## 2 genes correlation plot ##############
 ######################################################
 myCorggPlot <- function (df, gene1, gene2, histo = "All", subtype = "All", colorBy = "none", separateBy = "none",...) {
-#   if (!gene1%in%names(df) | !gene2%in%names(df)) {
-#     stop ("Incorrect gene entry or gene not available for this dataset")
-#   }
+  if (!gene1%in%names(df) | !gene2%in%names(df)) {
+    stop ("Incorrect gene entry or gene not available for this dataset")
+  }
   if (histo != "All") {
     df <- subset (df, Histology == histo)
   } else {
@@ -336,7 +328,7 @@ myCorrTest <- function (df, gene1, gene2, histo = "All", subtype = "All", colorB
                       list(x = as.name(gene1), y = as.name(gene2)))
     cor <- data.frame(eval(cor))
   } else if (separateBy == "none"){
-  cor <- cor.test(Gene1, Gene2, use = "complete.obs")
+    cor <- cor.test(Gene1, Gene2, use = "complete.obs")
   }
   cor
 }

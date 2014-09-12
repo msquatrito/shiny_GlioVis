@@ -14,7 +14,7 @@ shinyUI(
   
   navbarPage(title = "GlioVis", windowTitle = "GlioVis - Visualization Tools for Glioma Datasets", fluid = TRUE, 
              footer = includeHTML("tools/footer.html"),
-#              theme = "default.css",      
+   
              tabPanel(title = "Home", icon = icon("home"),
                       tags$head(includeScript("tools/google-analytics.js")),
                       div(id = "home",
@@ -69,7 +69,7 @@ shinyUI(
                                      br(),
                                      br(),
                                      selectInput(inputId = "dataset", label = h4("Dataset"),
-                                                 choices = c("TCGA GBM", "Rembrandt","Gravendeel", "Phillips", "Murat", "Freije"),
+                                                 choices = c("TCGA GBM", "TCGA Lgg", "Rembrandt","Gravendeel", "Phillips", "Murat", "Freije", "Reifenberger", "Bao"),
                                                  selected = "TCGA GBM", selectize = FALSE),
                                      br(),
                                      selectizeInput(inputId = "gene", label = h4("Gene"), choices = NULL, selected = NULL,
@@ -128,7 +128,7 @@ shinyUI(
                                            condition = "input.cutoff == 'Use a specific mRNA value'",
                                            br(),
                                            uiOutput("numericCutoff"),
-                                           plotOutput(outputId = "boxmRNA", width = 225 , height = 50),
+                                           plotOutput(outputId = "boxmRNA", width = "100%", height = 50),
                                            helpText("mRNA expression range")
                                          ),
                                          hr()
@@ -289,7 +289,7 @@ shinyUI(
                                  sidebarLayout(
                                    sidebarPanel(width = 3,
                                                 selectInput(inputId = "datasetCor", label = h4("Dataset"),
-                                                            choices = c("TCGA GBM", "Rembrandt","Gravendeel", "Phillips", "Murat", "Freije"),
+                                                            choices = c("TCGA GBM", "TCGA Lgg", "Rembrandt","Gravendeel", "Phillips", "Murat", "Freije", "Reifenberger", "Bao"),
                                                             selected = "TCGA GBM", selectize = FALSE),
                                                 br(),
                                                 selectInput(inputId = "histologyCorrTable", label = h4("Histology:"), choices = ""),

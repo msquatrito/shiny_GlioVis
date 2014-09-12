@@ -10,17 +10,20 @@ library (shinyBS)
 library (dplyr)
 
 source("helpers.R")
+`%then%` <- shiny:::`%OR%`
 
 #######################################
 ############## Datasets  ##############
 #######################################
 gbm.tcga <- readRDS("data/TCGA.GBM.Rds")
-# lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
+lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
 rembrandt <- readRDS("data/Rembrandt.Rds")
 freije <- readRDS("data/Freije.Rds")
 gravendeel <- readRDS("data/Gravendeel.Rds")
 murat <- readRDS("data/Murat.Rds")
 phillips <- readRDS("data/Phillips.Rds")
+reifenberger <- readRDS("data/Reifenberger.Rds")
+bao <- readRDS("data/Bao.Rds")
 gene_names <- readRDS("data/gene_names.Rds")
 
 #######################################
@@ -35,24 +38,28 @@ shinyServer(
     datasetInput <- reactive({
       switch(input$dataset, 
              "TCGA GBM" = gbm.tcga,
-#              "TCGA Lgg" = lgg.tcga,
+             "TCGA Lgg" = lgg.tcga,
              "Rembrandt" = rembrandt,
              "Gravendeel" = gravendeel,
              "Phillips" = phillips,
              "Murat" = murat,
-             "Freije" = freije)
+             "Freije" = freije,
+             "Reifenberger" = reifenberger,
+             "Bao" = bao)
     })
     
     #' Switch the datset for the correlation
     datasetInputCor <- reactive({
       switch(input$datasetCor, 
              "TCGA GBM" = gbm.tcga,
-#              "TCGA Lgg" = lgg.tcga,
+             "TCGA Lgg" = lgg.tcga,
              "Rembrandt" = rembrandt,
              "Gravendeel" = gravendeel,
              "Phillips" = phillips,
              "Murat" = murat,
-             "Freije" = freije)
+             "Freije" = freije,
+             "Reifenberger" = reifenberger,
+             "Bao" = bao)
     })
     
     # Expression data
@@ -94,7 +101,7 @@ shinyServer(
       }
     })
     
-    # This will change the plot type available for a specific dataset
+    # Change the plot type available for a specific dataset
     observe({
     updateSelectInput(session, inputId = "plotTypeSel", choices = datasetInput()[["plotType"]], selected = plotSelected()) 
     }, priority = 10)
@@ -106,14 +113,6 @@ shinyServer(
       title <- paste(input$gene, "in", input$dataset, "dataset")
     })
     
-#     # Help popup NOT WORKING YET
-#     output$help <- renderUI({ 
-#       helpPopup(title = "Help me pleaseeeeee", 
-#                 content = includeMarkdown("tools/help.Rmd"), 
-#                 placement = "right", 
-#                 trigger = "click") 
-#     })
-    
     # Return the available histology, to be used in the updateSelectInput for correlation and survival
     histo <- reactive({
       levels(datasetInput()[["pData"]][,"Histology"])
@@ -123,12 +122,12 @@ shinyServer(
       levels(datasetInputCor()[["pData"]][,"Histology"])
     })
 
+    # Change the value of input$histologyCorrTable, based on histological group available for that dataset
     observe({
-      # This will change the value of input$histologyCorrTable, based on histological group available for that dataset
       updateSelectInput(session, inputId = "histologyCorrTable", choices = c("All", histoCor()), selected = "All")
     })
     
-    # When switching datasets, if the selected histo is not available it will choose GBM (the last histo of the list)
+    # When switching datasets for surv, if the selected histo is not available it will choose GBM (the last histo of the list)
     histoSurvSelected <- reactive ({
       if (input$histologySurv %in% histo()){
         input$histologySurv
@@ -192,19 +191,16 @@ shinyServer(
       geneExp
     })
     
-    # Extract the Hazard ratios for the input gene.
+    #' Extract the Hazard ratios for the input gene.
     HR <- reactive ({
       HR <- getHR(exprs(), input$gene, input$gcimpSurv)
     })
     
     #' Render a plot to show the the Hazard ratio for the gene's expression values
     output$hazardPlot <- renderPlot({        
-#       if (input$gene == "")
-#         return()
       validate(
-        need(input$gene != "", "Please, enter a gene name in the panel on the left")
-      )
-      validate(
+        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger", "Sorry, no survival data are available for this dataset")%then%
+        need(input$gene != "", "Please, enter a gene name in the panel on the left"),
         need(histoSurvSelected()  == "GBM", "Interactive HR plot currently available only for GBM samples")
       )
       # Wrap the entire expensive operation with withProgress 
@@ -222,7 +218,7 @@ shinyServer(
       })
     }, bg = "transparent")
     
-    # A reactive survival formula
+    #' A reactive survival formula
     survivalFml <- reactive({
       df <- subset (exprs(), Histology == "GBM")
       if (input$gcimpSurv){
@@ -237,13 +233,10 @@ shinyServer(
     
     #' Create a Kaplan Meier plot on the HR cutoff
     output$kmPlot <- renderPlot({
-#       if (input$gene == "")
-#         return()
       validate(
-        need(input$gene != "", "Please, enter a gene name in the panel on the left")
-      )
-      validate(
-        need(histoSurvSelected()  == "GBM","Interactive HR plot currently available only for GBM samples")
+        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger", "Sorry, no survival data are available for this dataset")%then%
+          need(input$gene != "", "Please, enter a gene name in the panel on the left"),
+        need(histoSurvSelected()  == "GBM", "Interactive HR plot currently available only for GBM samples")
       )
       cutoff <- getCutoff()
       surv <- survivalFml()
@@ -261,80 +254,83 @@ shinyServer(
       }
       mRNA <- df[ ,input$gene]
       mRNA.values <- round(mRNA[!is.na(mRNA)],2)
-      mRNA.values <- sort(mRNA.values[mRNA.values != min(mRNA.values) & mRNA.values != max(mRNA.values)]) # Generate a a vector of continuos values, excluding the first an last value
+      # Generate a a vector of continuos values, excluding the first an last value
+      mRNA.values <- sort(mRNA.values[mRNA.values != min(mRNA.values) & mRNA.values != max(mRNA.values)]) 
     })
     
+    #' Create a rug plot with the mRNA expression value for the manual cutoff
     output$boxmRNA <- renderPlot({
+      
       validate(
-        need(input$gene != "", "")
+        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger", ""),
+        need(input$gene != "", ""),
+        need(input$histologySurv %in% histo(),""),
+        need(input$histologySurv != "Non-tumor",""),
+        need(input$mInput, "")
       )
-      validate(
-        need(input$histologySurv %in% histo(),"")
-      )
-      validate(
-        need(input$histologySurv != "Non-tumor","")
-      )
+      
       mRNA <- mRNAsurv()
-      ymin <-min(mRNA)
+      xrange <-range(mRNA)
       par(mar = c(0,0,0,0)) 
-      plot(0, 0, type = "n", xlim = range(mRNA), ylim = c(ymin - 0.4, ymin + 0.4), ylab ="", xlab = "", axes = FALSE)
-      points(x = mRNA, y = rep(ymin, length(mRNA)), pch="|")
-    }, bg = "transparent")
+      plot(0, 0, type = "n", xlim = c(xrange[1] + 0.25, xrange[2]) , ylim = c(-0.1,  + 0.1), ylab ="", xlab = "", axes = FALSE)
+      points(x = mRNA, y = rep(0, length(mRNA)), pch="|")
+      # Add a red line to show which  is the current cutoff.
+      points(x = input$mInput, y = 0, pch = "|", col="red",cex = 1.5)
+    }, bg = "transparent", width = 225)
 
+    #' Generate the slider for the manual cutoff
     output$numericCutoff <- renderUI({
+      
       validate(
-        need(input$gene != "", "")
-      )
-      validate(
-        need(input$histologySurv %in% histo(),"")
-      )
-      validate(
+        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger", ""),
+        need(input$gene != "", ""),
+        need(input$histologySurv %in% histo(),""),
         need(input$histologySurv != "Non-tumor","")
       )
-      #generate the slider
+      
       sliderInput(inputId = "mInput",label = NULL, min = min(mRNAsurv()), max = max(mRNAsurv()), value = median(mRNAsurv()))
     })
 
-    #' Create a Kaplan Meier plot with cutoff based on quantiles
+    #' Create a Kaplan Meier plot with cutoff based on quantiles or manual selection
     output$survPlot <- renderPlot({
-#       if (input$gene == "" | input$histologySurv == "")
-#         return()
+      
       validate(
-        need(input$gene != "", "Please, enter a gene name in the panel on the left")
-      )
-      validate(
+        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger", "Sorry, no survival data are available for this dataset")%then%
+        need(input$histologySurv != "Non-tumor","Sorry, no survival data are available for this group")%then%
+        need(input$gene != "", "Please, enter a gene name in the panel on the left"),
+        # Trying to avoid an error when switching datasets in case the choosen histology is not available.
         need(input$histologySurv %in% histo(),"")
-      ) # Trying to avoid an error when switching datasets in case the choosen histology is not available.
-      validate(
-        need(input$histologySurv != "Non-tumor","Sorry, no survival data are available for this group")
       )
-      survivalPlot (exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, numeric = input$mInput,
-                    subtype = input$subtypeSurv, gcimp = input$gcimpSurv)
+      
+      try(survivalPlot (exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, numeric = input$mInput,
+                    subtype = input$subtypeSurv, gcimp = input$gcimpSurv), silent = TRUE) # need to suppress a message throwed the first time manual cutoff is selected
     })
     
     #' Create the selected plot
-    output$plot <- renderPlot({     
+    output$plot <- renderPlot({
+      
       validate(
-        need(input$gene != "", "Please, enter a gene name in the panel on the left")
-      )
-      validate(
-        need(plotType() %in% datasetInput()[["plotType"]],"")
-      ) # Trying to avoid an error when switching datasets in case the plotType is not available.
-      validate(
+        need(input$gene != "", "Please, enter a gene name in the panel on the left"),
+        # Trying to avoid an error when switching datasets in case the plotType is not available.
+        need(plotType() %in% datasetInput()[["plotType"]],""),
+        # Not all genes are available for all the dataset
         need(input$gene %in% names(exprs()),"Gene not available for this dataset")
-      ) # Not all genes are available for all the dataset
+      )
+      
+      # I needed to create the ggboxPlot function (see helper file) to use it in the output$downloadPlot
       ggboxPlot(exprs = exprs(), cna = cnas(), gene = input$gene, plotType = plotType(), scale = input$scale, 
-                stat = input$stat, colBox = input$colBox, colStrip = input$colStrip, bw = input$bw) 
-      # I needed to create the ggboxPlot function (see helper file) to use it in the output$downloadPlot .... OTHER WAY TO DO IT??
+                stat = input$stat, colBox = input$colBox, colStrip = input$colStrip, bw = input$bw)  
     })
     
     #' Tukey post-hoc test
     output$tukeyTest <- renderPrint(width = 800, {    
-      if (input$gene == "" )
-        return()
+
       validate(
+        need(input$gene != "", ""),
+        # Trying to avoid an error when switching datasets in case the plotType is not available.
         need(plotType() %in% datasetInput()[["plotType"]],"")
-      ) # Trying to avoid an error when switching datasets in case the plotType is not available.
+      )
+      
       mRNA <- exprs()[ ,input$gene]
       if (input$scale) {
         mRNA <- scale(mRNA)
@@ -359,11 +355,13 @@ shinyServer(
     
     #' Pairwise t test
     output$pairwiseTtest <- renderPrint({     
-      if (input$gene == "" )
-        return()
+      
       validate(
+        need(input$gene != "", ""),
+        # Trying to avoid an error when switching datasets in case the plotType is not available.
         need(plotType() %in% datasetInput()[["plotType"]],"")
-      ) # Trying to avoid an error when switching datasets in case the plotType is not available.
+      )
+      
       mRNA <- exprs()[ ,input$gene]
       if (input$scale) {
         mRNA <- scale(mRNA)
@@ -407,7 +405,7 @@ shinyServer(
         value = plotUnitDef)
     })
     
-    # Get the download dimensions.
+    #' Get the download dimensions.
     downloadPlotHeight <- reactive({
       input$downloadPlotHeight
     })
@@ -508,7 +506,7 @@ shinyServer(
       }
     )
     
-    ## Generate reactive Inputs for the corrPlot to be used also to download the complete plot
+    #' Generate reactive Inputs for the corrPlot to be used also to download the complete plot
     colorByInput <- reactive({
       switch(input$colorBy, 
              none = "none",
@@ -525,22 +523,20 @@ shinyServer(
     
     #' Generate the correlation plot
     output$corrPlot <-renderPlot({    
-#       if (input$gene == "")
-#         return()
+
       validate(
-        need(input$gene != "", "Please, enter a gene name in the panel on the left")
+        need(input$gene != "", "Please, enter a gene name in the panel on the left"),
+        need(input$gene2 != "", "Please enter Gene 2"),
+        # Trying to avoid an error when switching datasets in case the choosen histology is not available.
+        need(input$histologySurv %in% histo(),"")
       )
-      validate( 
-        need(input$gene2 != "", "Please enter Gene 2")
-      )
+      
       if (input$dataset == "TCGA Lgg") {
         validate(
           need(input$colorBy != "Subtype" & input$separateBy != "Subtype", "Subtype available for GBM samples only")
         ) 
       }
-      validate(
-        need(plotType() %in% datasetInput()[["plotType"]],"")
-      ) # Trying to avoid an error when switching datasets in case the choosen histology is not available.
+      
       myCorggPlot(exprs(), input$gene, input$gene2, input$histologyCorr, input$subtype, 
                    colorBy = colorByInput(), separateBy = separateByInput())
     })
@@ -549,14 +545,18 @@ shinyServer(
     output$corrTest <-renderPrint({     
       if (input$gene == "" | input$gene2 == "")
         return()
+      
       validate(
+        # Trying to avoid an error when switching datasets in case the choosen histology is not available.
         need(input$histologyCorr %in% c("All",histo()),"")
-      ) # Trying to avoid an error when switching datasets in case the choosen histology is not available.
+      ) 
+      
       if (input$dataset == "TCGA Lgg") {
         validate(
           need(input$colorBy != "Subtype" & input$separateBy != "Subtype", "Subtype available for GBM samples only")
         ) 
       }
+      
       myCorrTest(exprs(), input$gene, input$gene2, input$histologyCorr, input$subtype, separateBy = separateByInput())
     })
     
@@ -648,24 +648,22 @@ shinyServer(
         plot_surv_name <- paste("plotSurv", i, sep = "")
         plotOutput(plot_surv_name, height = 400, width = 400)
       })
-      # Convert the list to a tagList - this is necessary for the list of items
-      # to display properly.
       do.call(tagList, plot_output_list)
     })  
     
     observe({   
       df <- pDatas()
-      df <- df[,colSums(is.na(df)) < nrow(df)] # Removing unavailable (all NA) groups
-      df <- droplevels.data.frame(subset(df, Histology!="Non-tumor")) # Exclude normal sample, not displaying properly
+      df <- df[,colSums(is.na(df)) < nrow(df)] 
+      df <- droplevels.data.frame(subset(df, Histology != "Non-tumor")) 
       groups <- names(df)[!names(df) %in% c("Sample","status","survival")]
       for (i in groups) {                                                    
-        # Need local so that each item gets its own name. Without it, the value
-        # of i in the renderPlot() will be the same across all instances, because
-        # of when the expression is evaluated.
         local({
           my_Survi <- i
           plot_surv_name <- paste("plotSurv", my_Survi, sep="")
           output[[plot_surv_name]] <- renderPlot({
+            validate(
+              need(input$dataset!= "Bao" & input$dataset!= "Reifenberger", "Sorry, no survival data are available for this dataset")
+            )
             surv.status <- df[ ,"status"]
             surv.time <- df[ ,"survival"]
             my.Surv <- Surv(surv.time, surv.status == 1)
@@ -695,12 +693,13 @@ shinyServer(
       row.names(upData) <- upData[,"Sample"]
       upData <- upData [,-1]
       df.exp <-t(upData)
-      genes <-intersect(row.names(TCGA.exp),row.names(df.exp))  # common genes of the two datasets
-      ## Subset the initial TCGA matrix to only contain common genes
+      # Common genes of the two datasets
+      genes <-intersect(row.names(TCGA.exp),row.names(df.exp))  
+      # Subset the initial TCGA matrix to only contain common genes
       TCGA.1 <- TCGA.exp[genes,]
       TCGA.1 <- TCGA.1[!is.na(TCGA.1[,1]),]  #Check for NA's
       TCGA.train <- TCGA.1 - rowMeans(TCGA.1)
-      ## Subset the inputDf matrix to only contain common genes
+      # Subset the inputDf matrix to only contain common genes
       df.1 <- df.exp[genes,]
       df.1 <- df.1[!is.na(df.1[,1]),]
       df.learn <- df.1- rowMeans(df.1)
@@ -730,7 +729,6 @@ shinyServer(
       inFile <- input$upFile
       if (is.null(inFile))
         return(NULL)
-      # Wrap the entire expensive operation with withProgress 
       withProgress(session, min = 1, max = 5, {
         setProgress(message = "Calculating, please wait",
                     detail = "Be patients, switching to another tab will crash GlioVis ...")
