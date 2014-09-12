@@ -245,6 +245,14 @@ shinyServer(
 
     #' Create a slider for the manual cutoff    
     mRNAsurv <- reactive({
+      
+      validate(
+        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger", ""),
+        need(input$gene != "", ""),
+        need(input$histologySurv %in% histo(),""),
+        need(input$histologySurv != "Non-tumor","")
+      )
+      
       df <- subset(exprs(), Histology == input$histologySurv & !is.na(status))
       if (input$histologySurv == "GBM" & input$subtypeSurv != "All") {
         df <- subset (df, Subtype == input$subtypeSurv)
@@ -262,10 +270,6 @@ shinyServer(
     output$boxmRNA <- renderPlot({
       
       validate(
-        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger", ""),
-        need(input$gene != "", ""),
-        need(input$histologySurv %in% histo(),""),
-        need(input$histologySurv != "Non-tumor",""),
         need(input$mInput, "")
       )
       
@@ -280,14 +284,6 @@ shinyServer(
 
     #' Generate the slider for the manual cutoff
     output$numericCutoff <- renderUI({
-      
-      validate(
-        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger", ""),
-        need(input$gene != "", ""),
-        need(input$histologySurv %in% histo(),""),
-        need(input$histologySurv != "Non-tumor","")
-      )
-      
       sliderInput(inputId = "mInput",label = NULL, min = min(mRNAsurv()), max = max(mRNAsurv()), value = median(mRNAsurv()))
     })
 
@@ -300,83 +296,63 @@ shinyServer(
         need(input$gene != "", "Please, enter a gene name in the panel on the left"),
         # Trying to avoid an error when switching datasets in case the choosen histology is not available.
         need(input$histologySurv %in% histo(),"")
+        
+      )
+      # Use try because I need to suppress a message throwed the first time manual cutoff is selected
+      try(survivalPlot (exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, numeric = input$mInput,
+                    subtype = input$subtypeSurv, gcimp = input$gcimpSurv), silent = TRUE) 
+    })
+    
+    #' Create the dataframe to call in ggbox,Tukey and ttest
+    data <- reactive({
+      
+      validate(
+        need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
+          # Not all genes are available for all the dataset
+          need(input$gene %in% names(exprs()),"Gene not available for this dataset"),
+        # Trying to avoid an error when switching datasets in case the plotType is not available.
+        need(plotType() %in% datasetInput()[["plotType"]],"")
       )
       
-      try(survivalPlot (exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, numeric = input$mInput,
-                    subtype = input$subtypeSurv, gcimp = input$gcimpSurv), silent = TRUE) # need to suppress a message throwed the first time manual cutoff is selected
+      mRNA <- exprs()[ ,input$gene]
+      if (input$scale) {
+        mRNA <- scale(mRNA)
+      }
+      if (plotType() == "Copy number") {
+        validate(
+          need(input$gene %in% names(cnas()),"Copy number not available for this gene in this dataset")
+        )
+        group <- cnas()[ ,input$gene]
+        group <- factor(group, levels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp"))
+        group <- droplevels(group)
+      } else {
+        group <- exprs()[ ,plotType()]
+      }
+      if (any(!is.na(group))) {
+        data <- data.frame(mRNA, group)
+        data <- na.omit(data)
+      }
+      data
     })
     
     #' Create the selected plot
     output$plot <- renderPlot({
-      
-      validate(
-        need(input$gene != "", "Please, enter a gene name in the panel on the left"),
-        # Trying to avoid an error when switching datasets in case the plotType is not available.
-        need(plotType() %in% datasetInput()[["plotType"]],""),
-        # Not all genes are available for all the dataset
-        need(input$gene %in% names(exprs()),"Gene not available for this dataset")
-      )
-      
       # I needed to create the ggboxPlot function (see helper file) to use it in the output$downloadPlot
-      ggboxPlot(exprs = exprs(), cna = cnas(), gene = input$gene, plotType = plotType(), scale = input$scale, 
-                stat = input$stat, colBox = input$colBox, colStrip = input$colStrip, bw = input$bw)  
+      ggboxPlot(data = data (), scale = input$scale, stat = input$stat, colBox = input$colBox, colStrip = input$colStrip, bw = input$bw)  
     })
     
     #' Tukey post-hoc test
     output$tukeyTest <- renderPrint(width = 800, {    
-
-      validate(
-        need(input$gene != "", ""),
-        # Trying to avoid an error when switching datasets in case the plotType is not available.
-        need(plotType() %in% datasetInput()[["plotType"]],"")
-      )
-      
-      mRNA <- exprs()[ ,input$gene]
-      if (input$scale) {
-        mRNA <- scale(mRNA)
-      }
-      if (plotType() == "Copy number") {
-        group <- cnas()[ ,input$gene]
-        group <- factor(group, levels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp"))
-        group <- droplevels(group)
-      } else {
-        group <- exprs()[ ,plotType()]
-      }
-      if (any(!is.na(group))) {
-        data <- data.frame(mRNA, group)
-        data <- na.omit(data)
-      }
+      data <- data()
       tukey <- data.frame(TukeyHSD(aov(mRNA ~ group, data = data))[[1]])
       tukey$Significance <- as.factor(starmaker(tukey$p.adj, p.levels = c(.001, .01, .05, 1), symbols=c("***", "**", "*", "ns")))
       tukey <- tukey[order(tukey$diff), ]
       tukey
-     })
-    
-    
+    })
+  
     #' Pairwise t test
     output$pairwiseTtest <- renderPrint({     
-      
-      validate(
-        need(input$gene != "", ""),
-        # Trying to avoid an error when switching datasets in case the plotType is not available.
-        need(plotType() %in% datasetInput()[["plotType"]],"")
-      )
-      
-      mRNA <- exprs()[ ,input$gene]
-      if (input$scale) {
-        mRNA <- scale(mRNA)
-      }
-      if (plotType() == "Copy number") {
-        group <- cnas()[ ,input$gene]
-        group <- factor(group, levels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp"))
-        group <- droplevels(group)
-      } else {
-        group <- exprs()[ ,plotType()]
-      }
-      if (any(!is.na(group))) {
-        data <- data.frame(mRNA, group)
-        data <- na.omit(data)
-      }
+      data <- data()
       pttest <- pairwise.t.test(data$mRNA, data$group, na.rm= TRUE, p.adj = "bonferroni", paired = FALSE)[[3]]
       pttest
     })
@@ -427,8 +403,7 @@ shinyServer(
         # returns function pdf() if downloadFileType == "pdf".
         plotFunction <- match.fun(downloadPlotFileType())
         plotFunction(con, width = downloadPlotWidth(), height = downloadPlotHeight())
-        ggboxPlot(exprs = exprs(), cna = cnas(), gene = input$gene, plotType = plotType(), scale = input$scale, 
-                  stat = input$stat, colBox = input$colBox, colStrip = input$colStrip, bw = input$bw)
+        ggboxPlot(data = data (), scale = input$scale, stat = input$stat, colBox = input$colBox, colStrip = input$colStrip, bw = input$bw)
         dev.off(which=dev.cur())
       }
     )
@@ -469,6 +444,10 @@ shinyServer(
     output$corrData <- renderDataTable({
       if (input$geneCor == "" | input$goCor == 0)
         return()
+      validate(
+          # Not all genes are available for all the dataset
+          need(input$geneCor %in% names(exprs()),"Gene not available for this dataset")
+      )
       isolate({  # https://groups.google.com/forum/#!searchin/shiny-discuss/submit$20button/shiny-discuss/3eXElZxZoaM/QtGCl-4qXzsJ
         withProgress(session, min=1, max=5, {
           setProgress(message = "Calculating, please wait",
@@ -525,8 +504,10 @@ shinyServer(
     output$corrPlot <-renderPlot({    
 
       validate(
-        need(input$gene != "", "Please, enter a gene name in the panel on the left"),
-        need(input$gene2 != "", "Please enter Gene 2"),
+        need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
+          need(input$gene %in% names(exprs()),"Gene not available for this dataset"),
+        need(input$gene2 != "", "Please enter Gene 2")%then%
+          need(input$gene2 %in% names(exprs()),"Gene not available for this dataset"),
         # Trying to avoid an error when switching datasets in case the choosen histology is not available.
         need(input$histologySurv %in% histo(),"")
       )

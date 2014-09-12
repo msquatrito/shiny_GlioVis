@@ -38,7 +38,7 @@ shinyUI(
                               h4(class = "outer", "Can I download the plots?"),
                               p(class = "outer",'Yes, all the plots can be downloaded as .pdf files. More file type options are available for the boxplots.'),
                               h4(class = "outer", "Can I download the data?"),
-                              p(class = "outer",'Yes, it is', strong("highly recommended"), 'for reproducibility issue. Data can be downloaded at "Explore/Data/Download Table".'),
+                              p(class = "outer",'Yes, it is', strong("highly recommended"), 'for reproducibility issues. Data can be downloaded at "Explore/Data/Download Table".'),
                               h4(class = "outer", "What other tools are available?"),
                               p(class = "outer",'SubtypeME: Classify tumor samples based on mRNA expression profiles.'),
                               p(class = "outer",'CorrelateME: Correlate expression of a gene with all the genes in the dataset.'),
@@ -129,7 +129,7 @@ shinyUI(
                                            br(),
                                            uiOutput("numericCutoff"),
                                            plotOutput(outputId = "boxmRNA", width = "100%", height = 50),
-                                           helpText("mRNA expression range")
+                                           helpText("mRNA expression (log2)")
                                          ),
                                          hr()
                                        ),

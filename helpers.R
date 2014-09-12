@@ -1,25 +1,12 @@
 ############################################
 ############## my ggboxPlot  ##############
 ############################################
-ggboxPlot <- function(exprs, cna, gene, plotType, scale = FALSE, 
-                      stat = FALSE, colBox = FALSE, colStrip = FALSE, bw = FALSE, ...) {
-  mRNA <- exprs[ ,gene] 
+ggboxPlot <- function(data,  scale = FALSE, stat = FALSE, colBox = FALSE, colStrip = FALSE, bw = FALSE, ...) {
   if (scale) {
-    mRNA <- scale(mRNA)
     ylab <- "Normalized mRNA expression"
   } else {
-    mRNA <- mRNA
     ylab <- "mRNA expression (log2)"
   }
-  if (plotType == "Copy number") {
-    group <- cna[, gene]
-    group <- factor(group, levels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp"))
-  } else {
-    group <- exprs[ ,plotType]
-  }
-  data <- data.frame(mRNA, group)
-  data <- na.omit(data) 
-  n.class <- length(levels(group)) #  Not used yet
   if (colBox) {
     box <- geom_boxplot(aes(fill = group), outlier.size = 0) # It works but not the right way to approach this issue
   } else {
@@ -59,7 +46,8 @@ ggboxPlot <- function(exprs, cna, gene, plotType, scale = FALSE,
 ## Get HR ##
 ############
 getHR <- function (df, gene, gcimp = FALSE) {
-  df <- subset (df, Histology == "GBM"  & !is.na(status)) # GBM patient with survival data
+  # GBM patient with survival data
+  df <- subset (df, Histology == "GBM"  & !is.na(status)) 
   if (gcimp){
     df <- subset (df, Subtype != "G-CIMP")
   }
@@ -122,9 +110,6 @@ hazardPlot <- function (HRdata, quantile) {
 ## Survival plot ##
 ###################
 survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FALSE) {
-#   if (!gene%in%names(df)) {
-#     stop ("Incorrect gene entry or gene not available for this dataset")
-#   }
   df <- subset (df, Histology == group & Histology != "Non-tumor" & !is.na(status)) 
   if (group == "GBM" & any(!is.na(df$Recurrence))) {
     df <- subset (df, Histology == "GBM" & Recurrence == "Primary")
@@ -214,9 +199,6 @@ survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FAL
 #####################
 # To use to geet correlation data (r an p value) on the fly. TOO SLOW
 getCorr <- function (df, gene, histology) {
-  if (!gene%in%names(df)) {
-    stop ("Incorrect gene entry or gene not available for this dataset")
-  }
   if (histology != "All") {
     df <- subset (df, Histology == histology)
   } else {
@@ -239,9 +221,6 @@ getCorr <- function (df, gene, histology) {
 ############## 2 genes correlation plot ##############
 ######################################################
 myCorggPlot <- function (df, gene1, gene2, histo = "All", subtype = "All", colorBy = "none", separateBy = "none",...) {
-  if (!gene1%in%names(df) | !gene2%in%names(df)) {
-    stop ("Incorrect gene entry or gene not available for this dataset")
-  }
   if (histo != "All") {
     df <- subset (df, Histology == histo)
   } else {
