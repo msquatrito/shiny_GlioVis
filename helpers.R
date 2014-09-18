@@ -197,25 +197,29 @@ survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FAL
 #####################
 ## Get correlations ##
 #####################
-# To use to geet correlation data (r an p value) on the fly. TOO SLOW
+# To use to geet correlation data (r an p value) on the fly. 
+
+# using corFast
+cor.p.values <- function(r, n) {
+  df <- n - 2
+  t <- c(sqrt(df) * r / sqrt(1 - r^2))
+  p <- pt(t, df)
+  return(2 * pmin(p, 1 - p))
+}
+
 getCorr <- function (df, gene, histology) {
   if (histology != "All") {
     df <- subset (df, Histology == histology)
   } else {
     df <- df
   }
-  df <- df[,8:ncol(df)]
-  mRNA <- df[ ,gene]
-  corr <- NULL
-  for (Gene in names(df)){
-    y <- df[ ,Gene]
-    cor <- cor.test (mRNA, y, use="complete.obs")
-    r <- round(cor$estimate, digits =  3)
-    p <- round(cor$p.value, digits = 10)
-    corr <- rbind(corr, data.frame(Gene, r, p))
-  }
-  corr
-}
+  mat <-as.matrix(df[,8:length(df)])
+  cor <- corFast (mat, use="pairwise.complete.obs")
+  r <- round(cor[, gene], digits =  3)
+  p <- cor.p.values(r, nrow(mat))
+  corr <- data.frame(Gene = as.character(row.names(cor)), r, p.value = round(p,10))
+  corr 
+} 
 
 ######################################################
 ############## 2 genes correlation plot ##############

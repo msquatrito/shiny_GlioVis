@@ -1,13 +1,6 @@
-library (shiny)
-library (survival)
-library (weights)
-library (shinyIncubator)
-library (ggplot2)
-library (gridExtra)
-library (rCharts)
-library (shinysky)
-library (shinyBS)
-library (dplyr)
+library(shiny)
+library(shinyIncubator)
+library(shinysky)
 source("helpers.R")
 
 shinyUI(  
@@ -38,7 +31,7 @@ shinyUI(
                               h4(class = "outer", "Can I download the plots?"),
                               p(class = "outer",'Yes, all the plots can be downloaded as .pdf files. More file type options are available for the boxplots.'),
                               h4(class = "outer", "Can I download the data?"),
-                              p(class = "outer",'Yes, it is', strong("highly recommended"), 'for reproducibility issues. Data can be downloaded at "Explore/Data/Download Table".'),
+                              p(class = "outer",'Yes, it is', strong("highly recommended"), 'for reproducibility issues. Data can be downloaded at "Explore/Data/Table".'),
                               h4(class = "outer", "What other tools are available?"),
                               p(class = "outer",'SubtypeME: Classify tumor samples based on mRNA expression profiles.'),
                               p(class = "outer",'CorrelateME: Correlate expression of a gene with all the genes in the dataset.'),
@@ -284,7 +277,7 @@ shinyUI(
                         ),
                         tabPanel(title = "CorrelateME", 
                                  p(class = "lead","Correlate expression of a gene with all the genes in the dataset"),
-                                 helpText("Calculating gene correlations will take a couple of minutes. Please DON'T switch tabs while computing"),
+                                 helpText("Calculating gene correlations will take a few of moments. Please DON'T switch tabs while computing"),
                                  br(),
                                  sidebarLayout(
                                    sidebarPanel(width = 3,
@@ -307,6 +300,7 @@ shinyUI(
                                                 br(),
                                                 conditionalPanel(
                                                   condition = "output.corrData",
+                                                  br(),
                                                   downloadButton(outputId = "downloadCorrData", label = "Download data")
                                                 )
                                    ),

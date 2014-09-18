@@ -1,13 +1,14 @@
-library (shiny)
-library (survival)
-library (weights)
-library (shinyIncubator)
-library (ggplot2)
-library (gridExtra)
-library (rCharts)
-library (shinysky)
-library (shinyBS)
-library (dplyr)
+library(shiny)
+library(survival)
+library(weights)
+library(shinyIncubator)
+library(ggplot2)
+library(gridExtra)
+library(rCharts)
+library(shinysky)
+library(shinyBS)
+library(dplyr)
+library(WGCNA)
 
 source("helpers.R")
 `%then%` <- shiny:::`%OR%`
@@ -200,7 +201,8 @@ shinyServer(
     output$hazardPlot <- renderPlot({        
       validate(
         need(input$dataset!= "Bao" & input$dataset!= "Reifenberger", "Sorry, no survival data are available for this dataset")%then%
-        need(input$gene != "", "Please, enter a gene name in the panel on the left"),
+          need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
+          need(input$gene %in% names(exprs()),"Gene not available for this dataset"),
         need(histoSurvSelected()  == "GBM", "Interactive HR plot currently available only for GBM samples")
       )
       # Wrap the entire expensive operation with withProgress 
@@ -235,7 +237,8 @@ shinyServer(
     output$kmPlot <- renderPlot({
       validate(
         need(input$dataset!= "Bao" & input$dataset!= "Reifenberger", "Sorry, no survival data are available for this dataset")%then%
-          need(input$gene != "", "Please, enter a gene name in the panel on the left"),
+          need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
+          need(input$gene %in% names(exprs()),"Gene not available for this dataset"),
         need(histoSurvSelected()  == "GBM", "Interactive HR plot currently available only for GBM samples")
       )
       cutoff <- getCutoff()
@@ -247,8 +250,9 @@ shinyServer(
     mRNAsurv <- reactive({
       
       validate(
-        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger", ""),
-        need(input$gene != "", ""),
+        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger", "")%then%
+          need(input$gene != "", "")%then%
+          need(input$gene %in% names(exprs()),""),
         need(input$histologySurv %in% histo(),""),
         need(input$histologySurv != "Non-tumor","")
       )
@@ -292,12 +296,13 @@ shinyServer(
       
       validate(
         need(input$dataset!= "Bao" & input$dataset!= "Reifenberger", "Sorry, no survival data are available for this dataset")%then%
-        need(input$histologySurv != "Non-tumor","Sorry, no survival data are available for this group")%then%
-        need(input$gene != "", "Please, enter a gene name in the panel on the left"),
+          need(input$histologySurv != "Non-tumor","Sorry, no survival data are available for this group")%then%
+          need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
+          need(input$gene %in% names(exprs()),"Gene not available for this dataset"),
         # Trying to avoid an error when switching datasets in case the choosen histology is not available.
         need(input$histologySurv %in% histo(),"")
-        
       )
+      
       # Use try because I need to suppress a message throwed the first time manual cutoff is selected
       try(survivalPlot (exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, numeric = input$mInput,
                     subtype = input$subtypeSurv, gcimp = input$gcimpSurv), silent = TRUE) 
@@ -451,14 +456,14 @@ shinyServer(
       isolate({  # https://groups.google.com/forum/#!searchin/shiny-discuss/submit$20button/shiny-discuss/3eXElZxZoaM/QtGCl-4qXzsJ
         withProgress(session, min=1, max=5, {
           setProgress(message = "Calculating, please wait",
-                      detail = "Be patient, this takes forever...")
+                      detail = "Be patient ...")
           for (i in 1:5) {
             setProgress(value = i)
             Sys.sleep(0.5)
           }          
           corr.table <- suppressWarnings(corr())  # suppressWarnings  is used to prevent the warning messages in the LGG dataset  
           if (input$sign == 0.01){
-            corr.table <- subset(corr.table, p <= 0.01)
+            corr.table <- subset(corr.table, p.value <= 0.01)
           } 
           if (input$cor == "Positive"){
             corr.table <- subset(corr.table, r > 0)
@@ -468,7 +473,7 @@ shinyServer(
             corr.table <- subset(corr.table, r < 0)
             corr.table <- corr.table[order(corr.table$r), ]
           } else {
-            corr.table <- subset(corr.table, p <= 0.05)
+            corr.table <- subset(corr.table, p.value <= 0.05)
           }
           corr.table
         })
