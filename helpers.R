@@ -1,7 +1,7 @@
 ############################################
 ############## my ggboxPlot  ##############
 ############################################
-ggboxPlot <- function(data,  scale = FALSE, stat = FALSE, colBox = FALSE, colStrip = FALSE, bw = FALSE, ...) {
+ggboxPlot <- function(data,  scale = FALSE, stat = FALSE, colBox = FALSE, colStrip = FALSE, colorPoints, bw = FALSE, ...) {
   if (scale) {
     ylab <- "Normalized mRNA expression"
   } else {
@@ -13,14 +13,15 @@ ggboxPlot <- function(data,  scale = FALSE, stat = FALSE, colBox = FALSE, colStr
     box <- geom_boxplot(outlier.size = 0)
   }
   if (colStrip) {
-    strip <- geom_jitter(position = position_jitter(width = .2), aes(colour = group), size = 2, alpha = 0.75)
+    col <- aes_string(color = colorPoints)
+    strip <- geom_jitter(position = position_jitter(width = .2), col, size = 2, alpha = 0.75)
   } else {
     strip <- geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5)
   }
-  p <- ggplot(data, aes(x=group, y = mRNA)) + ylab(ylab) + xlab("") + theme(legend.position = "none")
+  p <- ggplot(data, aes(x=group, y = mRNA)) + ylab(ylab) + xlab("") 
   p <- p + box + strip 
   if (bw) {
-    p <- p + theme_bw () + theme(legend.position = "none")
+    p <- p + theme_bw () 
   }
   if (stat) {
     tukey <- data.frame(TukeyHSD(aov(mRNA ~ group, data = data))[[1]])
@@ -56,9 +57,9 @@ getHR <- function (df, gene, gcimp = FALSE) {
   surv.time <- df[ ,"survival"]
   my.Surv <- Surv(surv.time, surv.status == 1)
   mRNA.values <- mRNA[!is.na(mRNA)]
-  # Generate a a vector of continuos values, excluding the first an last value
+  # Generate a vector of continuos values, excluding the first an last value
   mRNA.values <- sort(mRNA.values[mRNA.values != min(mRNA.values) & mRNA.values != max(mRNA.values)]) 
-  scan.surv <-function(i,conf.level=95) {
+  scan.surv <-function(i, conf.level=95) {
     log.rank <- survdiff(my.Surv ~ mRNA <= i, data = df, rho = 0)
     model <- summary(coxph(my.Surv ~ mRNA <= i))
     HR <- model$conf.int[1]
@@ -110,16 +111,20 @@ hazardPlot <- function (HRdata, quantile) {
 ## Survival plot ##
 ###################
 survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FALSE) {
+  # Select the samples, for the specified histology,that has survival data 
   df <- subset (df, Histology == group & Histology != "Non-tumor" & !is.na(status)) 
+  # For GBM, select only primary tumors
   if (group == "GBM" & any(!is.na(df$Recurrence))) {
     df <- subset (df, Histology == "GBM" & Recurrence == "Primary")
-  } 
+  }
+  # Select a specific subtype
   if (group == "GBM" & subtype != "All") {
     df <- subset (df, Subtype == subtype)
   }
+  # Remove G-CIMP, when selected
   if (gcimp){
     df <- subset (df, Subtype != "G-CIMP")
-  }
+  } 
   
   mRNA <- df[ ,gene]
   surv.status <- df[ ,"status"]
@@ -132,7 +137,7 @@ survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FAL
   if(cutoff == "Use a specific mRNA value") {
     main <- paste("Histology: ", group, 
                   "; Subtype: ", subtype,
-                  "; Cutoff: ", numeric, sep = "") 
+                  "; Cutoff: ", round(numeric, 2), sep = "") 
   } else {
     main <- paste("Histology: ", group, 
                   "; Subtype: ", subtype,
@@ -140,17 +145,13 @@ survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FAL
   }
   
   if (cutoff != "quartiles") {
-    if (cutoff == "median") {
-      cut <- mRNA.q[2]
-    } else if (cutoff == "lower quartile") {
-      cut <- mRNA.q [1]
-    } else if (cutoff == "upper quartile") {
-      cut <- mRNA.q [3]
-    } else if (cutoff == "Use a specific mRNA value") {
-      cut <- as.numeric(numeric)
-    }
-    
-    f<-function(x) ifelse(x >= cut, c("high"),c("low"))
+    cut <- switch(cutoff, 
+           "median" = mRNA.q[2],
+           "lower quartile" = mRNA.q [1],
+           "upper quartile" = mRNA.q [3],
+           "Use a specific mRNA value" = numeric)
+
+    f <- function(x) ifelse(x >= cut, c("high"),c("low"))
     strat <- f(mRNA)
     expr.surv <- survfit(my.Surv ~ strat, conf.type = "none")
     log.rank <- survdiff(my.Surv ~ strat, rho = 0)
@@ -199,7 +200,29 @@ survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FAL
 #####################
 # To use to geet correlation data (r an p value) on the fly. 
 
-# using corFast
+# # TOO SLOW
+# getCorr <- function (df, gene, histology) {
+#   if (!gene%in%names(df)) {
+#     stop ("Incorrect gene entry or gene not available for this dataset")
+#   }
+#   if (histology != "All") {
+#     df <- subset (df, Histology == histology)
+#   } else {
+#     df <- df
+#   }
+#   df <- df[,8:ncol(df)]
+#   mRNA <- df[ ,gene]
+#   corr <- NULL
+#   for (Gene in names(df)){
+#     y <- df[ ,Gene]
+#     cor <- cor.test (mRNA, y, use="complete.obs")
+#     r <- round(cor$estimate, digits =  3)
+#     p <- round(cor$p.value, digits = 10)
+#     corr <- rbind(corr, data.frame(Gene, r, p.value = p))
+#   }
+#   corr
+# }
+# using tcrossprod. corFast is much faster but I can't use WGCNA package in shinyapps.io
 cor.p.values <- function(r, n) {
   df <- n - 2
   t <- c(sqrt(df) * r / sqrt(1 - r^2))
@@ -207,20 +230,35 @@ cor.p.values <- function(r, n) {
   return(2 * pmin(p, 1 - p))
 }
 
+# getCorr <- function (df, gene, histology) {
+#   if (histology != "All") {
+#     df <- subset (df, Histology == histology)
+#   } else {
+#     df <- df
+#   }
+#   mat <- as.matrix(t(df[,8:length(df)]))
+#   mat <-  mat - rowMeans(mat);
+#   mat <- mat / sqrt(rowSums(mat^2));   
+#   cor <- tcrossprod(mat)
+#   r <- round(cor[, gene], digits =  3)
+#   p <- cor.p.values(r, ncol(mat))
+#   corr <- data.frame(Gene = as.character(row.names(cor)), r, p.value = round(p,10))
+#   corr 
+# }  
+
 getCorr <- function (df, gene, histology) {
   if (histology != "All") {
     df <- subset (df, Histology == histology)
   } else {
     df <- df
   }
-  mat <-as.matrix(df[,8:length(df)])
-  cor <- corFast (mat, use="pairwise.complete.obs")
+  mat <- as.matrix(df[,8:length(df)])
+  cor <- corFast (mat, use="all.obs")
   r <- round(cor[, gene], digits =  3)
   p <- cor.p.values(r, nrow(mat))
   corr <- data.frame(Gene = as.character(row.names(cor)), r, p.value = round(p,10))
   corr 
 } 
-
 ######################################################
 ############## 2 genes correlation plot ##############
 ######################################################
@@ -380,19 +418,3 @@ helpPopup <- function(title, content,
     tags$style(type='text/css', ".popover { width: 1200px; relative; top: 20px; left: 20px !important; }")
   )
 }
-
-############################################################################
-############## binding to a bootstrap modal, https://github.com/mostly-harmless/radiant/commit/9b554532e417b4a8c0e8a43f16111f9b57c343d4#diff-848f402b1e98cb59e92553dac731963dR161  ###########
-############################################################################
-helpModal <- function(title, link, content) {
-  html <- sprintf("<div id='%s' class='modal hide fade in' style='display: none; '>
-                  <div class='modal-header'><a class='close' data-dismiss='modal' href='#'>&times;</a>
-                  <h3>%s</h3>
-                  </div>
-                  <div class='modal-body'>%s</div>
-                  </div>
-                  <a title='Help' data-toggle='modal' href='#%s' class='icon-question-sign'></a>", link, title, content, link)
-  Encoding(html) <- 'UTF-8'
-  HTML(html)
-}
-

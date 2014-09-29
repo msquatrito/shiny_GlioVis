@@ -36,7 +36,7 @@ shinyUI(
                               p(class = "outer",'SubtypeME: Classify tumor samples based on mRNA expression profiles.'),
                               p(class = "outer",'CorrelateME: Correlate expression of a gene with all the genes in the dataset.'),
                               h4(class = "outer", "Can I use GlioVis results for my publication?"),
-                              p(class = "outer", strong("Of course!"), 'If you do so, please cite:',a("Bowman R. and Squatrito M.", href="#addRef", target="_blank"), " (manuscript in preparation)."),
+                              p(class = "outer", strong("Of course!"), 'If you do so, please include references for the dataset(s) you used and cite:',a("Bowman R. and Squatrito M.", href="#addRef", target="_blank"), " (manuscript in preparation)."),
                               hr(), br(),
                               tags$blockquote(class="pull-right",
                                               tags$p("No great discovery was ever made without a bold guess."), 
@@ -62,7 +62,7 @@ shinyUI(
                                      br(),
                                      br(),
                                      selectInput(inputId = "dataset", label = h4("Dataset"),
-                                                 choices = c("TCGA GBM", "TCGA Lgg", "Rembrandt","Gravendeel", "Phillips", "Murat", "Freije", "Reifenberger", "Bao"),
+                                                 choices = c("TCGA GBM", "TCGA Lgg", "Rembrandt", "Gravendeel", "Phillips", "Murat", "Freije", "Reifenberger", "Bao", "Gill"),
                                                  selected = "TCGA GBM", selectize = FALSE),
                                      br(),
                                      selectizeInput(inputId = "gene", label = h4("Gene"), choices = NULL, selected = NULL,
@@ -78,9 +78,13 @@ shinyUI(
                                        hr(),
                                        h5("Plot options:"),
                                        checkboxInput(inputId = "scale", label = "Scale y axis", value = FALSE),
-                                       checkboxInput(inputId = "colStrip", label = "Color stripchart", value = FALSE),
-                                       checkboxInput(inputId = "colBox", label = "Color box", value = FALSE),
                                        checkboxInput(inputId = "bw", label = "White background", value = FALSE),
+                                       checkboxInput(inputId = "colBox", label = "Color box", value = FALSE),
+                                       checkboxInput(inputId = "colStrip", label = "Color stripchart", value = FALSE),
+                                       conditionalPanel(
+                                         condition = "input.colStrip == true",
+                                       uiOutput("colorPoints")
+                                       ),
                                        hr(),
                                        h5("Statistic:"),
                                        checkboxInput(inputId = "statTable", label = "Tukey's HSD", value = FALSE),
@@ -159,10 +163,6 @@ shinyUI(
                                        hr(),
                                        downloadButton(outputId = "downloadcorrPlot", label = "Download plot")
                                      )
-#                                      bsTooltip("dataset", "Choose a dataset", "right", trigger="hover"),
-#                                      bsTooltip("gene", "Enter gene name", "right", trigger="hover"),
-#                                      bsTooltip("plotTypeSel", "Select one of the available plot for the specified dataset", "right", trigger="hover")
-#                                      #         uiOutput("help")
                         ),
                         
                         
@@ -282,7 +282,7 @@ shinyUI(
                                  sidebarLayout(
                                    sidebarPanel(width = 3,
                                                 selectInput(inputId = "datasetCor", label = h4("Dataset"),
-                                                            choices = c("TCGA GBM", "TCGA Lgg", "Rembrandt","Gravendeel", "Phillips", "Murat", "Freije", "Reifenberger", "Bao"),
+                                                            choices = c("TCGA GBM", "TCGA Lgg", "Rembrandt", "Gravendeel", "Phillips", "Murat", "Freije", "Reifenberger", "Bao", "Gill"),
                                                             selected = "TCGA GBM", selectize = FALSE),
                                                 br(),
                                                 selectInput(inputId = "histologyCorrTable", label = h4("Histology:"), choices = ""),

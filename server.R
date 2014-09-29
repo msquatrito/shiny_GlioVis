@@ -25,6 +25,7 @@ murat <- readRDS("data/Murat.Rds")
 phillips <- readRDS("data/Phillips.Rds")
 reifenberger <- readRDS("data/Reifenberger.Rds")
 bao <- readRDS("data/Bao.Rds")
+gill <- readRDS("data/Gill.Rds")
 gene_names <- readRDS("data/gene_names.Rds")
 
 #######################################
@@ -46,7 +47,8 @@ shinyServer(
              "Murat" = murat,
              "Freije" = freije,
              "Reifenberger" = reifenberger,
-             "Bao" = bao)
+             "Bao" = bao,
+             "Gill" = gill)
     })
     
     #' Switch the datset for the correlation
@@ -59,8 +61,9 @@ shinyServer(
              "Phillips" = phillips,
              "Murat" = murat,
              "Freije" = freije,
-             "Reifenberger" = reifenberger,
-             "Bao" = bao)
+             "Reifenberger" = reifenberger,             
+             "Bao" = bao,
+             "Gill" = gill)
     })
     
     # Expression data
@@ -200,7 +203,7 @@ shinyServer(
     #' Render a plot to show the the Hazard ratio for the gene's expression values
     output$hazardPlot <- renderPlot({        
       validate(
-        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger", "Sorry, no survival data are available for this dataset")%then%
+        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger" & input$dataset!= "Gill", "Sorry, no survival data are available for this dataset")%then%
           need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
           need(input$gene %in% names(exprs()),"Gene not available for this dataset"),
         need(histoSurvSelected()  == "GBM", "Interactive HR plot currently available only for GBM samples")
@@ -236,7 +239,7 @@ shinyServer(
     #' Create a Kaplan Meier plot on the HR cutoff
     output$kmPlot <- renderPlot({
       validate(
-        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger", "Sorry, no survival data are available for this dataset")%then%
+        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger" & input$dataset!= "Gill", "Sorry, no survival data are available for this dataset")%then%
           need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
           need(input$gene %in% names(exprs()),"Gene not available for this dataset"),
         need(histoSurvSelected()  == "GBM", "Interactive HR plot currently available only for GBM samples")
@@ -250,7 +253,7 @@ shinyServer(
     mRNAsurv <- reactive({
       
       validate(
-        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger", "")%then%
+        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger" & input$dataset!= "Gill", "")%then%
           need(input$gene != "", "")%then%
           need(input$gene %in% names(exprs()),""),
         need(input$histologySurv %in% histo(),""),
@@ -295,7 +298,7 @@ shinyServer(
     output$survPlot <- renderPlot({
       
       validate(
-        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger", "Sorry, no survival data are available for this dataset")%then%
+        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger" & input$dataset!= "Gill" , "Sorry, no survival data are available for this dataset")%then%
           need(input$histologySurv != "Non-tumor","Sorry, no survival data are available for this group")%then%
           need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
           need(input$gene %in% names(exprs()),"Gene not available for this dataset"),
@@ -334,16 +337,37 @@ shinyServer(
         group <- exprs()[ ,plotType()]
       }
       if (any(!is.na(group))) {
-        data <- data.frame(mRNA, group)
-        data <- na.omit(data)
+#         data <- data.frame(mRNA, group)
+        data <- data.frame(mRNA, group,pDatas()[,-c(1,6,7)])
+        data <- data[,colSums(is.na(data)) < nrow(data)]
+#         data <- na.omit(data)
+        data <- subset(data, !is.na(group))
       }
       data
     })
     
+    output$colorPoints <- renderUI({
+      if (input$gene == "")
+        return()
+      data <- data()[,-c(1:2)] # to remove mRNA and group
+      colnames <- names(data)
+      # Create the radiobuttons for the different pData categories
+      radioButtons("colorP", "Color by:", 
+                         choices  = colnames,
+                         selected = plotType())
+    })
+
     #' Create the selected plot
     output$plot <- renderPlot({
+      # Trying to avoid an error when switching datasets in case the colStrip is not available.
+      if(input$colStrip){
+        validate(
+          need(input$colorP %in% names(data()[,-c(1:2)]),"")
+        )
+      }
       # I needed to create the ggboxPlot function (see helper file) to use it in the output$downloadPlot
-      ggboxPlot(data = data (), scale = input$scale, stat = input$stat, colBox = input$colBox, colStrip = input$colStrip, bw = input$bw)  
+      ggboxPlot(data = data (), scale = input$scale, stat = input$stat, colBox = input$colBox, 
+                colStrip = input$colStrip, colorPoints = input$colorP, bw = input$bw)  
     })
     
     #' Tukey post-hoc test
@@ -408,7 +432,8 @@ shinyServer(
         # returns function pdf() if downloadFileType == "pdf".
         plotFunction <- match.fun(downloadPlotFileType())
         plotFunction(con, width = downloadPlotWidth(), height = downloadPlotHeight())
-        ggboxPlot(data = data (), scale = input$scale, stat = input$stat, colBox = input$colBox, colStrip = input$colStrip, bw = input$bw)
+        ggboxPlot(data = data (), scale = input$scale, stat = input$stat, colBox = input$colBox, 
+                  colStrip = input$colStrip, colorPoints = input$colorP, bw = input$bw)  
         dev.off(which=dev.cur())
       }
     )
@@ -584,18 +609,15 @@ shinyServer(
           plotname <- paste("plot", my_i, sep="")
           output[[plotname]] <- renderChart2({
             plotData <- data.frame(table(data[, my_i]))
-#             h <- hPlot(x = "Var1", y = "Freq",  data = plotData, type = 'pie', title = my_i)
-#             h$addParams(height = 400, width = 400) # It changes the size of the pie too
-#             h 
             n1 <- nPlot(x = "Var1", y = "Freq", data = plotData, type = "pieChart")
             n1$addParams(height = 400, width = 400)      
-#             n1$chart(showLegend = FALSE)
+            #             n1$chart(showLegend = FALSE)
             n1
           })
         })
       }
     })
-
+    
     #' Generate an HTML table view of the data
     dataTable <- reactive({
       mRNA <- exprs()[ , input$gene]
@@ -626,7 +648,10 @@ shinyServer(
 
     #' Generate survival groups stratified by Histology, etc.
     output$survPlots <- renderUI({
-      df <- pDatas()
+      validate(
+        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger" & input$dataset!= "Gill", "Sorry, no survival data are available for this dataset")
+      )
+      df <- pDatas()[,1:7]
       df <- df[,colSums(is.na(df)) < nrow(df)] # Removing unavailable (all NA) groups
       df <- droplevels.data.frame(subset(df, Histology!="Non-tumor")) # Exclude normal sample, not displaying properly
       groups <- names(df)[!names(df) %in% c("Sample","status","survival")]
@@ -638,7 +663,7 @@ shinyServer(
     })  
     
     observe({   
-      df <- pDatas()
+      df <- pDatas()[,1:7]
       df <- df[,colSums(is.na(df)) < nrow(df)] 
       df <- droplevels.data.frame(subset(df, Histology != "Non-tumor")) 
       groups <- names(df)[!names(df) %in% c("Sample","status","survival")]
@@ -647,9 +672,9 @@ shinyServer(
           my_Survi <- i
           plot_surv_name <- paste("plotSurv", my_Survi, sep="")
           output[[plot_surv_name]] <- renderPlot({
-            validate(
-              need(input$dataset!= "Bao" & input$dataset!= "Reifenberger", "Sorry, no survival data are available for this dataset")
-            )
+            if (input$dataset== "Bao" || input$dataset == "Reifenberger" || input$dataset == "Gill") {
+              return()
+            }
             surv.status <- df[ ,"status"]
             surv.time <- df[ ,"survival"]
             my.Surv <- Surv(surv.time, surv.status == 1)
