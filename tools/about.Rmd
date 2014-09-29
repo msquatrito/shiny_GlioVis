@@ -19,17 +19,30 @@
   + [GSE4412](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE4412) ^7
   
 **Murat**
-  + [GSE7696](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE7696) ^8
+  + [GSE7696](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE7696) ^8  
+
+**Reifenberger**
+  + [GSE53733](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE53733) ^9  
+  
+**Bao**
+  + [GSE48865](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE48865) ^10  (currently available only for the GlioVis stand alone version)  
+  
+**Gill**
+  + [GSE59612](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE59612) ^11 
+  
 
 References:  
-1 [The Cancer Genome Atlas Research Network 2008](http://www.ncbi.nlm.nih.gov/pubmed/18772890)  
-2 unpublished, see [TCGA guidelines](http://cancergenome.nih.gov/publications/publicationguidelines) for unpublished data  
-3 [Cerami E et al. 2012](http://www.ncbi.nlm.nih.gov/pubmed/22588877)  
-4 [Madhavan S et al. 2009](http://www.ncbi.nlm.nih.gov/pubmed/19208739)  
-5 [Gravendeel LA et al. 2009](http://www.ncbi.nlm.nih.gov/pubmed/19920198)  
-6 [Phillips HS et al. 2006](http://www.ncbi.nlm.nih.gov/pubmed/16530701)  
-7 [Freije WA et al. 2004](http://www.ncbi.nlm.nih.gov/pubmed/15374961)  
-8 [Murat A et al. 2008](http://www.ncbi.nlm.nih.gov/pubmed/18565887)
+1. [The Cancer Genome Atlas Research Network 2008](http://www.ncbi.nlm.nih.gov/pubmed/18772890)  
+2. unpublished, see [TCGA guidelines](http://cancergenome.nih.gov/publications/publicationguidelines) for unpublished data  
+3. [Cerami E et al. 2012](http://www.ncbi.nlm.nih.gov/pubmed/22588877)  
+4. [Madhavan S et al. 2009](http://www.ncbi.nlm.nih.gov/pubmed/19208739)  
+5. [Gravendeel LA et al. 2009](http://www.ncbi.nlm.nih.gov/pubmed/19920198)  
+6. [Phillips HS et al. 2006](http://www.ncbi.nlm.nih.gov/pubmed/16530701)  
+7. [Freije WA et al. 2004](http://www.ncbi.nlm.nih.gov/pubmed/15374961)  
+8. [Murat A et al. 2008](http://www.ncbi.nlm.nih.gov/pubmed/18565887)  
+9. [Reifenberger G. et al. 2014](http://www.ncbi.nlm.nih.gov/pubmed/24615357)  
+10. [Bao ZS. et al. 2014](http://www.ncbi.nlm.nih.gov/pubmed/25135958)  
+11. [Gill BJ. et al. 2014](http://www.ncbi.nlm.nih.gov/pubmed/25114226)  
 
 ### Data processing  
 * Affymetrix expression array analyses were completed in R using the [Bioconductor](http://bioconductor.org) suite. The [‘affy’](http://www.bioconductor.org/packages/release/bioc/manuals/affy/man/affy.pdf) package was used for robust multi-array average normalization followed by quantile normalization. RNA-seq data (TCGA Lgg dataset) and copy number alteration (TCGA GBM and Lgg datasets) were downloaded from the [cBioPortal](http://www.cbioportal.org/public-portal/index.do).  
@@ -44,7 +57,7 @@ By: [Massimo Squatrito](http://www.cnio.es/ing/grupos/plantillas/presentacion.as
 
 Built using [Shiny](http://www.rstudio.com/shiny) by [RStudio](http://www.rstudio.com)
 
-Code available on [GitHub](https://github.com/msquatrito/shiny_GlioVis)
+Code available on [GitHub](https://#github.com/msquatrito/shiny_GlioVis)
 
 ### License
 
@@ -52,7 +65,8 @@ The GlioVis is licensed under the [AGPLv3](http://www.tldrlegal.com/l/AGPL3)
 
 As a summary, the AGPLv3 license requires, attribution, include copyright and license in copies of the software, state changes if you modify the code, and disclose all source code. 
 
-&copy; Massimo Squatrito (2014) <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /></a> 
+&copy; Massimo Squatrito (2014) 
+<a rel="license" href="http://www.creativecommons.org/licenses/by-nc/4.0/"><img alt="Creative Commons License" style="border-width:0" src="cc.png" /></a><br />This work is licensed under a <a rel="license" href="http://www.creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0 International License</a>. 
   
 ### Funding
 

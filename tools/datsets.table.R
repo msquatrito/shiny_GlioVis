@@ -9,9 +9,8 @@ HTML('<style type="text/css">
      .tg .tg-cxkv{background-color:#ffffff;padding: 0px 5px}
      .tg .tg-eoji{font-size:14px;color:#333333;text-align:center;padding: 0px 5px}
      .tg .tg-9fhq{background-color:#68cbd0;text-align:center;padding: 0px 5px}
-     .tg .tg-g74p{font-size:14px;background-color:#ffffff;color:#333333;text-align:center;padding: 0px 5px}
      .tg .tg-hgcj{font-weight:bold;text-align:center;padding: 0px 5px}
-     .tg .tg-zlxb{background-color:#ffffff;text-align:center;padding: 0px 5px}
+tfoot {color:gray; font-size:6px; text-align: right;}
      </style>
      <table class="tg">
      <tr>
@@ -65,7 +64,7 @@ HTML('<style type="text/css">
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">✔</td>
-     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
      <td class="tg-eoji">-</td>
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">✔</td>
@@ -113,18 +112,18 @@ HTML('<style type="text/css">
      <td class="tg-lvt2">✔</td>
      </tr>
      <tr>
-     <td class="tg-cxkv">Murat</td>
-     <td class="tg-zlxb">0</td>
-     <td class="tg-zlxb">0</td>
-     <td class="tg-zlxb">80</td>
-     <td class="tg-zlxb"></td>
-     <td class="tg-g74p">-</td>
-     <td class="tg-g74p">-</td>
-     <td class="tg-g74p">-</td>
-     <td class="tg-g74p">✔</td>
-     <td class="tg-g74p">✔</td>
-     <td class="tg-g74p">✔</td>
-     <td class="tg-g74p">✔</td>
+     <td class="tg-031e">Murat</td>
+     <td class="tg-s6z2">4</td>
+     <td class="tg-s6z2">0</td>
+     <td class="tg-s6z2">80</td>
+     <td class="tg-s6z2"></td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
      </tr>
      <tr>
      <td class="tg-0a3w">Freije</td>
@@ -140,4 +139,51 @@ HTML('<style type="text/css">
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
      </tr>
+     <tr>
+     <td class="tg-031e">Reifenberger</td>
+     <td class="tg-s6z2">0</td>
+     <td class="tg-s6z2">0</td>
+     <td class="tg-s6z2">70</td>
+     <td class="tg-s6z2"></td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
+     </tr>
+     <tr>
+     <td class="tg-0a3w">Bao</td>
+     <td class="tg-9fhq">0</td>
+     <td class="tg-9fhq">174</td>
+     <td class="tg-9fhq">100</td>
+     <td class="tg-9fhq"></td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">-</td>
+     </tr>
+     <tr>
+     <td class="tg-031e">Gill</td>
+     <td class="tg-s6z2">17</td>
+     <td class="tg-s6z2">0</td>
+     <td class="tg-s6z2">75*</td>
+     <td class="tg-s6z2"></td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
+     </tr>
+    <tfoot>
+    <tr>
+    <td colspan="8">* more than one sample for each patients (MRI non-enhancing and contranst-enhancing)</td>
+    </tr>
+    </tfoot>
      </table>')
