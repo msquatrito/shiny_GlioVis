@@ -29,6 +29,9 @@
   
 **Gill**
   + [GSE59612](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE59612) ^11 
+
+**Gorovets**
+  + [GSE35158](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE35158) ^12 
   
 
 References:  
@@ -43,6 +46,8 @@ References:
 9. [Reifenberger G. et al. 2014](http://www.ncbi.nlm.nih.gov/pubmed/24615357)  
 10. [Bao ZS. et al. 2014](http://www.ncbi.nlm.nih.gov/pubmed/25135958)  
 11. [Gill BJ. et al. 2014](http://www.ncbi.nlm.nih.gov/pubmed/25114226)  
+11. [Gorovets D. et al. 2012](http://www.ncbi.nlm.nih.gov/pubmed/22415316)  
+
 
 ### Data processing  
 * Affymetrix expression array analyses were completed in R using the [Bioconductor](http://bioconductor.org) suite. The [‘affy’](http://www.bioconductor.org/packages/release/bioc/manuals/affy/man/affy.pdf) package was used for robust multi-array average normalization followed by quantile normalization. RNA-seq data (TCGA Lgg dataset) and copy number alteration (TCGA GBM and Lgg datasets) were downloaded from the [cBioPortal](http://www.cbioportal.org/public-portal/index.do).  
