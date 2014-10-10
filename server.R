@@ -4,7 +4,7 @@ library(weights)
 library(ggplot2)
 library(gridExtra)
 library(rCharts)
-library(shinysky)
+# library(shinysky)
 library(dplyr)
 library(GSVA)
 

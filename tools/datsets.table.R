@@ -195,6 +195,19 @@ tfoot {color:gray; font-size:6px; text-align: right;}
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
      </tr>
+     <td class="tg-031e">Nutt</td>
+     <td class="tg-s6z2">0</td>
+     <td class="tg-s6z2">22</td>
+     <td class="tg-s6z2">28</td>
+     <td class="tg-s6z2"></td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
+     </tr>
     <tfoot>
     <tr>
     <td colspan="8">* more than one sample for each patients (MRI non-enhancing and contranst-enhancing)</td>
