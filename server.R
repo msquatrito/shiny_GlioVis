@@ -25,7 +25,8 @@ plotList <- list("TCGA GBM" = c("Histology", "Copy number", "Subtype","Recurrenc
                  "Reifenberger" = c("Subtype"),
                  "Bao" = c("Histology", "Subtype", "Recurrence"),
                  "Gill" = c("Histology", "Subtype"),
-                 "Gorovets" = c("Histology", "Grade", "Subtype"))
+                 "Gorovets" = c("Histology", "Grade", "Subtype"),
+                 "Nutt" = c("Histology", "Subtype"))
 gbm.tcga <- readRDS("data/TCGA.GBM.Rds")
 lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
 rembrandt <- readRDS("data/Rembrandt.Rds")
@@ -37,6 +38,7 @@ reifenberger <- readRDS("data/Reifenberger.Rds")
 bao <- readRDS("data/Bao.Rds")
 gill <- readRDS("data/Gill.Rds")
 gorovets <- readRDS("data/Gorovets.Rds")
+nutt <- readRDS("data/Nutt.Rds")
 subtype_list <- readRDS("data/subtype_list.Rds")
 
 #######################################
@@ -60,7 +62,8 @@ shinyServer(
              "Reifenberger" = reifenberger,
              "Bao" = bao,
              "Gill" = gill,
-             "Gorovets" = gorovets)
+             "Gorovets" = gorovets,
+             "Nutt" = nutt)
     })
     
     #' Switch the datset for the correlation
@@ -76,7 +79,8 @@ shinyServer(
              "Reifenberger" = reifenberger,
              "Bao" = bao,
              "Gill" = gill,
-             "Gorovets"= gorovets)
+             "Gorovets"= gorovets,
+             "Nutt" = nutt)
     })
     
     #' Expression data
