@@ -78,7 +78,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                     sidebarLayout(
                       sidebarPanel(width = 3,
                                    selectInput(inputId = "datasetCor", label = h4("Dataset"),
-                                               choices = c("TCGA GBM", "TCGA Lgg", "Rembrandt", "Gravendeel", "Phillips", "Murat", "Freije", "Reifenberger", "Bao", "Gill", "Gorovets","Nutt"),
+                                               choices = datasets,
                                                selected = "TCGA GBM", selectize = TRUE),
                                    br(),
                                    selectInput(inputId = "histologyCorrTable", label = h4("Histology:"), choices = ""),
