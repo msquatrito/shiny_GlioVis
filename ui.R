@@ -1,5 +1,4 @@
 library(shiny)
-# library(shinysky)
 source("global.R")
 datasets <- c("TCGA GBM", "TCGA Lgg", "Rembrandt", "Gravendeel", "Phillips", "Murat", "Freije", 
               "Reifenberger", "Bao", "Gill", "Gorovets","Nutt")

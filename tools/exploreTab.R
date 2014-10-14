@@ -13,9 +13,10 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                     choices = datasets,
                                     selected = "TCGA GBM", selectize = TRUE),
                         br(),
-                        selectizeInput(inputId = "gene", label = h4("Gene"), choices = NULL, selected = NULL,
-                                       options = list(placeholder = "Enter gene, eg: EGFR", plugins = list('restore_on_backspace'))),
-                        
+                        conditionalPanel(
+                          condition = "input.tabCorr == '2genes'",
+                          selectizeInput(inputId = "gene", label = h4("Gene"), choices = NULL, selected = NULL, 
+                                         options = list(placeholder = "Enter gene, eg: EGFR", plugins = list('restore_on_backspace')))),
                         conditionalPanel(
                           condition = "input.tab1 == 1",
                           br(),
@@ -53,14 +54,14 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                         conditionalPanel(
                           condition = "input.tab1 == 2",
                           br(),
-                          selectInput(inputId = "histologySurv", label = h5("Histology:"), choices = ""),
+                          selectInput(inputId = "histologySurv", label = h4("Histology:"), choices = ""),
                           conditionalPanel(
                             condition = "input.histologySurv == 'GBM'",
                             checkboxInput(inputId = "gcimpSurv", label = "Exclude G-CIMP samples", value = FALSE)
                           ),
                           conditionalPanel(
                             condition = "input.histologySurv == 'GBM'",
-                            selectInput(inputId = "subtypeSurv", label = h5("Subtype:"), 
+                            selectInput(inputId = "subtypeSurv", label = h4("Subtype:"), 
                                         choices = c("All", "Classical", "Mesenchymal", "Neural", "Proneural","G-CIMP"))
                           ),
                           hr(),
@@ -88,17 +89,24 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                           )
                         ),
                         conditionalPanel(
-                          condition = "input.tab1 == 3",
+                          condition = "input.tab1 == 3 & input.tabCorr == '2genes'",
                           br(),
                           selectizeInput(inputId = "gene2", label = h4("Gene 2"), choices ="", 
-                                         options = list(placeholder = "Enter gene 2, eg: SOCS2", plugins = list('restore_on_backspace'))),
+                                         options = list(placeholder = "Enter gene 2, eg: SOCS2", plugins = list('restore_on_backspace')))),
+                        conditionalPanel(
+                          condition = "input.tab1 == 3 & input.tabCorr == 'geneslist'",
+                          selectizeInput(inputId = "genelist", label = h4("Genes list"), choices ="", multiple = TRUE,
+                                         options = list(placeholder = "Enter genes", plugins = list('restore_on_backspace')))),
+                        conditionalPanel(
+                          condition = "input.tab1 == 3",  
                           hr(),
-                          selectInput(inputId = "histologyCorr", label = h5("Histology:"), choices = ""),
+                          selectInput(inputId = "histologyCorr", label = h4("Histology:"), choices = ""),
                           conditionalPanel(
                             condition = "input.histologyCorr == 'GBM'",
-                            selectInput(inputId = "subtype", label = h5("Subtype (GBM):"), 
-                                        choices = c("All", "Classical", "Mesenchymal", "Neural", "Proneural","G-CIMP"))
-                          ),
+                            selectInput(inputId = "subtype", label = h4("Subtype (GBM):"), 
+                                        choices = c("All", "Classical", "Mesenchymal", "Neural", "Proneural","G-CIMP")))),
+                        conditionalPanel(
+                          condition = "input.tab1 == 3 & input.tabCorr == '2genes'",
                           hr(),
                           h5("Statistic:"),
                           checkboxInput(inputId = "statCorr", label = "Pearson's correlation", value = FALSE),
@@ -110,6 +118,11 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                        choices = c("None" = "none", "Histology" = "Histology", "Subtype" = "Subtype")),
                           hr(),
                           downloadButton(outputId = "downloadcorrPlot", label = "Download plot")
+                        ),
+                        conditionalPanel(
+                          condition = "input.tab1 == 3 & input.tabCorr == 'geneslist'",
+                        hr(),
+                        downloadButton(outputId = "downloadpairsPlot", label = "Download plot")
                         )
            ),
            
@@ -166,11 +179,20 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                          ),
                          
                          tabPanel(title = "Correlations", icon = icon("list-alt"),  value = 3,
-                                  plotOutput(outputId = "corrPlot"), 
-                                  br(),
-                                  conditionalPanel(
-                                    condition = "input.statCorr",
-                                    verbatimTextOutput(outputId = "corrTest")
+                                  tabsetPanel(id = "tabCorr",
+                                              tabPanel(title = "2-Genes",  value = "2genes",
+                                                       plotOutput(outputId = "corrPlot"), 
+                                                       br(),
+                                                       conditionalPanel(
+                                                         condition = "input.statCorr",
+                                                         verbatimTextOutput(outputId = "corrTest")
+                                                       )
+                                              ),
+                                              tabPanel(title = "Multiple-Genes", value = "geneslist",
+                                                       plotOutput(outputId = "pairsPlot")
+#                                                        ,
+#                                                        verbatimTextOutput(outputId = "pairsData")
+                                              )
                                   )
                          ),
                          

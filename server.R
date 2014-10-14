@@ -4,9 +4,9 @@ library(weights)
 library(ggplot2)
 library(gridExtra)
 library(rCharts)
-# library(shinysky)
 library(dplyr)
 library(GSVA)
+library(GGally)
 
 source("global.R")
 `%then%` <- shiny:::`%OR%`
@@ -101,7 +101,14 @@ shinyServer(
     #' Text matching with the gene names list
     updateSelectizeInput(session, inputId = "gene", choices = gene_names, server = TRUE)
     updateSelectizeInput(session, inputId = "geneCor", choices = gene_names, server = TRUE)
-    updateSelectizeInput(session, inputId = "gene2", choices = gene_names, server = TRUE) 
+    updateSelectizeInput(session, inputId = "gene2", choices = gene_names, server = TRUE)
+    updateSelectizeInput(session, inputId = "genelist", choices = gene_names, server = TRUE) 
+    
+    #' Required for the conditional panel 'geneslist' to work correctly
+    observe({
+      if(input$tab1 != 3)
+      updateTabsetPanel(session, inputId = "tabCorr", selected = "2genes")
+    })
     
     #' When switching datasets, if the selected plot is not available it will choose the first plot of the list
     plotSelected <- reactive ({
@@ -455,7 +462,7 @@ shinyServer(
     })
     
     #' Generate the correlation plot
-    output$corrPlot <-renderPlot({    
+    output$corrPlot <- renderPlot({    
       validate(
         need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
           need(input$gene %in% names(exprs()),"Gene not available for this dataset"),
@@ -494,6 +501,50 @@ shinyServer(
         pdf(file)
         myCorggPlot (exprs(), input$gene, input$gene2, input$histologyCorr, input$subtype, 
                      colorByInput(), separateByInput())
+        dev.off()
+      }
+    )
+    
+    pairsData <- reactive({
+      validate(
+        # Need two or more genes
+        need(length(input$genelist) > 1, "Please enter 2 or more genes in the panel on the left")%then%
+          need(input$genelist %in% names(exprs()),"Gene not available for this dataset")%then%         
+          # Trying to avoid an error when switching datasets in case the choosen histology is not available.
+          need(input$histologyCorr %in% c("All",histo()),"")
+      )
+      df <- exprs()
+      if (input$histologyCorr != "All") {
+        df <- subset (df, Histology == input$histologyCorr)
+      } 
+      if (input$histologyCorr == "GBM" & input$subtype != "All") {
+        df <- subset (df, Subtype == input$subtype)
+      }
+      df <- df[ ,input$genelist] 
+    })
+    
+    #' Generate the pairs plot
+    output$pairsPlot <- renderPlot({
+#       myPairsPlot(pairsData())
+      ggpairs(pairsData(),lower=list(continuous="smooth", params=c(alpha=0.5)))    
+    })
+    
+#     #' Generate an HTML table view of the correlation table 
+#     output$pairsData <- renderPrint({
+#       if (length(input$genelist) < 2)
+#         return()
+#       pairs.table <- rcorr(as.matrix(pairsData()))
+#       pairs.table
+#     })
+    
+    #' Download the pairs plot
+    output$downloadpairsPlot <- downloadHandler(
+      filename = function() {
+        paste(input$dataset, "_pairsPlot.pdf", sep = "")
+      },
+      content = function(file) {
+        pdf(file)
+        print(ggpairs(pairsData(),lower=list(continuous="smooth", params=c(alpha=0.5)))) 
         dev.off()
       }
     )
@@ -650,7 +701,7 @@ shinyServer(
     
     #' Rerndering the subtype call as a data table
     output$svm <- renderDataTable({ 
-      if (is.null(input$upFile) | input$goSvm == 0)
+      if (is.null(input$upFile) || input$goSvm == 0)
         return(NULL)
       input$goSvm
       isolate({
@@ -689,7 +740,7 @@ shinyServer(
     
     #' Rerndering the subtype call as a data table
     output$gsva <- renderDataTable({ 
-      if (is.null(input$upFile) | input$goGsva == 0)
+      if (is.null(input$upFile) || input$goGsva == 0)
         return(NULL)
       input$goGsva
       isolate({
@@ -707,9 +758,16 @@ shinyServer(
       }
     )
     
+    #' Correlation method
+    corrMethod <- reactive({
+      switch(input$corrMethod,
+             "Spearman" = "spearman",
+             "Pearson" = "pearson")
+    })
+    
     #' Generate the correlation table ##  corFast works locally but not on shinyapps.io
     corr <- reactive ({
-      corr <- getCorr(datasetInputCor()[["expr"]], input$geneCor, input$histologyCorrTable)
+      corr <- getCorr(datasetInputCor()[["expr"]], input$geneCor, input$histologyCorrTable, corrMethod())
       corr <- corr[order(-abs(corr$r)), ]
       corr
     })
@@ -735,7 +793,7 @@ shinyServer(
     
     #' Generate an HTML table view of the correlation table 
     output$corrData <- renderDataTable({
-      if (input$geneCor == "" | input$goCor == 0)
+      if (input$geneCor == "" || input$goCor == 0)
         return()
       validate(
         # Not all genes are available for all the dataset

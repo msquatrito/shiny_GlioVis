@@ -90,6 +90,8 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                    br(),
                                    selectInput(inputId = "sign", label = h5("Signficance:"), choices = c(0.05, 0.01)),
                                    br(),
+                                   radioButtons(inputId = "corrMethod",label = h5("Method:"), choices = c("Pearson", "Spearman")),
+                                   hr(),
                                    actionButton(inputId = "goCor", label = "Get data", styleclass = "primary"), # Not working correctly, the second time 
                                    # it triggers after the gene is selected
                                    # probably need to use isolate()
