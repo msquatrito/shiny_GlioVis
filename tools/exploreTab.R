@@ -57,7 +57,8 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                           selectInput(inputId = "histologySurv", label = h4("Histology:"), choices = ""),
                           conditionalPanel(
                             condition = "input.histologySurv == 'GBM'",
-                            checkboxInput(inputId = "gcimpSurv", label = "Exclude G-CIMP samples", value = FALSE)
+                            checkboxInput(inputId = "gcimpSurv", label = "Exclude G-CIMP samples", value = FALSE),
+                            br()
                           ),
                           conditionalPanel(
                             condition = "input.histologySurv == 'GBM'",
@@ -96,14 +97,15 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                         conditionalPanel(
                           condition = "input.tab1 == 3 & input.tabCorr == 'geneslist'",
                           selectizeInput(inputId = "genelist", label = h4("Genes list"), choices ="", multiple = TRUE,
-                                         options = list(placeholder = "Enter genes", plugins = list('restore_on_backspace')))),
+                                         options = list(placeholder = "Enter genes", plugins = list('remove_button')))),
                         conditionalPanel(
                           condition = "input.tab1 == 3",  
-                          hr(),
+                          br(),
                           selectInput(inputId = "histologyCorr", label = h4("Histology:"), choices = ""),
                           conditionalPanel(
                             condition = "input.histologyCorr == 'GBM'",
-                            selectInput(inputId = "subtype", label = h4("Subtype (GBM):"), 
+                            br(),
+                            selectInput(inputId = "subtype", label = h4("Subtype:"), 
                                         choices = c("All", "Classical", "Mesenchymal", "Neural", "Proneural","G-CIMP")))),
                         conditionalPanel(
                           condition = "input.tab1 == 3 & input.tabCorr == '2genes'",
@@ -158,10 +160,6 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                        plotOutput(outputId = "survPlot", width = 500 , height = 400)
                                               ),
                                               tabPanel(title = "HR plot", value = "hr",
-                                                       div(class = "busy",  
-                                                           p("Calculating, please wait"),
-                                                           img(src="ajax-loader.gif")
-                                                       ),
                                                        column(width = 9,  
                                                               wellPanel(
                                                                 helpText(HTML("<b>IMPORTANT: </b> Currently active only for GBM samples.")),
@@ -169,6 +167,10 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                                               to update the survival plot. The blue line represents the current selection.")),
                                                                 br(),
                                                                 checkboxInput(inputId = "quantile", label = "Show quantiles", value = TRUE),
+                                                                div(class = "busy",  
+                                                                    p("Calculating, please wait"),
+                                                                    img(src="ajax-loader.gif")
+                                                                ),
                                                                 plotOutput(outputId = "hazardPlot", clickId = "hrClick", width = 500 , height = 400)
                                                               ),
                                                               plotOutput(outputId = "kmPlot", width = 500 , height = 400)

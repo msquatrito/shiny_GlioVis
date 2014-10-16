@@ -526,7 +526,7 @@ shinyServer(
     #' Generate the pairs plot
     output$pairsPlot <- renderPlot({
 #       myPairsPlot(pairsData())
-      ggpairs(pairsData(),lower=list(continuous="smooth", params=c(alpha=0.5)))    
+      ggpairs(pairsData(),lower=list(continuous="smooth", params=list(alpha=0.5)))  
     })
     
 #     #' Generate an HTML table view of the correlation table 
