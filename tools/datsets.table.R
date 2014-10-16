@@ -206,7 +206,7 @@ tfoot {color:gray; font-size:6px; text-align: right;}
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">✔</td>
-     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
      </tr>
     <tfoot>
     <tr>
