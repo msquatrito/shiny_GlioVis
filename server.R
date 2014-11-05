@@ -7,6 +7,7 @@ library(rCharts)
 library(dplyr)
 library(GSVA)
 library(GGally)
+library(shinysky)
 
 source("global.R")
 `%then%` <- shiny:::`%OR%`
@@ -17,7 +18,7 @@ source("global.R")
 gene_names <- readRDS("data/gene_names.Rds")
 plotList <- list("TCGA GBM" = c("Histology", "Copy number", "Subtype","Recurrence"),
                  "TCGA Lgg" = c("Histology", "Grade", "Copy number", "Subtype"),
-                 "Rembrandt" = c("Histology", "Grade", "Subtype", "Recurrence"),
+                 "Rembrandt" = c("Histology", "Grade", "Subtype"),
                  "Gravendeel" = c("Histology", "Grade", "Subtype"),
                  "Phillips" = c("Grade", "Subtype", "Recurrence"),
                  "Murat" = c("Histology", "Subtype", "Recurrence"),
@@ -138,10 +139,10 @@ shinyServer(
     
     #' When switching datasets for surv, if the selected histo is not available it will choose GBM (the last histo of the list)
     histoSurvSelected <- reactive ({
-      if (input$histologySurv %in% histo()){
+      if (input$histologySurv %in% c("All", histo())){
         input$histologySurv
       } else {
-        tail(histo(), n=1)
+        "All"
       }
     })
     
@@ -156,7 +157,7 @@ shinyServer(
     
     observe({
       # This will change the value of input$histologySurv, based on histological group available for that dataset  
-      updateSelectInput(session, inputId = "histologySurv", choices = histo(), selected = histoSurvSelected())
+      updateSelectInput(session, inputId = "histologySurv", choices = c("All", histo()), selected = histoSurvSelected())
       # This will change the value of input$histologyCorr, based on histological group available for that dataset
       updateSelectInput(session, inputId = "histologyCorr", choices = c("All", histo()), selected = histoCorrSelected())
     })
@@ -194,6 +195,9 @@ shinyServer(
       }
       data <- data.frame(mRNA, group, pDatas()[,-c(1,6,7)]) # To exclude sample name and survival data
       data <- subset(data, !is.na(group))
+      if (input$primary& any(!is.na(data$Recurrence))) {
+        data <- subset (data, Recurrence == "Primary")
+      }
       data
     })
     
@@ -217,6 +221,16 @@ shinyServer(
       # I needed to create the ggboxPlot function (see helper file) to use it in the output$downloadPlot
       ggboxPlot(data = data (), scale = input$scale, stat = input$stat, colBox = input$colBox, 
                 colStrip = input$colStrip, colorPoints = input$colorP, bw = input$bw)  
+    })
+    
+      
+    #' Tukey post-hoc test
+    output$summary <- renderPrint(width = 300,{    
+      data <- data()
+      data.frame(data%>%
+                    group_by(group)%>%
+                    summarise(N= n(),mean = mean(mRNA, na.rm=T), sd = sd(mRNA, na.rm=T)))
+
     })
     
     #' Tukey post-hoc test
@@ -269,7 +283,7 @@ shinyServer(
     #' Download the Plot
     output$downloadPlot <- downloadHandler(
       filename = function() {
-        paste(input$gene, "_", input$dataset, "_", input$plotType, ".", downloadPlotFileType(), sep = "")
+        paste(input$gene, "_", input$dataset, "_", input$plotTypeSel, ".", downloadPlotFileType(), sep = "")
       },     
       # The argument content below takes filename as a function and returns what's printed to it.
       content = function(con) {
@@ -304,6 +318,9 @@ shinyServer(
         df <- subset (df, Histology == "GBM" & Recurrence == "Primary")
       }
       df <- subset (df, Histology == "GBM")
+      if (input$subtypeSurv != "All") {
+        df <- subset (df, Subtype == input$subtypeSurv)
+      }
       # exclude G-CIMP is selected
       if (input$gcimpSurv){
         df <- subset (df, Subtype != "G-CIMP")
@@ -378,17 +395,23 @@ shinyServer(
         need(input$dataset!= "Bao" & input$dataset!= "Reifenberger" & input$dataset!= "Gill", "")%then%
           need(input$gene != "", "")%then%
           need(input$gene %in% names(exprs()),""),
-        need(input$histologySurv %in% histo(),""),
+        need(input$histologySurv %in% c("All", histo()),""),
         need(input$histologySurv != "Non-tumor","")
       )     
-      df <- subset(exprs(), Histology == input$histologySurv)
+      df <- exprs()
+      df <- subset(df, !is.na(df$status))
+      if (input$histologySurv != "All"){
+        df <- subset(exprs(), Histology == input$histologySurv)
+      }
       if (input$histologySurv == "GBM" & input$subtypeSurv != "All") {
         df <- subset (df, Subtype == input$subtypeSurv)
       }
       if (input$gcimpSurv){
         df <- subset (df, Subtype != "G-CIMP")
       }
-      df <- subset(df, !is.na(df$status))
+      if (input$primarySurv & any(!is.na(df$Recurrence))) {
+        df <- subset (df, Recurrence == "Primary")
+      }
       mRNA <- df[ ,input$gene]
       mRNA.values <- round(mRNA[!is.na(mRNA)],2)
       # Generate a vector of continuos values, excluding the first an last value
@@ -415,10 +438,10 @@ shinyServer(
     #' Create a Kaplan Meier plot with cutoff based on quantiles or manual selection
     output$survPlot <- renderPlot({     
       survNeed ()
-      validate(need(input$histologySurv %in% histo(),""))   
+      validate(need(input$histologySurv %in% c("All", histo()),""))   
       # Use try because I need to suppress a message throwed the first time manual cutoff is selected
       try(survivalPlot (exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, numeric = input$mInput,
-                        subtype = input$subtypeSurv, gcimp = input$gcimpSurv), silent = TRUE) 
+                        subtype = input$subtypeSurv, gcimp = input$gcimpSurv, primary = input$primarySurv), silent = TRUE) 
     })
     
     #' Download the survPlot
@@ -793,16 +816,11 @@ shinyServer(
     
     #' Generate an HTML table view of the correlation table 
     output$corrData <- renderDataTable({
-      if (input$geneCor == "" || input$goCor == 0)
-        return()
       validate(
         # Not all genes are available for all the dataset
-        need(input$geneCor %in% names(exprs()),"Gene not available for this dataset")
-      )  
-      input$goCor
-      isolate({  # https://groups.google.com/forum/#!searchin/shiny-discuss/submit$20button/shiny-discuss/3eXElZxZoaM/QtGCl-4qXzsJ      
+        need(input$geneCor %in% names(datasetInputCor()[["expr"]]),"Gene not available for this dataset")
+      )   
       corr.table <- corrData()
-      })
     }, options = list(orderClasses = TRUE))
     
     #' Download the correlation table 

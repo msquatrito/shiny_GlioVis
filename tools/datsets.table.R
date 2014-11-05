@@ -79,7 +79,7 @@ tfoot {color:gray; font-size:6px; text-align: right;}
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
-     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
      </tr>

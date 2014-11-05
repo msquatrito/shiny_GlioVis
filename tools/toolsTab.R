@@ -85,17 +85,17 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                    br(),
                                    selectizeInput(inputId = "geneCor", label = h4("Gene"), choices = NULL, selected = NULL,
                                                   options = list(placeholder = "Enter gene, eg: EGFR", plugins = list('restore_on_backspace'))),
+                                   div(class = "busy",  
+                                       p("Calculating, please wait"),
+                                       img(src="ajax-loader.gif") 
+                                   ),
                                    hr(),
                                    selectInput(inputId = "cor", label = h5("Correlation:"), choices = c("All", "Positive", "Negative")),
                                    br(),
                                    selectInput(inputId = "sign", label = h5("Signficance:"), choices = c(0.05, 0.01)),
                                    br(),
-                                   radioButtons(inputId = "corrMethod",label = h5("Method:"), choices = c("Pearson", "Spearman")),
+                                   selectInput(inputId = "corrMethod",label = h5("Method:"), choices = c("Pearson", "Spearman")),
                                    hr(),
-                                   actionButton(inputId = "goCor", label = "Get data", styleclass = "primary"), # Not working correctly, the second time 
-                                   # it triggers after the gene is selected
-                                   # probably need to use isolate()
-                                   br(),
                                    conditionalPanel(
                                      condition = "output.corrData",
                                      br(),

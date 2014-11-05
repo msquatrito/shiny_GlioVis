@@ -21,6 +21,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                           condition = "input.tab1 == 1",
                           br(),
                           selectInput(inputId = "plotTypeSel", label = h4("Plot type"), choices = "", selectize = TRUE),
+                          checkboxInput(inputId = "primary", label = "Primary samples only", value = FALSE),
                           br(),
                           helpPopup(title = "Help me pleaseeeeee", content = includeMarkdown("tools/help.Rmd"), 
                                     placement = "bottom", trigger = "click"),
@@ -36,6 +37,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                           ),
                           hr(),
                           h5("Statistic:"),
+                          checkboxInput(inputId = "statSummary", label = "Summary statistics", value = FALSE),
                           checkboxInput(inputId = "statTable", label = "Tukey's HSD", value = FALSE),
                           checkboxInput(inputId = "tTest", label = "Pairwise t tests", value = FALSE),
                           hr(),
@@ -58,6 +60,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                           conditionalPanel(
                             condition = "input.histologySurv == 'GBM'",
                             checkboxInput(inputId = "gcimpSurv", label = "Exclude G-CIMP samples", value = FALSE),
+                            checkboxInput(inputId = "primarySurv", label = "Exclude Recurrent samples", value = FALSE),
                             br()
                           ),
                           conditionalPanel(
@@ -139,15 +142,21 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                   plotOutput(outputId = "plot"),
                                   br(),
                                   conditionalPanel(
+                                    condition = "input.statSummary",
+                                    strong("Summary statistics"),
+                                    verbatimTextOutput(outputId = "summary"),
+                                    hr()
+                                  ),
+                                  conditionalPanel(
                                     condition = "input.statTable",
                                     strong("Tukey's Honest Significant Difference (HSD)"),
                                     helpText("The table shows the difference between pairs, the 95% confidence interval and the p-value of the pairwise comparisons:"),
                                     checkboxInput(inputId = "stat", label = "Show the results in the plot", value = FALSE),
-                                    verbatimTextOutput(outputId = "tukeyTest")
+                                    verbatimTextOutput(outputId = "tukeyTest"),
+                                    hr()
                                   ),
                                   conditionalPanel(
                                     condition = "input.tTest",
-                                    br(),
                                     strong("Pairwise t tests"),
                                     helpText("Pairwise comparisons between group levels with corrections for multiple testing (p-values with Bonferroni correction):"),
                                     verbatimTextOutput(outputId = "pairwiseTtest")
@@ -158,18 +167,19 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                   tabsetPanel(id = "tabSurv",
                                               tabPanel(title = "Km plot",  value = "km",
                                                        plotOutput(outputId = "survPlot", width = 500 , height = 400)
-                                              ),
+                                              ),                                              
                                               tabPanel(title = "HR plot", value = "hr",
-                                                       column(width = 9,  
+                                                       column(width = 9,
                                                               wellPanel(
                                                                 helpText(HTML("<b>IMPORTANT: </b> Currently active only for GBM samples.")),
                                                                 helpText(HTML("<b>Note: </b> This is an interactive plot, click on a specific mRNA expression value 
                                                                               to update the survival plot. The blue line represents the current selection.")),
                                                                 br(),
                                                                 checkboxInput(inputId = "quantile", label = "Show quantiles", value = TRUE),
+                                                                # This busy gif does not activate when switching tab
                                                                 div(class = "busy",  
                                                                     p("Calculating, please wait"),
-                                                                    img(src="ajax-loader.gif")
+                                                                    img(src="ajax-loader.gif") 
                                                                 ),
                                                                 plotOutput(outputId = "hazardPlot", clickId = "hrClick", width = 500 , height = 400)
                                                               ),
@@ -208,7 +218,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                     ),
                                     tabPanel(title = "Summary plots",
                                              splitLayout(
-                                               uiOutput(outputId = "survPlots", inline = TRUE),# inline = TRUE not working
+                                               uiOutput(outputId = "survPlots", inline = TRUE), # inline = TRUE not working
                                                uiOutput(outputId = "piePlots", inline = TRUE) 
                                              )
                                     )

@@ -105,12 +105,15 @@ hazardPlot <- function (HRdata, quantile) {
 ###################
 ## Survival plot ##
 ###################
-survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FALSE) {
-  # Select the samples, for the specified histology,that has survival data 
-  df <- subset (df, Histology == group & Histology != "Non-tumor" & !is.na(status)) 
+survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FALSE, primary = FALSE) {
+  df <- subset(df, !is.na(df$status))
+  # Select the samples, for the specified histology,that has survival data
+  if (group != "All") {
+    df <- subset (df, Histology == group) 
+  }
   # For GBM, select only primary tumors
-  if (group == "GBM" & any(!is.na(df$Recurrence))) {
-    df <- subset (df, Histology == "GBM" & Recurrence == "Primary")
+  if (primary & any(!is.na(df$Recurrence))) {
+    df <- subset (df, Recurrence == "Primary")
   }
   # Select a specific subtype
   if (group == "GBM" & subtype != "All") {
