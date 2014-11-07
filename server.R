@@ -224,7 +224,7 @@ shinyServer(
     })
     
       
-    #' Tukey post-hoc test
+    #' Summary statistic
     output$summary <- renderTable({    
       data <- data()
       stat <- data.frame(data%>%
