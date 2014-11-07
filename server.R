@@ -7,7 +7,7 @@ library(rCharts)
 library(dplyr)
 library(GSVA)
 library(GGally)
-library(shinysky)
+# library(shinysky)
 
 source("global.R")
 `%then%` <- shiny:::`%OR%`
@@ -225,16 +225,19 @@ shinyServer(
     
       
     #' Tukey post-hoc test
-    output$summary <- renderPrint(width = 300,{    
+    output$summary <- renderTable({    
       data <- data()
-      data.frame(data%>%
-                    group_by(group)%>%
-                    summarise(N= n(),mean = mean(mRNA, na.rm=T), sd = sd(mRNA, na.rm=T)))
+      stat <- data.frame(data%>%
+                           dplyr::group_by(group)%>%
+                           dplyr::summarise(count = n(),mean = mean(mRNA, na.rm=T), sd = sd(mRNA, na.rm=T)))
+      row.names(stat) <- stat$group
+      stat <- stat[,-1]
+      stat
 
     })
     
     #' Tukey post-hoc test
-    output$tukeyTest <- renderPrint(width = 800, {    
+    output$tukeyTest <- renderTable({    
       data <- data()
       tukey <- data.frame(TukeyHSD(aov(mRNA ~ group, data = data))[[1]])
       tukey$Significance <- as.factor(starmaker(tukey$p.adj, p.levels = c(.001, .01, .05, 1), symbols=c("***", "**", "*", "ns")))
@@ -243,7 +246,7 @@ shinyServer(
     })
     
     #' Pairwise t test
-    output$pairwiseTtest <- renderPrint({     
+    output$pairwiseTtest <- renderTable({     
       data <- data()
       pttest <- pairwise.t.test(data$mRNA, data$group, na.rm= TRUE, p.adj = "bonferroni", paired = FALSE)[[3]]
       pttest
@@ -492,7 +495,7 @@ shinyServer(
         need(input$gene2 != "", "Please enter Gene 2")%then%
           need(input$gene2 %in% names(exprs()),"Gene not available for this dataset"),
         # Trying to avoid an error when switching datasets in case the choosen histology is not available.
-        need(input$histologySurv %in% histo(),"")
+        need(input$histologyCorr %in% c("All",histo()),"")
       )
       if (input$dataset == "TCGA Lgg") {
         validate(need(input$colorBy != "Subtype" & input$separateBy != "Subtype", "Subtype available for GBM samples only")) 
@@ -553,7 +556,7 @@ shinyServer(
     })
     
 #     #' Generate an HTML table view of the correlation table 
-#     output$pairsData <- renderPrint({
+#     output$pairsData <- renderTable({
 #       if (length(input$genelist) < 2)
 #         return()
 #       pairs.table <- rcorr(as.matrix(pairsData()))

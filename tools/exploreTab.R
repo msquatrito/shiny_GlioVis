@@ -144,7 +144,8 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                   conditionalPanel(
                                     condition = "input.statSummary",
                                     strong("Summary statistics"),
-                                    verbatimTextOutput(outputId = "summary"),
+                                    br(),
+                                    tableOutput(outputId = "summary"),
                                     hr()
                                   ),
                                   conditionalPanel(
@@ -152,14 +153,14 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                     strong("Tukey's Honest Significant Difference (HSD)"),
                                     helpText("The table shows the difference between pairs, the 95% confidence interval and the p-value of the pairwise comparisons:"),
                                     checkboxInput(inputId = "stat", label = "Show the results in the plot", value = FALSE),
-                                    verbatimTextOutput(outputId = "tukeyTest"),
+                                    tableOutput(outputId = "tukeyTest"),
                                     hr()
                                   ),
                                   conditionalPanel(
                                     condition = "input.tTest",
                                     strong("Pairwise t tests"),
                                     helpText("Pairwise comparisons between group levels with corrections for multiple testing (p-values with Bonferroni correction):"),
-                                    verbatimTextOutput(outputId = "pairwiseTtest")
+                                    tableOutput(outputId = "pairwiseTtest")
                                   )
                          ),
                          
@@ -203,7 +204,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                               tabPanel(title = "Multiple-Genes", value = "geneslist",
                                                        plotOutput(outputId = "pairsPlot")
 #                                                        ,
-#                                                        verbatimTextOutput(outputId = "pairsData")
+#                                                        tableOutput(outputId = "pairsData")
                                               )
                                   )
                          ),
