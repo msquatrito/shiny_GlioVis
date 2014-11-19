@@ -278,9 +278,6 @@ myCorggPlot <- function (df, gene1, gene2, histo = "All", subtype = "All", color
 ########################################
 # Use to generate summary data for the correlation analysis
 myCorrTest <- function (df, gene1, gene2, histo = "All", subtype = "All", colorBy = "none", separateBy = "none",...) {
-  if (!gene1%in%names(df) | !gene2%in%names(df)) {
-    stop ("Incorrect gene entry or gene not available for this dataset")
-  }
   if (histo != "All") {
     df <- subset (df, Histology == histo)
   } else {

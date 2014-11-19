@@ -41,6 +41,7 @@ gill <- readRDS("data/Gill.Rds")
 gorovets <- readRDS("data/Gorovets.Rds")
 nutt <- readRDS("data/Nutt.Rds")
 subtype_list <- readRDS("data/subtype_list.Rds")
+core.samples <- readRDS("data/TCGA.core.samples.Rds")
 
 #######################################
 ############## server.R  ##############
@@ -193,7 +194,7 @@ shinyServer(
       } else {
         group <- exprs()[ ,plotSelected()]
       }
-      data <- data.frame(mRNA, group, pDatas()[,-c(1,6,7)]) # To exclude sample name and survival data
+      data <- data.frame(mRNA, group, subset(pDatas(),select = -c(Sample,survival,status))) # To exclude sample name and survival data
       data <- subset(data, !is.na(group))
       if (input$primary& any(!is.na(data$Recurrence))) {
         data <- subset (data, Recurrence == "Primary")
@@ -219,7 +220,7 @@ shinyServer(
         validate(need(input$colorP %in% names(data()[,-c(1:2)]),""))
       }
       # I needed to create the ggboxPlot function (see helper file) to use it in the output$downloadPlot
-      ggboxPlot(data = data (), scale = input$scale, stat = input$stat, colBox = input$colBox, 
+      ggboxPlot(data = data (), scale = input$scale, stat = input$tukeyPlot, colBox = input$colBox, 
                 colStrip = input$colStrip, colorPoints = input$colorP, bw = input$bw)  
     })
     
@@ -293,7 +294,7 @@ shinyServer(
         # Gets the name of the function to use from the downloadFileType reactive element.
         plotFunction <- match.fun(downloadPlotFileType())
         plotFunction(con, width = downloadPlotWidth(), height = downloadPlotHeight())
-        ggboxPlot(data = data (), scale = input$scale, stat = input$stat, colBox = input$colBox, 
+        ggboxPlot(data = data (), scale = input$scale, stat = input$tukeyPlot, colBox = input$colBox, 
                   colStrip = input$colStrip, colorPoints = input$colorP, bw = input$bw)  
         dev.off(which=dev.cur())
       }
@@ -531,6 +532,7 @@ shinyServer(
       }
     )
     
+    #' Multiple genes correlation
     pairsData <- reactive({
       validate(
         # Need two or more genes
@@ -575,7 +577,7 @@ shinyServer(
       }
     )
     
-    #' Generate an HTML table view of the data
+    #' Reactive function for an HTML table view of the data
     dataTable <- reactive({
       mRNA <- exprs()[ , input$gene, drop = FALSE]
       names(mRNA) <- paste0(input$gene,"_mRNA")
@@ -609,7 +611,7 @@ shinyServer(
     
     #' Generate a graphic summary of the dataset, using rCharts
     output$piePlots <- renderUI({
-      data <- pDatas()[,c("Histology","Grade","Recurrence","Subtype")]
+      data <- exprs()[,c("Histology","Grade","Recurrence","Subtype")]
       data <- data[,colSums(is.na(data)) < nrow(data)] # Removing unavailable (all NA) groups
       plot_output_list <- lapply(names(data), function(i) {
         plotname <- paste("plot", i, sep="")
@@ -620,7 +622,7 @@ shinyServer(
     })
     
     observe ({                                                               
-      data <- pDatas()[,c("Histology","Grade","Recurrence","Subtype")]
+      data <- exprs()[,c("Histology","Grade","Recurrence","Subtype")]
       data <- data[,colSums(is.na(data)) < nrow(data)]
       # Call renderChart for each one. 
       for (i in names(data)) {                                                    
@@ -643,7 +645,7 @@ shinyServer(
       validate(
         need(input$dataset!= "Bao" & input$dataset!= "Reifenberger" & input$dataset!= "Gill", "Sorry, no survival data are available for this dataset")
       )
-      df <- pDatas()[,1:7]
+      df <- exprs()[,1:7]
       df <- df[,colSums(is.na(df)) < nrow(df)] # Removing unavailable (all NA) groups
       df <- droplevels.data.frame(subset(df, Histology!="Non-tumor")) # Exclude normal sample, not displaying properly
       groups <- names(df)[!names(df) %in% c("Sample","status","survival")]
@@ -655,7 +657,7 @@ shinyServer(
     })  
     
     observe({   
-      df <- pDatas()[,1:7]
+      df <- exprs()[,1:7]
       df <- df[,colSums(is.na(df)) < nrow(df)] 
       df <- droplevels.data.frame(subset(df, Histology != "Non-tumor")) 
       groups <- names(df)[!names(df) %in% c("Sample","status","survival")]
@@ -679,7 +681,7 @@ shinyServer(
       }
     })
     
-    #' Reactive function to generate subtype call to pass to data table and download handler
+    #' Reactive function to generate SVM subtype call to pass to data table and download handler
     svm.call <- reactive ({
       # input$upFile will be NULL initially. After the user selects
       # and uploads a file, it will be a data frame with 'name',
@@ -694,6 +696,7 @@ shinyServer(
         train <- gorovets[["expr"]]
       }
       row.names(train) <- train[,"Sample"]
+      train <- train[core.samples,]
       train.exp <- data.frame(t(train[,-c(1:8)]))
       row.names(upData) <- upData[,"Sample"]
       upData <- upData [,-1]
@@ -717,9 +720,9 @@ shinyServer(
                   family="multinomial", # we are predicting 5 classes
                   prob.model=TRUE,  # We want a probability model included so we can give each predicted sample a score, not just a class
                   scale=FALSE)  # We already scaled before by mean-centering the data.
-      subtype.call <- as.matrix(predict(svm, t(df.learn)))
+      svm.subtype.call <- as.matrix(predict(svm, t(df.learn)))
       prob <- as.matrix(predict(svm, t(df.learn ), type="probabilities"))
-      svm.call <- data.frame(subtype.call, prob)
+      svm.call <- data.frame(svm.subtype.call, prob)
       rownames(svm.call) <- rownames(t(df.learn))
       svm.call[,"Sample"] <- rownames(svm.call)
       svm.call
@@ -744,7 +747,47 @@ shinyServer(
         write.csv(svm.call(), file)
       }
     )
+
+    #' Reactive function to generate k-nearest neighbour subtype call to pass to data table and download handler
+    knn.call <- reactive ({
+      inFile <- input$upFile
+      upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote)
+      if (input$tumorType == "gbm") {
+        train <- gbm.tcga[["expr"]]
+      } else if (input$tumorType == "lgg") {
+        train <- gorovets[["expr"]]
+      }
+      row.names(train) <- train[,"Sample"]
+      train <- train[core.samples,]
+      train.exp <- as.matrix(train[,-c(1:7)])
+      row.names(upData) <- upData[,"Sample"]
+      learn.exp <-as.matrix(upData [,-1])
+      # Common genes of the two datasets
+      genes <- intersect(colnames(train.exp), colnames(learn.exp))
+      pred <- knn(train = train.exp[,genes], test = learn.exp[,genes], cl =  train$Subtype, k = 5, prob=TRUE)
+      kn <- data.frame(Sample = row.names(upData), knn.subtype.call = pred, prob = attr(pred,"prob"))
+      kn
+    })
+      
+    #' Rerndering the knn subtype call as a data table
+    output$knn <- renderDataTable({ 
+      if (is.null(input$upFile) || input$goKnn == 0)
+        return(NULL)
+      input$goknn
+      isolate({
+        knn <- knn.call()
+      })
+    })
     
+    #' Download the knn subtype call
+    output$downloadKnn <- downloadHandler(
+      filename = function() {
+        paste("KNN_Subtype_Call.csv", sep="")
+      },
+      content = function(file) {
+        write.csv(knn.call(), file)
+      }
+    )  
     #' Reactive function to generate ssGSEA call to pass to data table and download handler
     gsva.call <- reactive ({
       inFile <- input$upFile
@@ -759,7 +802,7 @@ shinyServer(
       gsva_results <- gsva(expr=as.matrix(exprs), gset.idx.list = gene_list, method="ssgsea", rnaseq=FALSE,
                            min.sz=0, max.sz=10000, verbose=FALSE)
       subtype_scores <- t(gsva_results)
-      subtype_final <- data.frame(subtype_scores, Subtype = names(subtype_list)[apply(subtype_scores,1,which.max)], 
+      subtype_final <- data.frame(subtype_scores, gsea.subtype.call = names(subtype_list)[apply(subtype_scores,1,which.max)], 
                                   Sample = rownames(subtype_scores))
       subtype_final
     })
@@ -820,8 +863,9 @@ shinyServer(
     #' Generate an HTML table view of the correlation table 
     output$corrData <- renderDataTable({
       validate(
-        # Not all genes are available for all the dataset
-        need(input$geneCor %in% names(datasetInputCor()[["expr"]]),"Gene not available for this dataset")
+        need(input$geneCor != "", "Please, enter a gene name in the panel on the left")%then%
+          # Not all genes are available for all the dataset
+          need(input$geneCor %in% names(datasetInputCor()[["expr"]]),"Gene not available for this dataset")
       )   
       corr.table <- corrData()
     }, options = list(orderClasses = TRUE))
