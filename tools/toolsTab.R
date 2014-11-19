@@ -27,6 +27,11 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                    ),
                                    conditionalPanel(
                                      condition = "input.tabTools == 2",
+                                     actionButton(inputId = "goKnn", label = "Submit K-NN", styleclass = "primary"),
+                                     br()
+                                   ),
+                                   conditionalPanel(
+                                     condition = "input.tabTools == 3",
                                      actionButton(inputId = "goGsva", label = "Submit ssGSEA", styleclass = "primary"),
                                      br()
                                    )
@@ -51,7 +56,24 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                    dataTableOutput(outputId = "svm")
                           ),
                           
-                          tabPanel(title = "ssGSEA", id = "GSVA", value = 2,
+                          tabPanel(title = "K-NN", id = "K-NN", value = 2,
+                                   div(class = "busy",  
+                                       p("Calculating, please wait"),
+                                       img(src="ajax-loader.gif"),
+                                       hr(),
+                                       p("Be patients, switching to another tab will crash GlioVis ...")
+                                   ),
+                                   p(class = "lead","K-nearest neighbors prediction"),
+                                   p(strong("File output format:"), "Download a .csv file containing the subtype call with the probability score."),
+                                   conditionalPanel(
+                                     condition = "output.knn",
+                                     downloadButton(outputId = "downloadKnn", label = "Download data")
+                                   ),
+                                   br(),
+                                   dataTableOutput(outputId = "knn")
+                          ),
+                          
+                          tabPanel(title = "ssGSEA", id = "GSVA", value = 3,
                                    div(class = "busy",  
                                        p("Calculating, please wait"),
                                        img(src="ajax-loader.gif"),
