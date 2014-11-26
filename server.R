@@ -27,7 +27,8 @@ plotList <- list("TCGA GBM" = c("Histology", "Copy number", "Subtype","Recurrenc
                  "Bao" = c("Histology", "Subtype", "Recurrence"),
                  "Gill" = c("Histology", "Subtype"),
                  "Gorovets" = c("Histology", "Grade", "Subtype"),
-                 "Nutt" = c("Histology", "Subtype"))
+                 "Nutt" = c("Histology", "Subtype"),
+                 "Ducray" = c("Subtype"))
 gbm.tcga <- readRDS("data/TCGA.GBM.Rds")
 lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
 rembrandt <- readRDS("data/Rembrandt.Rds")
@@ -40,6 +41,7 @@ bao <- readRDS("data/Bao.Rds")
 gill <- readRDS("data/Gill.Rds")
 gorovets <- readRDS("data/Gorovets.Rds")
 nutt <- readRDS("data/Nutt.Rds")
+ducray <- readRDS("data/Ducray.Rds")
 subtype_list <- readRDS("data/subtype_list.Rds")
 core.samples <- readRDS("data/TCGA.core.samples.Rds")
 
@@ -65,7 +67,8 @@ shinyServer(
              "Bao" = bao,
              "Gill" = gill,
              "Gorovets" = gorovets,
-             "Nutt" = nutt)
+             "Nutt" = nutt,
+             "Ducray" = ducray)
     })
     
     #' Switch the datset for the correlation
@@ -82,7 +85,8 @@ shinyServer(
              "Bao" = bao,
              "Gill" = gill,
              "Gorovets"= gorovets,
-             "Nutt" = nutt)
+             "Nutt" = nutt,
+             "Ducray" = ducray)
     })
     
     #' Expression data
@@ -121,9 +125,31 @@ shinyServer(
       }
     })
     
+    #' Return the names of the available user-defined plots
+    plotUserSelection <- reactive ({
+      data <- pDatas()[,!names(pDatas())%in%c("Sample","Histology","Grade","Recurrence","Subtype", "survival","status", "Age",
+                                              "ID","Patient_ID","Sample_ID")] # Exlude pre-defined plots and numeric variables
+      n <- colnames(data)
+      n
+    })
+    
+    #' When switching datasets, if the selected plot is not available it will choose the first plot of the list
+    plotUserSelected <- reactive ({
+      if (input$plotTypeUserSel %in% plotUserSelection()){ 
+        input$plotTypeUserSel
+      } else {
+        NULL
+      }
+    })
+  
+    
     #' Change the plot type available for a specific dataset
     observe({
       updateSelectInput(session, inputId = "plotTypeSel", choices = plotList[[input$dataset]], selected = plotSelected()) 
+    }, priority = 10)
+    
+    observe({
+      updateSelectInput(session, inputId = "plotTypeUserSel", choices = plotUserSelection(),selected = plotUserSelected())
     }, priority = 10)
     
     # Caption with gene and dataset
@@ -180,26 +206,37 @@ shinyServer(
           # Not all genes are available for all the dataset
           need(input$gene %in% names(exprs()),"Gene not available for this dataset"),
         # Trying to avoid an error when switching datasets in case the plotType is not available.
-        need(plotSelected() %in% plotList[[input$dataset]],"")
+        need(plotSelected() %in% plotList[[input$dataset]],""),
+        need(plotUserSelected() %in% plotUserSelection(),"")
       ) 
       mRNA <- exprs()[ ,input$gene]
       if (input$scale) {
         mRNA <- scale(mRNA)
       }
-      if (plotSelected() == "Copy number") {
-        validate(need(input$gene %in% names(cnas()), "Copy number not available for this gene in this dataset"))
-        group <- cnas()[ ,input$gene]
-        group <- factor(group, levels = c(-2:2), labels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp"))
-        group <- droplevels(group)
-      } else {
-        group <- exprs()[ ,plotSelected()]
+      if (input$plotType == "Pre-defined") {
+        if (plotSelected() == "Copy number") {
+          validate(need(input$gene %in% names(cnas()), "Copy number not available for this gene in this dataset"))
+          group <- cnas()[ ,input$gene]
+          group <- factor(group, levels = c(-2:2), labels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp"))
+          group <- droplevels(group)
+        } else {
+          group <- exprs()[ ,plotSelected()]
+        }
+        data <- data.frame(mRNA, group, subset(pDatas(),select = -c(Sample,survival,status))) # To exclude sample name and survival data
+        data <- subset(data, !is.na(group))
+        if (input$primary& any(!is.na(data$Recurrence))) {
+          data <- subset (data, Recurrence == "Primary")
+        }
+        data
+      } else if (input$plotType == "User-defined") {
+          group <- pDatas()[ ,input$plotTypeUserSel]
+        data <- data.frame(mRNA, group, subset(pDatas(),select = -c(Sample,survival,status))) # To exclude sample name and survival data
+        data <- subset(data, !is.na(group))
+        if (input$primary& any(!is.na(data$Recurrence))) {
+          data <- subset (data, Recurrence == "Primary")
+        }
+        data
       }
-      data <- data.frame(mRNA, group, subset(pDatas(),select = -c(Sample,survival,status))) # To exclude sample name and survival data
-      data <- subset(data, !is.na(group))
-      if (input$primary& any(!is.na(data$Recurrence))) {
-        data <- subset (data, Recurrence == "Primary")
-      }
-      data
     })
     
     #' Generate radiobuttons for the various categories in the pData
@@ -213,6 +250,14 @@ shinyServer(
       radioButtons("colorP", "Color by:", choices  = colnames, selected = plotSelected())
     })
     
+    xlabel <- reactive ({
+      if (input$plotType == "Pre-defined"){
+        xlabel <- plotSelected()
+      } else if (input$plotType == "User-defined") {
+        xlabel <- plotUserSelected()
+      }
+    })
+    
     #' Create the selected plot
     output$plot <- renderPlot({
       # Trying to avoid an error when switching datasets in case the colStrip is not available.
@@ -220,7 +265,7 @@ shinyServer(
         validate(need(input$colorP %in% names(data()[,-c(1:2)]),""))
       }
       # I needed to create the ggboxPlot function (see helper file) to use it in the output$downloadPlot
-      ggboxPlot(data = data (), scale = input$scale, stat = input$tukeyPlot, colBox = input$colBox, 
+      ggboxPlot(data = data (), xlabel = xlabel(), scale = input$scale, stat = input$tukeyPlot, colBox = input$colBox, 
                 colStrip = input$colStrip, colorPoints = input$colorP, bw = input$bw)  
     })
     
@@ -294,7 +339,7 @@ shinyServer(
         # Gets the name of the function to use from the downloadFileType reactive element.
         plotFunction <- match.fun(downloadPlotFileType())
         plotFunction(con, width = downloadPlotWidth(), height = downloadPlotHeight())
-        ggboxPlot(data = data (), scale = input$scale, stat = input$tukeyPlot, colBox = input$colBox, 
+        ggboxPlot(data = data (), xlabel = xlabel(), scale = input$scale, stat = input$tukeyPlot, colBox = input$colBox, 
                   colStrip = input$colStrip, colorPoints = input$colorP, bw = input$bw)  
         dev.off(which=dev.cur())
       }

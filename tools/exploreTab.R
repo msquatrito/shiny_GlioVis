@@ -16,11 +16,23 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                         conditionalPanel(
                           condition = "input.tabCorr == '2genes'",
                           selectizeInput(inputId = "gene", label = h4("Gene"), choices = NULL, selected = NULL, 
-                                         options = list(placeholder = "Enter gene, eg: EGFR", plugins = list('restore_on_backspace')))),
+                                         options = list(placeholder = "Enter gene, eg: EGFR", plugins = list('restore_on_backspace'))),
+                          br(),
+                          conditionalPanel(
+                            condition = "input.tab1 == 1", 
+                          radioButtons(inputId ="plotType", label = h4("Plot type"), choices = c("Pre-defined","User-defined"),selected = NULL, inline = T)
+                          )
+                          ),
+                        conditionalPanel(
+                          condition = "input.tab1 == 1 & input.plotType == 'Pre-defined'",
+                          selectInput(inputId = "plotTypeSel", label = NULL, choices = "", selectize = TRUE)
+                          ),
+                        conditionalPanel(
+                          condition = "input.tab1 == 1 & input.plotType == 'User-defined'",
+                          selectInput(inputId = "plotTypeUserSel", label = NULL, choices = "", selectize = TRUE)
+                        ),
                         conditionalPanel(
                           condition = "input.tab1 == 1",
-                          br(),
-                          selectInput(inputId = "plotTypeSel", label = h4("Plot type"), choices = "", selectize = TRUE),
                           checkboxInput(inputId = "primary", label = "Primary samples only", value = FALSE),
                           br(),
                           helpPopup(title = "Help me pleaseeeeee", content = includeMarkdown("tools/help.Rmd"), 
@@ -55,7 +67,6 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                         ),
                         conditionalPanel(
                           condition = "input.tab1 == 2",
-                          br(),
                           selectInput(inputId = "histologySurv", label = h4("Histology:"), choices = ""),
                           conditionalPanel(
                             condition = "input.histologySurv == 'GBM'",
@@ -94,7 +105,6 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                         ),
                         conditionalPanel(
                           condition = "input.tab1 == 3 & input.tabCorr == '2genes'",
-                          br(),
                           selectizeInput(inputId = "gene2", label = h4("Gene 2"), choices ="", 
                                          options = list(placeholder = "Enter gene 2, eg: SOCS2", plugins = list('restore_on_backspace')))),
                         conditionalPanel(

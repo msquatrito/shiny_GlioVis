@@ -1,7 +1,7 @@
 #########################################
 ##############  ggboxPlot  ##############
 #########################################
-ggboxPlot <- function(data,  scale = FALSE, stat = FALSE, colBox = FALSE, colStrip = FALSE, colorPoints, bw = FALSE, ...) {
+ggboxPlot <- function(data,  scale = FALSE, xlabel, stat = FALSE, colBox = FALSE, colStrip = FALSE, colorPoints, bw = FALSE, ...) {
   if (scale) {
     ylab <- "Normalized mRNA expression"
   } else {
@@ -18,7 +18,7 @@ ggboxPlot <- function(data,  scale = FALSE, stat = FALSE, colBox = FALSE, colStr
   } else {
     strip <- geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5)
   }
-  p <- ggplot(data, aes(x=group, y = mRNA)) + ylab(ylab) + xlab("") 
+  p <- ggplot(data, aes(x=group, y = mRNA)) + ylab(ylab) + xlab(xlabel) 
   p <- p + box + strip 
   if (bw) {
     p <- p + theme_bw () 
