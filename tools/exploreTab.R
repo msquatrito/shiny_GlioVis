@@ -190,7 +190,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                                 # This busy gif does not activate when switching tab
                                                                 div(class = "busy",  
                                                                     p("Calculating, please wait"),
-                                                                    img(src="ajax-loader.gif") 
+                                                                    img(src="Rotating_brain.gif") 
                                                                 ),
                                                                 plotOutput(outputId = "hazardPlot", clickId = "hrClick", width = 500 , height = 400)
                                                               ),

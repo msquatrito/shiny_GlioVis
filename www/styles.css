@@ -44,7 +44,7 @@ ol.outer {
 .busy { 
   position:absolute;
   top: 40%;
-  left: 50%;
+  left: 40%;
   margin-top: -100px;
   margin-left: -50px;
   display:none;
