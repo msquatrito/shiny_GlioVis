@@ -208,6 +208,20 @@ tfoot {color:gray; font-size:6px; text-align: right;}
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">✔</td>
      </tr>
+     <tr>
+     <td class="tg-0a3w">Ducray</td>
+     <td class="tg-9fhq">0</td>
+     <td class="tg-9fhq">0</td>
+     <td class="tg-9fhq">52</td>
+     <td class="tg-9fhq"></td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">✔</td>
+     </tr>
     <tfoot>
     <tr>
     <td colspan="8">* more than one sample for each patients (MRI non-enhancing and contranst-enhancing)</td>
