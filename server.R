@@ -7,6 +7,7 @@ library(rCharts)
 library(dplyr)
 library(GSVA)
 library(GGally)
+library(class)
 # library(shinysky)
 
 source("global.R")
@@ -756,7 +757,7 @@ shinyServer(
       learn.1 <- learn.exp[genes,]
       learn.1 <- learn.1[!is.na(learn.1[,1]),]
       df.learn <- learn.1- rowMeans(learn.1)
-      Training <- as.factor(as.character(train$Subtype))
+      Training <- train$Subtype
       require(kernlab)
       svm <- ksvm(t(df.train), #Training matrix
                   Training, # "Truth" factor
@@ -766,10 +767,9 @@ shinyServer(
                   prob.model=TRUE,  # We want a probability model included so we can give each predicted sample a score, not just a class
                   scale=FALSE)  # We already scaled before by mean-centering the data.
       svm.subtype.call <- as.matrix(predict(svm, t(df.learn)))
-      prob <- as.matrix(predict(svm, t(df.learn ), type="probabilities"))
-      svm.call <- data.frame(svm.subtype.call, prob)
-      rownames(svm.call) <- rownames(t(df.learn))
-      svm.call[,"Sample"] <- rownames(svm.call)
+      svm.subtype.call <- factor(svm.subtype.call,levels = c("Classical", "Mesenchymal", "Neural", "Proneural", "G-CIMP"))
+      prob <- as.matrix(predict(svm, t(df.learn), type="probabilities"))
+      svm.call <- data.frame(Sample = rownames(upData), svm.subtype.call, prob)
       svm.call
     })
     
@@ -810,7 +810,7 @@ shinyServer(
       # Common genes of the two datasets
       genes <- intersect(colnames(train.exp), colnames(learn.exp))
       pred <- knn(train = train.exp[,genes], test = learn.exp[,genes], cl =  train$Subtype, k = 5, prob=TRUE)
-      kn <- data.frame(Sample = row.names(upData), knn.subtype.call = pred, prob = attr(pred,"prob"))
+      kn <- data.frame(Sample = rownames(upData), knn.subtype.call = pred, prob = attr(pred,"prob"))
       kn
     })
       
@@ -847,8 +847,7 @@ shinyServer(
       gsva_results <- gsva(expr=as.matrix(exprs), gset.idx.list = gene_list, method="ssgsea", rnaseq=FALSE,
                            min.sz=0, max.sz=10000, verbose=FALSE)
       subtype_scores <- t(gsva_results)
-      subtype_final <- data.frame(subtype_scores, gsea.subtype.call = names(subtype_list)[apply(subtype_scores,1,which.max)], 
-                                  Sample = rownames(subtype_scores))
+      subtype_final <- data.frame(Sample = rownames(upData), gsea.subtype.call = names(subtype_list)[apply(subtype_scores,1,which.max)], subtype_scores) 
       subtype_final
     })
     
@@ -872,6 +871,69 @@ shinyServer(
       }
     )
     
+    #' Reactive function to generate the 3 subtype calls to pass to data table and download handler
+    sub3.call <- reactive ({
+      inFile <- input$upFile
+      upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote)
+      sub3 <- data.frame(Sample = upData$Sample, svm.call = svm.call()[,"svm.subtype.call"], 
+                         knn.call = knn.call()[,"knn.subtype.call"], gsea.call = gsva.call()[,"gsea.subtype.call"])
+      sub3<<-sub3
+    })
+
+    output$call.identity <- renderText({
+      sub3 <- sub3.call()
+      m <- mean(sub3$svm.call == sub3$knn.call, na.rm=TRUE)
+      paste(", % of identinty:", round(m*100,1))
+    })
+    
+    #' subtype call summary
+    sub3Summary <- reactive ({
+      if (is.null(input$upFile) || input$goSub3 == 0)
+        return(NULL)
+      input$goSub3
+      isolate({
+        sub3 <- sub3.call()
+        sub3 <- list(
+          svm_vs_knn = table(svm = sub3$svm.call, knn = sub3$knn.call),
+          svm_vs_gsea = table(svm = sub3$svm.call, knn = sub3$gsea.call),
+          knn_vs_gsea = table(svm = sub3$knn.call, knn = sub3$gsea.call)
+        )
+      })
+    })
+
+    #' subtype call summary.1 
+    output$sub3Summary.1 <- renderTable({
+      sub3Summary()[[1]]
+    })
+    #' subtype call summary.2 
+    output$sub3Summary.2 <- renderTable({
+      sub3Summary()[[2]]
+    })
+    #' subtype call summary.3 
+    output$sub3Summary.3 <- renderTable({ 
+      sub3Summary()[[3]]
+    })
+
+    #' Rerndering the subtype call as a data table
+    output$sub3 <- renderDataTable({ 
+      if (is.null(input$upFile) || input$goSub3 == 0)
+        return(NULL)
+      input$goSub3
+      isolate({
+        sub3 <- sub3.call()
+      })
+    })
+    
+    #' Download the subtype call
+    output$downloadSub3 <- downloadHandler(
+      filename = function() {
+        paste("3_Way_Subtype_call.csv", sep="")
+      },
+      content = function(file) {
+        write.csv(sub3.call(), file)
+      }
+    )
+
     #' Correlation method
     corrMethod <- reactive({
       switch(input$corrMethod,

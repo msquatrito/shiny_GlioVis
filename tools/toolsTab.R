@@ -34,6 +34,11 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                      condition = "input.tabTools == 3",
                                      actionButton(inputId = "goGsva", label = "Submit ssGSEA", styleclass = "primary"),
                                      br()
+                                   ),
+                                   conditionalPanel(
+                                     condition = "input.tabTools == 4",
+                                     actionButton(inputId = "goSub3", label = "Submit 3-Way", styleclass = "primary"),
+                                     br()
                                    )
                       ),
                       mainPanel(
@@ -88,6 +93,39 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                    ),
                                    br(),
                                    dataTableOutput(outputId = "gsva")
+                          ),
+                          
+                          tabPanel(title = "3-Way", id = "3-Way", value = 4,
+                                   div(class = "busy",  
+                                       p("Calculating, please wait"),
+                                       img(src="Rotating_brain.gif"),
+                                       hr(),
+                                       p("Be patients, it could take a couple of minutes ...")
+                                   ),
+                                   p(class = "lead","Generate and compare subtype calls by SVM, K-NN and ssGSEA"),
+                                   conditionalPanel(
+                                     condition = "output.sub3",
+                                     p(strong("svm_vs_knn"),textOutput(outputId = "call.identity",inline = TRUE)),
+                                     tableOutput(outputId = "sub3Summary.1"),
+                                     br(),
+                                     fluidRow(
+                                       column(width = 5,
+                                              p(strong("svm_vs_gsea")),
+                                              tableOutput(outputId = "sub3Summary.2")
+                                       ),
+                                       column(width = 5, offset = 1,
+                                              p(strong("knn_vs_gsea")),
+                                              tableOutput(outputId = "sub3Summary.3")
+                                       )
+                                     )
+                                   ),
+                                   br(),
+                                   conditionalPanel(
+                                     condition = "output.sub3",
+                                     downloadButton(outputId = "downloadSub3", label = "Download data")
+                                   ),
+                                   br(),
+                                   dataTableOutput(outputId = "sub3")
                           )
                         )
                       )
