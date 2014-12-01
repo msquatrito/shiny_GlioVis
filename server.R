@@ -877,7 +877,6 @@ shinyServer(
       upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote)
       sub3 <- data.frame(Sample = upData$Sample, svm.call = svm.call()[,"svm.subtype.call"], 
                          knn.call = knn.call()[,"knn.subtype.call"], gsea.call = gsva.call()[,"gsea.subtype.call"])
-      sub3<<-sub3
     })
 
     output$call.identity <- renderText({
