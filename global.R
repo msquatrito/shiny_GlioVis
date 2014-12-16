@@ -211,8 +211,9 @@ getCorr <- function (df, gene, histology, corrMethod) {
   t <- sqrt(df) * r / sqrt(1 - r ^ 2)
   p <- pt(t, df)
   p <- 2 * pmin(p, 1 - p)
-  corr <- data.frame(row.names(r), round(r,3), round(p,10))
-  names(corr) <- c("Gene","r","p.value")
+  padj <- p.adjust(p, method = "bonferroni")
+  corr <- data.frame(row.names(r), round(r,3), round(p,10),round(padj,10))
+  names(corr) <- c("Gene","r","p.value", "adj.p.value")
   corr
 }
 

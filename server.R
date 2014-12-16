@@ -600,6 +600,7 @@ shinyServer(
     #' Generate the pairs plot
     output$pairsPlot <- renderPlot({
 #       myPairsPlot(pairsData())
+#       theme_set(theme_bw())
       ggpairs(pairsData(),lower=list(continuous="smooth", params=list(alpha=0.5)))  
     })
     
