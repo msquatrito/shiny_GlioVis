@@ -15,11 +15,12 @@ HTML('<style type="text/css">
      .tg .tg-hgcj{font-weight:bold;text-align:center;padding: 0px 5px;}
      .tg .tg-hgcj-bd{font-weight:bold;text-align:center;padding: 0px 5px;border-right: 1px dashed gray;}
     .tg .tg-bd{border-right: 1px dashed gray;}
-tfoot {color:gray; font-size:6px; text-align: right;}
+tfoot {color:gray; font-size:5px; text-align: left;}
      </style>
      <table class="tg">
      <tr>
      <th class="tg-bd"><br></th>
+     <th class="tg-bd"></th>
      <th class="tg-031e"></th>
      <th class="tg-eccc">Samples</th>
      <th class="tg-s6z2-bd"></th>
@@ -33,7 +34,8 @@ tfoot {color:gray; font-size:6px; text-align: right;}
      <th class="tg-031e"></th>
      </tr>
      <tr>
-     <td class="tg-hgcj-bd"></td>
+     <td class="tg-hgcj-bd"> Dataset</td>
+     <td class="tg-hgcj-bd">Data type</td>
      <td class="tg-hgcj">Non-tumor</td>
      <td class="tg-hgcj">Low-grade</td>
      <td class="tg-hgcj-bd">GBM</td>
@@ -48,6 +50,7 @@ tfoot {color:gray; font-size:6px; text-align: right;}
      </tr>
      <tr>
      <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/18772890" style="color: rgb(0,0,0)">TCGA GBM</a></td>
+     <td class="tg-9fhq-bd"><a href="https://tcga-data.nci.nih.gov/tcga/tcgaCancerDetails.jsp?diseaseType=GBM&diseaseName=Glioblastoma%20multiforme" style="color: rgb(0,0,0)">Microarray</a></td>     
      <td class="tg-9fhq">10</td>
      <td class="tg-9fhq">0</td>
      <td class="tg-9fhq-bd">528</td>
@@ -61,8 +64,9 @@ tfoot {color:gray; font-size:6px; text-align: right;}
      <td class="tg-lvt2">✔</td>
      </tr>
      <tr>
-     <td class="tg-bd"><a href="https://tcga-data.nci.nih.gov/tcga/tcgaCancerDetails.jsp?diseaseType=LGG&diseaseName=Brain%20Lower%20Grade%20Glioma" style="color: rgb(0,0,0)">TCGA LGG</a></td>
-     <td class="tg-s6z2">0</td>
+     <td class="tg-bd"><a href="http://cancergenome.nih.gov/publications/publicationguidelines" style="color: rgb(0,0,0)">TCGA LGG</a></td>
+<td class="tg-s6z2-bd"><a href="https://tcga-data.nci.nih.gov/tcga/tcgaCancerDetails.jsp?diseaseType=LGG&diseaseName=Brain%20Lower%20Grade%20Glioma" style="color: rgb(0,0,0)">RNA-seq</td>     
+<td class="tg-s6z2">0</td>
      <td class="tg-s6z2">513</td>
      <td class="tg-s6z2-bd">0</td>
      <td class="tg-s6z2"></td>
@@ -76,7 +80,8 @@ tfoot {color:gray; font-size:6px; text-align: right;}
      </tr>
      <tr>
      <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/19208739" style="color: rgb(0,0,0)">Rembrandt</a></td>
-     <td class="tg-9fhq">21</td>
+<td class="tg-9fhq-bd"><a href="https://caintegrator.nci.nih.gov/rembrandt/" style="color: rgb(0,0,0)">Microarray</a></td>      
+<td class="tg-9fhq">21</td>
      <td class="tg-9fhq">200</td>
      <td class="tg-9fhq-bd">184</td>
      <td class="tg-9fhq"></td>
@@ -90,7 +95,8 @@ tfoot {color:gray; font-size:6px; text-align: right;}
      </tr>
      <tr>
      <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/19920198" style="color: rgb(0,0,0)">Gravendeel</a></td>
-     <td class="tg-s6z2">8</td>
+<td class="tg-s6z2-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE16011" style="color: rgb(0,0,0)">Microarray</a></td>      
+<td class="tg-s6z2">8</td>
      <td class="tg-s6z2">117</td>
      <td class="tg-s6z2-bd">159</td>
      <td class="tg-s6z2"></td>
@@ -104,7 +110,8 @@ tfoot {color:gray; font-size:6px; text-align: right;}
      </tr>
      <tr>
      <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/16530701" style="color: rgb(0,0,0)">Phillips</a></td>
-     <td class="tg-9fhq">0</td>
+     <td class="tg-9fhq-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE4271" style="color: rgb(0,0,0)">Microarray</a></td>  
+<td class="tg-9fhq">0</td>
      <td class="tg-9fhq">0</td>
      <td class="tg-9fhq-bd">100</td>
      <td class="tg-9fhq"></td>
@@ -118,7 +125,8 @@ tfoot {color:gray; font-size:6px; text-align: right;}
      </tr>
      <tr>
      <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/18565887" style="color: rgb(0,0,0)">Murat</a></td>
-     <td class="tg-s6z2">4</td>
+<td class="tg-s6z2-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE7696" style="color: rgb(0,0,0)">Microarray</a></td>        
+<td class="tg-s6z2">4</td>
      <td class="tg-s6z2">0</td>
      <td class="tg-s6z2-bd">80</td>
      <td class="tg-s6z2"></td>
@@ -132,7 +140,8 @@ tfoot {color:gray; font-size:6px; text-align: right;}
      </tr>
      <tr>
      <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/15374961" style="color: rgb(0,0,0)">Freije</a></td>
-     <td class="tg-9fhq">0</td>
+<td class="tg-9fhq-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE4412" style="color: rgb(0,0,0)">Microarray</a></td>      
+<td class="tg-9fhq">0</td>
      <td class="tg-9fhq">26</td>
      <td class="tg-9fhq-bd">59</td>
      <td class="tg-9fhq"></td>
@@ -146,7 +155,8 @@ tfoot {color:gray; font-size:6px; text-align: right;}
      </tr>
      <tr>
      <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/24615357" style="color: rgb(0,0,0)">Reifenberger</a></td>
-     <td class="tg-s6z2">0</td>
+<td class="tg-s6z2-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE53733" style="color: rgb(0,0,0)">Microarray</a></td>
+<td class="tg-s6z2">0</td>
      <td class="tg-s6z2">0</td>
      <td class="tg-s6z2-bd">70</td>
      <td class="tg-s6z2"></td>
@@ -160,7 +170,8 @@ tfoot {color:gray; font-size:6px; text-align: right;}
      </tr>
      <tr>
      <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/25135958" style="color: rgb(0,0,0)">Bao</a></td>
-     <td class="tg-9fhq">0</td>
+<td class="tg-9fhq-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE48865" style="color: rgb(0,0,0)">RNA-seq</td>
+<td class="tg-9fhq">0</td>
      <td class="tg-9fhq">174</td>
      <td class="tg-9fhq-bd">100</td>
      <td class="tg-9fhq"></td>
@@ -174,7 +185,8 @@ tfoot {color:gray; font-size:6px; text-align: right;}
      </tr>
      <tr>
      <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/25114226" style="color: rgb(0,0,0)">Gill</a></td>
-     <td class="tg-s6z2">17</td>
+<td class="tg-s6z2-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE59612" style="color: rgb(0,0,0)">RNA-seq</td>     
+<td class="tg-s6z2">17</td>
      <td class="tg-s6z2">0</td>
      <td class="tg-s6z2-bd">75*</td>
      <td class="tg-s6z2"></td>
@@ -188,7 +200,8 @@ tfoot {color:gray; font-size:6px; text-align: right;}
      </tr>
      <tr>
      <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/22415316" style="color: rgb(0,0,0)">Gorovets</a></td>
-     <td class="tg-9fhq">1</td>
+<td class="tg-9fhq-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE35158" style="color: rgb(0,0,0)">Microarray</a></td>     
+<td class="tg-9fhq">1</td>
      <td class="tg-9fhq">80</td>
      <td class="tg-9fhq-bd">0</td>
      <td class="tg-9fhq"></td>
@@ -201,6 +214,7 @@ tfoot {color:gray; font-size:6px; text-align: right;}
      <td class="tg-lvt2">✔</td>
      </tr>
      <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/12670911" style="color: rgb(0,0,0)">Nutt</a></td>
+     <td class="tg-s6z2-bd"><a href="http://www.broadinstitute.org/cgi-bin/cancer/datasets.cgi?utf8=✓&project=32" style="color: rgb(0,0,0)">Microarray</a></td>      
      <td class="tg-s6z2">0</td>
      <td class="tg-s6z2">22</td>
      <td class="tg-s6z2-bd">28</td>
@@ -215,6 +229,7 @@ tfoot {color:gray; font-size:6px; text-align: right;}
      </tr>
      <tr>
      <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/20822523" style="color: rgb(0,0,0)">Ducray</a></td>
+     <td class="tg-9fhq-bd"><a href="http://www.ebi.ac.uk/arrayexpress/experiments/E-TABM-898" style="color: rgb(0,0,0)">Microarray</a></td> 
      <td class="tg-9fhq">0</td>
      <td class="tg-9fhq">0</td>
      <td class="tg-9fhq-bd">52</td>
@@ -229,7 +244,7 @@ tfoot {color:gray; font-size:6px; text-align: right;}
      </tr>
     <tfoot>
     <tr>
-    <td colspan="8">* more than one sample for each patients (MRI non-enhancing and contranst-enhancing)</td>
+    <td colspan="10">* more than one sample for each patients (MRI non-enhancing and contranst-enhancing)</td>
     </tr>
     </tfoot>
      </table>')
