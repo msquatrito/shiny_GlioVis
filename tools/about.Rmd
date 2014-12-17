@@ -34,7 +34,7 @@
   + [GSE35158](http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE35158) ^12 
 
 **Nutt**
-  + [Broad](http://www.broadinstitute.org/cgi-bin/cancer/datasets.cgi) ^13  
+  + [Broad](http://www.broadinstitute.org/cgi-bin/cancer/datasets.cgi?utf8=✓&project=32) ^13  
 
 **Ducray**
   + [E-TABM-898](http://www.ebi.ac.uk/arrayexpress/experiments/E-TABM-898) ^14 

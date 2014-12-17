@@ -8,7 +8,6 @@ tabPanel(title = "Home", icon = icon("home"),
          ),
          
          div(id = "home",
-             div(class = "outer", 
                  img(src = "GlioVis_logo_trasnparent.gif", width = 750),
                  hr(),
                  p(class = "lead", "Welcome to", strong("GlioVis"),": a user friendly web based data visualization and analysis application for exploring Glioma datasets."),
@@ -40,7 +39,6 @@ tabPanel(title = "Home", icon = icon("home"),
                                  tags$small("Isaac Newton")),
                  br(),br(),br(),br(),
                  includeHTML("tools/share.html")
-             )
          )
          
 )
