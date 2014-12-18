@@ -3,7 +3,8 @@ tabPanel(title = "Home", icon = icon("home"),
          tagList(
          tags$head(
            includeScript("tools/google-analytics.js"),
-           tags$script(type="text/javascript", src = "busy.js")
+           tags$script(type="text/javascript", src = "busy.js"),
+           tags$link(rel="shortcut icon", href="./GlioVis_logo_bar.bmp")
            )
          ),
          
