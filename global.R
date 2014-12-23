@@ -107,7 +107,7 @@ hazardPlot <- function (HRdata, quantile) {
 ###################
 survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FALSE, primary = FALSE) {
   df <- subset(df, !is.na(df$status))
-  # Select the samples, for the specified histology,that has survival data
+  # Select the samples, for the specified histology,that have survival data
   if (group != "All") {
     df <- subset (df, Histology == group) 
   }
@@ -196,7 +196,7 @@ survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FAL
 #####################
 ## Get correlations ##
 #####################
-# To use to geet correlation data (r an p value) on the fly. 
+# To use to get correlation data (r an p value) on the fly. 
 # using Hadley suggestion: https://stat.ethz.ch/pipermail/r-help/2008-November/181049.html
 getCorr <- function (df, gene, histology, corrMethod) {
   if (histology != "All") {

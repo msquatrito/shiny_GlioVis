@@ -494,6 +494,20 @@ shinyServer(
                         subtype = input$subtypeSurv, gcimp = input$gcimpSurv, primary = input$primarySurv), silent = TRUE) 
     })
     
+    output$subSurvPlot <- renderPlot({
+      survNeed ()
+      try({
+      par(mfrow=c(2,2), mar=c(3,3,3,1), mgp=c(2.2,.95,0))
+      survivalPlot (exprs(), input$gene, group = "GBM", cutoff = input$cutoff, numeric = input$mInput,
+                    subtype = "Classical", gcimp = input$gcimpSurv, primary = input$primarySurv)
+      survivalPlot (exprs(), input$gene, group = "GBM", cutoff = input$cutoff, numeric = input$mInput,
+                    subtype = "Mesenchymal", gcimp = input$gcimpSurv, primary = input$primarySurv)
+      survivalPlot (exprs(), input$gene, group = "GBM", cutoff = input$cutoff, numeric = input$mInput,
+                    subtype = "Neural", gcimp = input$gcimpSurv, primary = input$primarySurv)
+      survivalPlot (exprs(), input$gene, group = "GBM", cutoff = input$cutoff, numeric = input$mInput,
+                    subtype = "Proneural", gcimp = input$gcimpSurv, primary = input$primarySurv)}, silent = TRUE)
+    })
+    
     #' Download the survPlot
     output$downloadsurvPlot <- downloadHandler(
       filename = function() {

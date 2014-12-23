@@ -79,6 +79,10 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                             selectInput(inputId = "subtypeSurv", label = h4("Subtype:"), 
                                         choices = c("All", "Classical", "Mesenchymal", "Neural", "Proneural","G-CIMP"))
                           ),
+                          conditionalPanel(
+                            condition = "input.histologySurv == 'GBM' & input.subtypeSurv == 'All'",
+                            checkboxInput(inputId = "allSubSurv", label = "Separate by subtype", value = FALSE)
+                          ),
                           hr(),
                           conditionalPanel(
                             condition = "input.tab1 == 2 & input.tabSurv == 'km'",
@@ -177,7 +181,17 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                          tabPanel(title = "Survival", icon = icon("user-md"), value = 2,
                                   tabsetPanel(id = "tabSurv",
                                               tabPanel(title = "Km plot",  value = "km",
-                                                       plotOutput(outputId = "survPlot", width = 500 , height = 400)
+                                                       div(class = "busy",  
+                                                           p("Rendering, please wait"),
+                                                           img(src="Rotating_brain.gif")),
+                                                       conditionalPanel(
+                                                         condition = "input.allSubSurv == false",
+                                                         plotOutput(outputId = "survPlot", width = 500 , height = 400)
+                                                         ),
+                                                       conditionalPanel(
+                                                         condition = "input.allSubSurv",                                                
+                                                         plotOutput(outputId = "subSurvPlot",width = 800, height = 600)
+                                                       )
                                               ),                                              
                                               tabPanel(title = "HR plot", value = "hr",
                                                        column(width = 9,
