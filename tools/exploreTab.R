@@ -77,7 +77,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                           conditionalPanel(
                             condition = "input.histologySurv == 'GBM'",
                             selectInput(inputId = "subtypeSurv", label = h4("Subtype:"), 
-                                        choices = c("All", "Classical", "Mesenchymal", "Neural", "Proneural","G-CIMP"))
+                                        choices = c("All", "Classical", "Mesenchymal", "Neural", "Proneural"))
                           ),
                           conditionalPanel(
                             condition = "input.histologySurv == 'GBM' & input.subtypeSurv == 'All'",
@@ -123,7 +123,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                             condition = "input.histologyCorr == 'GBM'",
                             br(),
                             selectInput(inputId = "subtype", label = h4("Subtype:"), 
-                                        choices = c("All", "Classical", "Mesenchymal", "Neural", "Proneural","G-CIMP")))),
+                                        choices = c("All", "Classical", "Mesenchymal", "Neural", "Proneural")))),
                         conditionalPanel(
                           condition = "input.tab1 == 3 & input.tabCorr == '2genes'",
                           hr(),

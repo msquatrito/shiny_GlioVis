@@ -121,7 +121,7 @@ survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FAL
   }
   # Remove G-CIMP, when selected
   if (gcimp){
-    df <- subset (df, Subtype != "G-CIMP")
+    df <- subset (df, CIMP_status != "G-CIMP")
   } 
   df <- subset(df, !is.na(df$status))
   mRNA <- df[ ,gene]
@@ -204,7 +204,7 @@ getCorr <- function (df, gene, histology, corrMethod) {
   } else {
     df <- df
   }
-  df <- df[,8:ncol(df)]
+  df <- df[,9:ncol(df)]
   mRNA <- df[ ,gene, drop = F]
   r <- apply(mRNA, 2, function(x) { apply(df, 2, function(y) { cor(x,y, method = corrMethod) })})
   df <- nrow(mRNA) - 2

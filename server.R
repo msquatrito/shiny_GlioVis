@@ -17,19 +17,19 @@ source("global.R")
 ############## Datasets  ##############
 #######################################
 gene_names <- readRDS("data/gene_names.Rds")
-plotList <- list("TCGA GBM" = c("Histology", "Copy number", "Subtype","Recurrence"),
+plotList <- list("TCGA GBM" = c("Histology", "Copy number", "Subtype", "CIMP_status", "Recurrence"),
                  "TCGA Lgg" = c("Histology", "Grade", "Copy number", "Subtype"),
-                 "Rembrandt" = c("Histology", "Grade", "Subtype"),
-                 "Gravendeel" = c("Histology", "Grade", "Subtype"),
-                 "Phillips" = c("Grade", "Subtype", "Recurrence"),
-                 "Murat" = c("Histology", "Subtype", "Recurrence"),
-                 "Freije" = c("Histology", "Grade", "Subtype"),
-                 "Reifenberger" = c("Subtype"),
-                 "Bao" = c("Histology", "Subtype", "Recurrence"),
-                 "Gill" = c("Histology", "Subtype"),
+                 "Rembrandt" = c("Histology", "Grade", "Subtype", "CIMP_status"),
+                 "Gravendeel" = c("Histology", "Grade", "Subtype", "CIMP_status"),
+                 "Phillips" = c("Grade", "Subtype", "Recurrence", "CIMP_status"),
+                 "Murat" = c("Histology", "Subtype", "Recurrence", "CIMP_status"),
+                 "Freije" = c("Histology", "Grade", "Subtype", "CIMP_status"),
+                 "Reifenberger" = c("Subtype", "CIMP_status"),
+                 "Bao" = c("Histology", "Subtype", "Recurrence", "CIMP_status"),
+                 "Gill" = c("Histology", "Subtype", "CIMP_status"),
                  "Gorovets" = c("Histology", "Grade", "Subtype"),
-                 "Nutt" = c("Histology", "Subtype"),
-                 "Ducray" = c("Subtype"))
+                 "Nutt" = c("Histology", "Subtype", "CIMP_status"),
+                 "Ducray" = c("Subtype", "CIMP_status"))
 gbm.tcga <- readRDS("data/TCGA.GBM.Rds")
 lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
 rembrandt <- readRDS("data/Rembrandt.Rds")
@@ -44,7 +44,7 @@ gorovets <- readRDS("data/Gorovets.Rds")
 nutt <- readRDS("data/Nutt.Rds")
 ducray <- readRDS("data/Ducray.Rds")
 subtype_list <- readRDS("data/subtype_list.Rds")
-core.samples <- readRDS("data/TCGA.core.samples.Rds")
+core.samples <- readRDS("data/TCGA.core.345samples.Rds")
 
 #######################################
 ############## server.R  ##############
@@ -128,7 +128,7 @@ shinyServer(
     
     #' Return the names of the available user-defined plots
     plotUserSelection <- reactive ({
-      data <- pDatas()[,!names(pDatas())%in%c("Sample","Histology","Grade","Recurrence","Subtype", "survival","status", "Age",
+      data <- pDatas()[,!names(pDatas())%in%c("Sample","Histology","Grade","Recurrence","Subtype", "CIMP_status",  "survival","status", "Age",
                                               "ID","Patient_ID","Sample_ID")] # Exlude pre-defined plots and numeric variables
       n <- colnames(data)
       n
@@ -373,7 +373,7 @@ shinyServer(
       }
       # exclude G-CIMP is selected
       if (input$gcimpSurv){
-        df <- subset (df, Subtype != "G-CIMP")
+        df <- subset (df, CIMP_status != "G-CIMP")
       }
       df
     })
@@ -457,7 +457,7 @@ shinyServer(
         df <- subset (df, Subtype == input$subtypeSurv)
       }
       if (input$gcimpSurv){
-        df <- subset (df, Subtype != "G-CIMP")
+        df <- subset (df, CIMP_status != "G-CIMP")
       }
       if (input$primarySurv & any(!is.na(df$Recurrence))) {
         df <- subset (df, Recurrence == "Primary")
@@ -672,7 +672,7 @@ shinyServer(
     
     #' Generate a graphic summary of the dataset, using rCharts
     output$piePlots <- renderUI({
-      data <- exprs()[,c("Histology","Grade","Recurrence","Subtype")]
+      data <- exprs()[ ,c("Histology", "Grade", "Recurrence", "Subtype", "CIMP_status")]
       data <- data[,colSums(is.na(data)) < nrow(data)] # Removing unavailable (all NA) groups
       plot_output_list <- lapply(names(data), function(i) {
         plotname <- paste("plot", i, sep="")
@@ -683,8 +683,8 @@ shinyServer(
     })
     
     observe ({                                                               
-      data <- exprs()[,c("Histology","Grade","Recurrence","Subtype")]
-      data <- data[,colSums(is.na(data)) < nrow(data)]
+      data <- exprs()[ ,c("Histology", "Grade", "Recurrence", "Subtype", "CIMP_status")]
+      data <- data[ ,colSums(is.na(data)) < nrow(data)]
       # Call renderChart for each one. 
       for (i in names(data)) {                                                    
         local({
@@ -706,7 +706,7 @@ shinyServer(
       validate(
         need(input$dataset!= "Bao" & input$dataset!= "Reifenberger" & input$dataset!= "Gill", "Sorry, no survival data are available for this dataset")
       )
-      df <- exprs()[,1:7]
+      df <- exprs()[,1:8]
       df <- df[,colSums(is.na(df)) < nrow(df)] # Removing unavailable (all NA) groups
       df <- droplevels.data.frame(subset(df, Histology!="Non-tumor")) # Exclude normal sample, not displaying properly
       groups <- names(df)[!names(df) %in% c("Sample","status","survival")]
@@ -718,7 +718,7 @@ shinyServer(
     })  
     
     observe({   
-      df <- exprs()[,1:7]
+      df <- exprs()[,1:8]
       df <- df[,colSums(is.na(df)) < nrow(df)] 
       df <- droplevels.data.frame(subset(df, Histology != "Non-tumor")) 
       groups <- names(df)[!names(df) %in% c("Sample","status","survival")]
@@ -782,7 +782,7 @@ shinyServer(
                   prob.model=TRUE,  # We want a probability model included so we can give each predicted sample a score, not just a class
                   scale=FALSE)  # We already scaled before by mean-centering the data.
       svm.subtype.call <- as.matrix(predict(svm, t(df.learn)))
-      svm.subtype.call <- factor(svm.subtype.call,levels = c("Classical", "Mesenchymal", "Neural", "Proneural", "G-CIMP"))
+      svm.subtype.call <- factor(svm.subtype.call,levels = c("Classical", "Mesenchymal", "Neural", "Proneural"))
       prob <- as.matrix(predict(svm, t(df.learn), type="probabilities"))
       svm.call <- data.frame(Sample = rownames(upData), svm.subtype.call, prob)
       svm.call
@@ -819,12 +819,12 @@ shinyServer(
       }
       row.names(train) <- train[,"Sample"]
       train <- train[core.samples,]
-      train.exp <- as.matrix(train[,-c(1:7)])
+      train.exp <- as.matrix(train[,-c(1:8)])
       row.names(upData) <- upData[,"Sample"]
       learn.exp <-as.matrix(upData [,-1])
       # Common genes of the two datasets
       genes <- intersect(colnames(train.exp), colnames(learn.exp))
-      pred <- knn(train = train.exp[,genes], test = learn.exp[,genes], cl =  train$Subtype, k = 5, prob=TRUE)
+      pred <- knn(train = train.exp[,genes], test = learn.exp[,genes], cl =  train$Subtype, k = 4, prob=TRUE)
       kn <- data.frame(Sample = rownames(upData), knn.subtype.call = pred, prob = attr(pred,"prob"))
       kn
     })
