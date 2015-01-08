@@ -28,6 +28,7 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      <th class="tg-031e"></th>
      <th class="tg-031e"><br></th>
      <th class="tg-031e"></th>
+<th class="tg-031e"></th>
      <th class="tg-eccc">Plots</th>
      <th class="tg-031e"></th>
      <th class="tg-031e"></th>
@@ -44,6 +45,7 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      <td class="tg-hgcj">Grade</td>
      <td class="tg-hgcj">Copy Number</td>
      <td class="tg-hgcj">Subtype</td>
+<td class="tg-hgcj">CIMP</td>
      <td class="tg-hgcj">Recurrence</td>
      <td class="tg-hgcj">Correlation</td>
      <td class="tg-hgcj">Survival</td>
@@ -59,6 +61,7 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
+<td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
@@ -74,6 +77,7 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">✔</td>
+<td class="tg-eoji">-</td>
      <td class="tg-eoji">-</td>
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">✔</td>
@@ -89,6 +93,7 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
+<td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
@@ -104,6 +109,7 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">-</td>
      <td class="tg-eoji">✔</td>
+<td class="tg-eoji">✔</td>
      <td class="tg-eoji">-</td>
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">✔</td>
@@ -119,6 +125,7 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
+<td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
@@ -134,6 +141,7 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      <td class="tg-eoji">-</td>
      <td class="tg-eoji">-</td>
      <td class="tg-eoji">✔</td>
+<td class="tg-eoji">✔</td>
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">✔</td>
@@ -149,6 +157,7 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
+<td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
@@ -164,6 +173,7 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      <td class="tg-eoji">-</td>
      <td class="tg-eoji">-</td>
      <td class="tg-eoji">✔</td>
+<td class="tg-eoji">✔</td>
      <td class="tg-eoji">-</td>
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">-</td>
@@ -179,6 +189,7 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
+<td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">-</td>
@@ -194,6 +205,7 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      <td class="tg-eoji">-</td>
      <td class="tg-eoji">-</td>
      <td class="tg-eoji">✔</td>
+<td class="tg-eoji">✔</td>
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">-</td>
@@ -209,6 +221,7 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
+<td class="tg-lvt2">-</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
@@ -223,6 +236,7 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      <td class="tg-eoji">-</td>
      <td class="tg-eoji">-</td>
      <td class="tg-eoji">✔</td>
+<td class="tg-eoji">-</td>
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">✔</td>
@@ -238,6 +252,7 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
+<td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
