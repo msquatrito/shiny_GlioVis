@@ -50,6 +50,7 @@ grzmil <- readRDS("data/Grzmil.Rds")
 donson <- readRDS("data/Donson.Rds")
 li <- readRDS("data/Li.Rds")
 
+noSurvDataset <- c("Bao","Reifenberger","Gill","Li")
 subtype_list <- readRDS("data/subtype_list.Rds")
 core.samples <- readRDS("data/TCGA.core.345samples.Rds")
 
@@ -417,7 +418,7 @@ shinyServer(
     #' Requirements for all the survival plots
     survNeed <- reactive({
       validate(
-        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger" & input$dataset!= "Gill" & input$dataset!= "Li", "Sorry, no survival data are available for this dataset")%then%
+        need(!input$dataset %in% noSurvDataset, "Sorry, no survival data are available for this dataset")%then%
                  need(input$histologySurv != "Non-tumor","Sorry, no survival data are available for this group")%then%
                  need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
                  need(input$gene %in% names(exprs()),"Gene not available for this dataset")
@@ -455,7 +456,7 @@ shinyServer(
     #' Create a slider for the manual cutoff of the Kaplan Meier plot
     mRNAsurv <- reactive({     
       validate(
-        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger" & input$dataset!= "Gill" & input$dataset!= "Li", "")%then%
+        need(!input$dataset %in% noSurvDataset, "")%then%
           need(input$gene != "", "")%then%
           need(input$gene %in% names(exprs()),""),
         need(input$histologySurv %in% c("All", histo()),""),
@@ -502,24 +503,18 @@ shinyServer(
     output$survPlot <- renderPlot({     
       survNeed ()
       validate(need(input$histologySurv %in% c("All", histo()),""))   
-      # Use try because I need to suppress a message throwed the first time manual cutoff is selected
-      try(survivalPlot (exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, numeric = input$mInput,
-                        subtype = input$subtypeSurv, gcimp = input$gcimpSurv, primary = input$primarySurv), silent = TRUE) 
-    })
-    
-    output$subSurvPlot <- renderPlot({
-      survNeed ()
-      try({
-      par(mfrow=c(2,2), mar=c(3,3,3,1), mgp=c(2.2,.95,0))
-      survivalPlot (exprs(), input$gene, group = "GBM", cutoff = input$cutoff, numeric = input$mInput,
-                    subtype = "Classical", gcimp = input$gcimpSurv, primary = input$primarySurv)
-      survivalPlot (exprs(), input$gene, group = "GBM", cutoff = input$cutoff, numeric = input$mInput,
-                    subtype = "Mesenchymal", gcimp = input$gcimpSurv, primary = input$primarySurv)
-      survivalPlot (exprs(), input$gene, group = "GBM", cutoff = input$cutoff, numeric = input$mInput,
-                    subtype = "Neural", gcimp = input$gcimpSurv, primary = input$primarySurv)
-      survivalPlot (exprs(), input$gene, group = "GBM", cutoff = input$cutoff, numeric = input$mInput,
-                    subtype = "Proneural", gcimp = input$gcimpSurv, primary = input$primarySurv)}, silent = TRUE)
-    })
+      # Use 'try' to suppress a message throwed the first time manual cutoff is selected
+      if(input$allSubSurv) {
+        try({
+          par(mfrow=c(2,2), mar=c(3,3,3,1), mgp=c(2.2,.95,0))
+          for (i in c("Classical","Mesenchymal","Neural","Proneural")) {
+            survivalPlot (exprs(), input$gene, group = "GBM", cutoff = input$cutoff, numeric = input$mInput,
+                          subtype = i, gcimp = input$gcimpSurv, primary = input$primarySurv)}
+        }, silent = TRUE)} else {
+          try(survivalPlot (exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, numeric = input$mInput,
+                            subtype = input$subtypeSurv, gcimp = input$gcimpSurv, primary = input$primarySurv), silent = TRUE)}
+    }, height = function(){if(!input$allSubSurv) {400} else {600}}, width = function(){if(!input$allSubSurv) {500} else {800}})
+
     
     #' Download the survPlot
     output$downloadsurvPlot <- downloadHandler(
@@ -528,11 +523,17 @@ shinyServer(
       },      
       content = function(file) {
         pdf(file)
-        survivalPlot(exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, 
-                     subtype = input$subtypeSurv, gcimp = input$gcimpSurv)
+        if(input$allSubSurv) {
+          par(mfrow=c(2,2), mar=c(3,3,3,1), mgp=c(2.2,.95,0))
+          for (i in c("Classical","Mesenchymal","Neural","Proneural")) {
+            survivalPlot (exprs(), input$gene, group = "GBM", cutoff = input$cutoff, numeric = input$mInput,
+                          subtype = i, gcimp = input$gcimpSurv, primary = input$primarySurv)}
+        } else {
+          survivalPlot (exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, numeric = input$mInput,
+                        subtype = input$subtypeSurv, gcimp = input$gcimpSurv, primary = input$primarySurv)}
         dev.off()
       }
-    )
+    ) 
     
     #' Download the kmPlot
     output$downloadkmPlot <- downloadHandler(
@@ -717,12 +718,11 @@ shinyServer(
     #' Generate survival groups stratified by Histology, etc.
     output$survPlots <- renderUI({
       validate(
-        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger" & input$dataset!= "Gill" & input$dataset!= "Li", 
+        need(!input$dataset %in% noSurvDataset,
              "Sorry, no survival data are available for this dataset")
       )
       df <- exprs()[,1:8]
       df <- df[,colSums(is.na(df)) < nrow(df)] # Removing unavailable (all NA) groups
-      df <- droplevels.data.frame(subset(df, Histology!="Non-tumor")) # Exclude normal sample, not displaying properly
       groups <- names(df)[!names(df) %in% c("Sample","status","survival")]
       plot_output_list <- lapply(groups, function(i) {
         plot_surv_name <- paste("plotSurv", i, sep = "")
@@ -734,24 +734,22 @@ shinyServer(
     observe({   
       df <- exprs()[,1:8]
       df <- df[,colSums(is.na(df)) < nrow(df)] 
-      df <- droplevels.data.frame(subset(df, Histology != "Non-tumor")) 
+#       df <- droplevels.data.frame(subset(df, Histology != "Non-tumor")) # Exclude normal sample, not displaying properly
       groups <- names(df)[!names(df) %in% c("Sample","status","survival")]
       for (i in groups) {                                                    
         local({
           my_Survi <- i
           plot_surv_name <- paste("plotSurv", my_Survi, sep="")
           output[[plot_surv_name]] <- renderPlot({
-            if (input$dataset== "Bao" || input$dataset == "Reifenberger" || input$dataset == "Gill") {
+            if (input$dataset %in% noSurvDataset) {
               return()
             }
-            surv.status <- df[ ,"status"]
-            surv.time <- df[ ,"survival"]
-            my.Surv <- Surv(surv.time, surv.status == 1)
-            df[ ,my_Survi] <- droplevels(df[ ,my_Survi])
-            expr.surv <- survfit(my.Surv ~ df[ ,my_Survi], data = df, conf.type = "none")
+            df1 <- na.omit(data.frame(status = df[ ,"status"], time = df[ ,"survival"], strata = df[ ,my_Survi]))
+            df1$strata <- droplevels(df1$strata)
+            expr.surv <- survfit(Surv(time, status == 1) ~ strata, data = df1, conf.type = "none")
             plot(expr.surv, xlab = "Survival time (Months)", ylab = "% Surviving", 
-                 yscale = 100,  col = 1:length((levels(df[ ,my_Survi]))), mark.time = FALSE, main = paste(my_Survi))
-            legend("topright", legend = levels(df[ ,my_Survi]), col = 1:length((levels(df[ ,my_Survi]))), lty = 1)
+                 yscale = 100,  col = 1:length(df1$strata), mark.time = FALSE, main = paste(my_Survi))
+            legend("topright", legend = levels(df1$strata), col = 1:length((levels(df1$strata))), lty = 1)
           })
         })
       }

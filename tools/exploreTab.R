@@ -184,14 +184,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                        div(class = "busy",  
                                                            p("Rendering, please wait"),
                                                            img(src="Rotating_brain.gif")),
-                                                       conditionalPanel(
-                                                         condition = "input.allSubSurv == false",
-                                                         plotOutput(outputId = "survPlot", width = 500 , height = 400)
-                                                         ),
-                                                       conditionalPanel(
-                                                         condition = "input.allSubSurv",                                                
-                                                         plotOutput(outputId = "subSurvPlot",width = 800, height = 600)
-                                                       )
+                                                       plotOutput(outputId = "survPlot", height = "100%")
                                               ),                                              
                                               tabPanel(title = "HR plot", value = "hr",
                                                        column(width = 9,
