@@ -29,7 +29,10 @@ plotList <- list("TCGA GBM" = c("Histology", "Copy number", "Subtype", "CIMP_sta
                  "Gill" = c("Histology", "Subtype", "CIMP_status"),
                  "Gorovets" = c("Histology", "Grade", "Subtype"),
                  "Nutt" = c("Histology", "Subtype", "CIMP_status"),
-                 "Ducray" = c("Subtype", "CIMP_status"))
+                 "Ducray" = c("Subtype", "CIMP_status"),
+                 "Grzmil"= c("Histology", "Subtype", "CIMP_status"),
+                 "Donson"= c("Histology", "Subtype"),
+                 "Li" = c("Subtype", "CIMP_status"))
 gbm.tcga <- readRDS("data/TCGA.GBM.Rds")
 lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
 rembrandt <- readRDS("data/Rembrandt.Rds")
@@ -43,6 +46,10 @@ gill <- readRDS("data/Gill.Rds")
 gorovets <- readRDS("data/Gorovets.Rds")
 nutt <- readRDS("data/Nutt.Rds")
 ducray <- readRDS("data/Ducray.Rds")
+grzmil <- readRDS("data/Grzmil.Rds")
+donson <- readRDS("data/Donson.Rds")
+li <- readRDS("data/Li.Rds")
+
 subtype_list <- readRDS("data/subtype_list.Rds")
 core.samples <- readRDS("data/TCGA.core.345samples.Rds")
 
@@ -69,7 +76,10 @@ shinyServer(
              "Gill" = gill,
              "Gorovets" = gorovets,
              "Nutt" = nutt,
-             "Ducray" = ducray)
+             "Ducray" = ducray,
+             "Grzmil" = grzmil,
+             "Donson" = donson,
+             "Li" = li)
     })
     
     #' Switch the datset for the correlation
@@ -87,7 +97,10 @@ shinyServer(
              "Gill" = gill,
              "Gorovets"= gorovets,
              "Nutt" = nutt,
-             "Ducray" = ducray)
+             "Ducray" = ducray,
+             "Grzmil" = grzmil,
+             "Donson" = donson,
+             "Li" = li)
     })
     
     #' Expression data
@@ -404,7 +417,7 @@ shinyServer(
     #' Requirements for all the survival plots
     survNeed <- reactive({
       validate(
-        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger" & input$dataset!= "Gill" , "Sorry, no survival data are available for this dataset")%then%
+        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger" & input$dataset!= "Gill" & input$dataset!= "Li", "Sorry, no survival data are available for this dataset")%then%
                  need(input$histologySurv != "Non-tumor","Sorry, no survival data are available for this group")%then%
                  need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
                  need(input$gene %in% names(exprs()),"Gene not available for this dataset")
@@ -442,7 +455,7 @@ shinyServer(
     #' Create a slider for the manual cutoff of the Kaplan Meier plot
     mRNAsurv <- reactive({     
       validate(
-        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger" & input$dataset!= "Gill", "")%then%
+        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger" & input$dataset!= "Gill" & input$dataset!= "Li", "")%then%
           need(input$gene != "", "")%then%
           need(input$gene %in% names(exprs()),""),
         need(input$histologySurv %in% c("All", histo()),""),
@@ -704,7 +717,8 @@ shinyServer(
     #' Generate survival groups stratified by Histology, etc.
     output$survPlots <- renderUI({
       validate(
-        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger" & input$dataset!= "Gill", "Sorry, no survival data are available for this dataset")
+        need(input$dataset!= "Bao" & input$dataset!= "Reifenberger" & input$dataset!= "Gill" & input$dataset!= "Li", 
+             "Sorry, no survival data are available for this dataset")
       )
       df <- exprs()[,1:8]
       df <- df[,colSums(is.na(df)) < nrow(df)] # Removing unavailable (all NA) groups
@@ -733,6 +747,7 @@ shinyServer(
             surv.status <- df[ ,"status"]
             surv.time <- df[ ,"survival"]
             my.Surv <- Surv(surv.time, surv.status == 1)
+            df[ ,my_Survi] <- droplevels(df[ ,my_Survi])
             expr.surv <- survfit(my.Surv ~ df[ ,my_Survi], data = df, conf.type = "none")
             plot(expr.surv, xlab = "Survival time (Months)", ylab = "% Surviving", 
                  yscale = 100,  col = 1:length((levels(df[ ,my_Survi]))), mark.time = FALSE, main = paste(my_Survi))

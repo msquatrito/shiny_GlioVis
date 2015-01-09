@@ -257,6 +257,75 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
      </tr>
+     
+     <tr>
+     <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/21406405" style="color: rgb(0,0,0)">Grzmil</a></td>
+     <td class="tg-s6z2-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE15824" style="color: rgb(0,0,0)">Microarray</a></td> 
+     <td class="tg-s6z2">2</td>
+     <td class="tg-s6z2">15</td>
+     <td class="tg-s6z2-bd">15</td>
+     <td class="tg-s6z2"></td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
+     </tr>
+
+     <tr>
+     <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/22802421" style="color: rgb(0,0,0)">Donson</a></td>
+     <td class="tg-9fhq-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE33331" style="color: rgb(0,0,0)">Microarray</a></td> 
+     <td class="tg-9fhq">0</td>
+     <td class="tg-9fhq">5</td>
+     <td class="tg-9fhq-bd">21</td>
+     <td class="tg-9fhq"></td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">✔</td>
+     </tr>
+     
+     <tr>
+     <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/25277177" style="color: rgb(0,0,0)">Li</a></td>
+     <td class="tg-s6z2-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE60184" style="color: rgb(0,0,0)">Microarray</a></td>      
+     <td class="tg-s6z2">0</td>
+     <td class="tg-s6z2">0</td>
+     <td class="tg-s6z2-bd">23</td>
+     <td class="tg-s6z2"></td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
+     </tr>
+
+     <tr>
+     <td class="tg-bd"></td>
+     <td class="tg-s6z2-bd"></td>      
+     <td class="tg-s6z2"></td>
+     <td class="tg-s6z2"></td>
+     <td class="tg-s6z2-bd"></td>
+     <td class="tg-s6z2"></td>
+     <td class="tg-eoji"></td>
+     <td class="tg-eoji"></td>
+     <td class="tg-eoji"></td>
+     <td class="tg-eoji"></td>
+     <td class="tg-eoji"></td>
+     <td class="tg-eoji"></td>
+     <td class="tg-eoji"></td>
+     <td class="tg-eoji"></td>
+     </tr>
+
     <tfoot>
     <tr>
     <td colspan="10">* more than one sample for each patients (MRI non-enhancing and contranst-enhancing)</td>
