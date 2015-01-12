@@ -20,13 +20,13 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                           br(),
                           conditionalPanel(
                             condition = "input.tab1 == 1", 
-                          radioButtons(inputId ="plotType", label = h4("Plot type"), choices = c("Pre-defined","User-defined"),selected = NULL, inline = T)
+                            radioButtons(inputId ="plotType", label = h4("Plot type"), choices = c("Pre-defined","User-defined"),selected = NULL, inline = T)
                           )
-                          ),
+                        ),
                         conditionalPanel(
                           condition = "input.tab1 == 1 & input.plotType == 'Pre-defined'",
                           selectInput(inputId = "plotTypeSel", label = NULL, choices = "", selectize = TRUE)
-                          ),
+                        ),
                         conditionalPanel(
                           condition = "input.tab1 == 1 & input.plotType == 'User-defined'",
                           selectInput(inputId = "plotTypeUserSel", label = NULL, choices = "", selectize = TRUE)
@@ -52,18 +52,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                           checkboxInput(inputId = "statSummary", label = "Summary statistics", value = FALSE),
                           checkboxInput(inputId = "tukeyHSD", label = "Tukey's HSD", value = FALSE),
                           checkboxInput(inputId = "tTest", label = "Pairwise t tests", value = FALSE),
-                          hr(),
-                          selectInput(inputId = "downloadPlotFileType", label = strong("Select download file type"),
-                                      choices = list("PDF"  = "pdf", "BMP"  = "bmp", "JPEG" = "jpeg", "PNG"  = "png")
-                          ),
-                          # Allow the user to set the height and width of the plot download.
-                          helpText(strong("Set download image dimensions"),
-                                   "(units are inches for PDF, pixels for all other formats)"),
-                          numericInput(inputId = "downloadPlotHeight", label = "Height (inches)", value = 7, min = 1, max = 100),
-                          numericInput(inputId = "downloadPlotWidth", label = "Width (inches)", value = 7, min = 1, max = 100),
-                          br(),
-                          br(),
-                          downloadButton(outputId = "downloadPlot", label = "Download")
+                          hr()
                         ),
                         conditionalPanel(
                           condition = "input.tab1 == 2",
@@ -97,24 +86,18 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                               helpText("mRNA expression (log2)")
                             ),
                             hr()
-                          ),
-                          conditionalPanel(
-                            condition = "input.tab1 == 2 & input.tabSurv == 'km'",
-                            downloadButton(outputId = "downloadsurvPlot", label = "Download")
-                          ),
-                          conditionalPanel(
-                            condition = "input.tab1 == 2 & input.tabSurv == 'hr'",
-                            downloadButton(outputId = "downloadkmPlot", label = "Download")
                           )
                         ),
                         conditionalPanel(
                           condition = "input.tab1 == 3 & input.tabCorr == '2genes'",
                           selectizeInput(inputId = "gene2", label = h4("Gene 2"), choices ="", 
-                                         options = list(placeholder = "Enter gene 2, eg: SOCS2", plugins = list('restore_on_backspace')))),
+                                         options = list(placeholder = "Enter gene 2, eg: SOCS2", plugins = list('restore_on_backspace')))
+                        ),
                         conditionalPanel(
                           condition = "input.tab1 == 3 & input.tabCorr == 'geneslist'",
                           selectizeInput(inputId = "genelist", label = h4("Genes list"), choices ="", multiple = TRUE,
-                                         options = list(placeholder = "Enter genes", plugins = list('remove_button')))),
+                                         options = list(placeholder = "Enter genes", plugins = list('remove_button')))
+                        ),
                         conditionalPanel(
                           condition = "input.tab1 == 3",  
                           br(),
@@ -123,10 +106,12 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                             condition = "input.histologyCorr == 'GBM'",
                             br(),
                             selectInput(inputId = "subtype", label = h4("Subtype:"), 
-                                        choices = c("All", "Classical", "Mesenchymal", "Neural", "Proneural")))),
+                                        choices = c("All", "Classical", "Mesenchymal", "Neural", "Proneural"))
+                          ),
+                          hr()
+                        ),
                         conditionalPanel(
                           condition = "input.tab1 == 3 & input.tabCorr == '2genes'",
-                          hr(),
                           h5("Statistic:"),
                           checkboxInput(inputId = "statCorr", label = "Pearson's correlation", value = FALSE),
                           hr(),
@@ -135,13 +120,40 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                           hr(),
                           radioButtons(inputId = "separateBy", label = h5("Separate by:"), 
                                        choices = c("None" = "none", "Histology" = "Histology", "Subtype" = "Subtype")),
-                          hr(),
-                          downloadButton(outputId = "downloadcorrPlot", label = "Download plot")
+                          hr()
                         ),
+                        # Allow the user to set the height and width of the plot download.
                         conditionalPanel(
-                          condition = "input.tab1 == 3 & input.tabCorr == 'geneslist'",
-                        hr(),
-                        downloadButton(outputId = "downloadpairsPlot", label = "Download plot")
+                          condition = "input.tab1 != 4",
+                          selectInput(inputId = "downloadPlotFileType", label = strong("Select download file type"),
+                                      choices = list("PDF"  = "pdf", "BMP"  = "bmp", "JPEG" = "jpeg", "PNG"  = "png")
+                          ),
+                          strong("Set download image dimensions"),
+                          helpText("(units are inches for PDF, pixels for all other formats)"),
+                          numericInput(inputId = "downloadPlotHeight", label = "Height (inches)", value = 7, min = 1, max = 100),
+                          numericInput(inputId = "downloadPlotWidth", label = "Width (inches)", value = 7, min = 1, max = 100),
+                          br(),
+                          br(),
+                          conditionalPanel(
+                            condition = "input.tab1 == 1",
+                            downloadButton(outputId = "downloadPlot", label = "Download")
+                          ),
+                          conditionalPanel(
+                            condition = "input.tab1 == 2 & input.tabSurv == 'km'",
+                            downloadButton(outputId = "downloadsurvPlot", label = "Download")
+                          ),
+                          conditionalPanel(
+                            condition = "input.tab1 == 2 & input.tabSurv == 'hr'",
+                            downloadButton(outputId = "downloadkmPlot", label = "Download")
+                          ),
+                          conditionalPanel(
+                            condition = "input.tab1 == 3 & input.tabCorr == '2genes'",
+                            downloadButton(outputId = "downloadcorrPlot", label = "Download")
+                          ),
+                          conditionalPanel(
+                            condition = "input.tab1 == 3 & input.tabCorr == 'geneslist'",
+                            downloadButton(outputId = "downloadpairsPlot", label = "Download")
+                          )
                         )
            ),
            
@@ -220,13 +232,13 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                               ),
                                               tabPanel(title = "Multiple-Genes", value = "geneslist",
                                                        plotOutput(outputId = "pairsPlot")
-#                                                        ,
-#                                                        tableOutput(outputId = "pairsData")
+                                                       #                                                        ,
+                                                       #                                                        tableOutput(outputId = "pairsData")
                                               )
                                   )
                          ),
                          
-                         tabPanel(title = "Data", icon = icon("table"),
+                         tabPanel(title = "Data", icon = icon("table"), value = 4,
                                   tabsetPanel(
                                     tabPanel(title = "Table",
                                              downloadButton(outputId = "downloadData", label = "Download table"), 

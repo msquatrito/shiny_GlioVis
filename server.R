@@ -350,10 +350,10 @@ shinyServer(
         paste(input$gene, "_", input$dataset, "_", input$plotTypeSel, ".", downloadPlotFileType(), sep = "")
       },     
       # The argument content below takes filename as a function and returns what's printed to it.
-      content = function(con) {
+      content = function(file) {
         # Gets the name of the function to use from the downloadFileType reactive element.
         plotFunction <- match.fun(downloadPlotFileType())
-        plotFunction(con, width = downloadPlotWidth(), height = downloadPlotHeight())
+        plotFunction(file, width = downloadPlotWidth(), height = downloadPlotHeight())
         ggboxPlot(data = data (), xlabel = xlabel(), scale = input$scale, stat = input$tukeyPlot, colBox = input$colBox, 
                   colStrip = input$colStrip, colorPoints = input$colorP, bw = input$bw)  
         dev.off(which=dev.cur())
@@ -522,7 +522,8 @@ shinyServer(
         paste(input$gene, "_", input$dataset, "_survPlot.pdf", sep = "")
       },      
       content = function(file) {
-        pdf(file)
+        plotFunction <- match.fun(downloadPlotFileType())
+        plotFunction(file, width = downloadPlotWidth(), height = downloadPlotHeight())
         if(input$allSubSurv) {
           par(mfrow=c(2,2), mar=c(3,3,3,1), mgp=c(2.2,.95,0))
           for (i in c("Classical","Mesenchymal","Neural","Proneural")) {
@@ -541,7 +542,8 @@ shinyServer(
         paste(input$gene, "_", input$dataset, "_kmPlot.pdf", sep = "")
       },
       content = function(file) {
-        pdf(file)
+        plotFunction <- match.fun(downloadPlotFileType())
+        plotFunction(file, width = downloadPlotWidth(), height = downloadPlotHeight())
         kmPlot(getCutoff(), survivalFml())
         dev.off()
       }
@@ -599,7 +601,8 @@ shinyServer(
         paste(input$gene, "_", input$dataset, "_corrPlot.pdf", sep = "")
       },
       content = function(file) {
-        pdf(file)
+        plotFunction <- match.fun(downloadPlotFileType())
+        plotFunction(file, width = downloadPlotWidth(), height = downloadPlotHeight())
         myCorggPlot (exprs(), input$gene, input$gene2, input$histologyCorr, input$subtype, 
                      colorByInput(), separateByInput())
         dev.off()
@@ -646,7 +649,8 @@ shinyServer(
         paste(input$dataset, "_pairsPlot.pdf", sep = "")
       },
       content = function(file) {
-        pdf(file)
+        plotFunction <- match.fun(downloadPlotFileType())
+        plotFunction(file, width = downloadPlotWidth(), height = downloadPlotHeight())
         print(ggpairs(pairsData(),lower=list(continuous="smooth", params=c(alpha=0.5)))) 
         dev.off()
       }
@@ -905,6 +909,14 @@ shinyServer(
       upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote)
       sub3 <- data.frame(Sample = upData$Sample, svm.call = svm.call()[,"svm.subtype.call"], 
                          knn.call = knn.call()[,"knn.subtype.call"], gsea.call = gsva.call()[,"gsea.subtype.call"])
+      sub3 <- within(sub3,{equal.call <- ifelse(svm.call==knn.call & knn.call==gsea.call, "TRUE", "FALSE")}) # compare calls
+      maj <- function(InVec) {
+        if (!is.factor(InVec)) InVec <- factor(InVec)
+        A <- tabulate(InVec)
+        levels(InVec)[which.max(A)]
+      }
+      sub3$majority.call <- apply(sub3,1,maj) # compare calls
+      sub3
     })
 
     output$call.identity <- renderText({

@@ -103,29 +103,31 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                        p("Be patients, it could take a couple of minutes ...")
                                    ),
                                    p(class = "lead","Generate and compare subtype calls by SVM, K-NN and ssGSEA"),
-                                   conditionalPanel(
-                                     condition = "output.sub3",
-                                     p(strong("svm_vs_knn"),textOutput(outputId = "call.identity",inline = TRUE)),
-                                     tableOutput(outputId = "sub3Summary.1"),
-                                     br(),
-                                     fluidRow(
-                                       column(width = 5,
-                                              p(strong("svm_vs_gsea")),
-                                              tableOutput(outputId = "sub3Summary.2")
-                                       ),
-                                       column(width = 5, offset = 1,
-                                              p(strong("knn_vs_gsea")),
-                                              tableOutput(outputId = "sub3Summary.3")
-                                       )
-                                     )
-                                   ),
+#                                    conditionalPanel(
+#                                      condition = "output.sub3",
+#                                      p(strong("svm_vs_knn"),textOutput(outputId = "call.identity",inline = TRUE)),
+#                                      tableOutput(outputId = "sub3Summary.1"),
+#                                      br(),
+#                                      fluidRow(
+#                                        column(width = 5,
+#                                               p(strong("svm_vs_gsea")),
+#                                               tableOutput(outputId = "sub3Summary.2")
+#                                        ),
+#                                        column(width = 5, offset = 1,
+#                                               p(strong("knn_vs_gsea")),
+#                                               tableOutput(outputId = "sub3Summary.3")
+#                                        )
+#                                      )
+#                                    ),
                                    br(),
                                    conditionalPanel(
                                      condition = "output.sub3",
                                      downloadButton(outputId = "downloadSub3", label = "Download data")
                                    ),
                                    br(),
-                                   dataTableOutput(outputId = "sub3")
+                                   column(width = 9,
+                                    dataTableOutput(outputId = "sub3")
+                                   )
                           )
                         )
                       )
