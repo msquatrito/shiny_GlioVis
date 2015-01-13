@@ -578,3 +578,12 @@ ggally_cor <- function(data, mapping, corAlignPercent = 0.6, ...){
 }
 
 assignInNamespace("ggally_cor", ggally_cor, "GGally")
+
+###############################################
+########## majority vote for 3-way sub ########
+###############################################
+maj <- function(InVec) {
+  if (!is.factor(InVec)) InVec <- factor(InVec)
+  A <- tabulate(InVec)
+  levels(InVec)[which.max(A)]
+}

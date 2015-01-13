@@ -419,10 +419,10 @@ shinyServer(
     survNeed <- reactive({
       validate(
         need(!input$dataset %in% noSurvDataset, "Sorry, no survival data are available for this dataset")%then%
-                 need(input$histologySurv != "Non-tumor","Sorry, no survival data are available for this group")%then%
-                 need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
-                 need(input$gene %in% names(exprs()),"Gene not available for this dataset")
-        )
+          need(input$histologySurv != "Non-tumor","Sorry, no survival data are available for this group")%then%
+          need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
+          need(input$gene %in% names(exprs()),"Gene not available for this dataset")
+      )
     })
     
     #' Render a plot to show the the Hazard ratio for the gene's expression values
@@ -454,14 +454,9 @@ shinyServer(
     })
     
     #' Create a slider for the manual cutoff of the Kaplan Meier plot
-    mRNAsurv <- reactive({     
-      validate(
-        need(!input$dataset %in% noSurvDataset, "")%then%
-          need(input$gene != "", "")%then%
-          need(input$gene %in% names(exprs()),""),
-        need(input$histologySurv %in% c("All", histo()),""),
-        need(input$histologySurv != "Non-tumor","")
-      )     
+    mRNAsurv <- reactive({
+      survNeed()
+      validate(need(input$histologySurv %in% c("All", histo()),""))      
       df <- exprs()
       df <- subset(df, !is.na(df$status))
       if (input$histologySurv != "All"){
@@ -907,51 +902,46 @@ shinyServer(
     sub3.call <- reactive ({
       inFile <- input$upFile
       upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote)
-      sub3 <- data.frame(Sample = upData$Sample, svm.call = svm.call()[,"svm.subtype.call"], 
-                         knn.call = knn.call()[,"knn.subtype.call"], gsea.call = gsva.call()[,"gsea.subtype.call"])
-      sub3 <- within(sub3,{equal.call <- ifelse(svm.call==knn.call & knn.call==gsea.call, "TRUE", "FALSE")}) # compare calls
-      maj <- function(InVec) {
-        if (!is.factor(InVec)) InVec <- factor(InVec)
-        A <- tabulate(InVec)
-        levels(InVec)[which.max(A)]
-      }
-      sub3$majority.call <- apply(sub3,1,maj) # compare calls
-      sub3
+      sub3 <- data_frame(Sample = upData$Sample, svm.call = svm.call()[,"svm.subtype.call"], 
+                         knn.call = knn.call()[,"knn.subtype.call"], gsea.call = gsva.call()[,"gsea.subtype.call"],
+                         equal.call = ifelse(svm.call==knn.call & knn.call==gsea.call, "TRUE", "FALSE"))
+      sub3$majority.call <- apply(sub3[,2:4],1,maj) # compare calls
+      sub3 <- as.data.frame(sub3) # the dataframe generated with dplyr gives issue when sorting the html table
     })
 
-    output$call.identity <- renderText({
-      sub3 <- sub3.call()
-      m <- mean(sub3$svm.call == sub3$knn.call, na.rm=TRUE)
-      paste(", % of identinty:", round(m*100,1))
-    })
-    
-    #' subtype call summary
-    sub3Summary <- reactive ({
-      if (is.null(input$upFile) || input$goSub3 == 0)
-        return(NULL)
-      input$goSub3
-      isolate({
-        sub3 <- sub3.call()
-        sub3 <- list(
-          svm_vs_knn = table(svm = sub3$svm.call, knn = sub3$knn.call),
-          svm_vs_gsea = table(svm = sub3$svm.call, knn = sub3$gsea.call),
-          knn_vs_gsea = table(svm = sub3$knn.call, knn = sub3$gsea.call)
-        )
-      })
-    })
-
-    #' subtype call summary.1 
-    output$sub3Summary.1 <- renderTable({
-      sub3Summary()[[1]]
-    })
-    #' subtype call summary.2 
-    output$sub3Summary.2 <- renderTable({
-      sub3Summary()[[2]]
-    })
-    #' subtype call summary.3 
-    output$sub3Summary.3 <- renderTable({ 
-      sub3Summary()[[3]]
-    })
+#     output$call.identity <- renderText({
+#       sub3 <- sub3.call()
+#       m <- mean(sub3$svm.call == sub3$knn.call, na.rm=TRUE)
+#       paste(", % of identinty:", round(m*100,1))
+#     })
+#     
+#     #' subtype call summary
+#     sub3Summary <- reactive ({
+#       if (is.null(input$upFile) || input$goSub3 == 0)
+#         return(NULL)
+#       input$goSub3
+#       isolate({
+#         sub3 <- sub3.call()
+#         sub3 <- list(
+#           svm_vs_knn = table(svm = sub3$svm.call, knn = sub3$knn.call),
+#           svm_vs_gsea = table(svm = sub3$svm.call, knn = sub3$gsea.call),
+#           knn_vs_gsea = table(svm = sub3$knn.call, knn = sub3$gsea.call)
+#         )
+#       })
+#     })
+# 
+#     #' subtype call summary.1 
+#     output$sub3Summary.1 <- renderTable({
+#       sub3Summary()[[1]]
+#     })
+#     #' subtype call summary.2 
+#     output$sub3Summary.2 <- renderTable({
+#       sub3Summary()[[2]]
+#     })
+#     #' subtype call summary.3 
+#     output$sub3Summary.3 <- renderTable({ 
+#       sub3Summary()[[3]]
+#     })
 
     #' Rerndering the subtype call as a data table
     output$sub3 <- renderDataTable({ 
