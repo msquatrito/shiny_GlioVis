@@ -347,7 +347,8 @@ shinyServer(
     #' Download the Plot
     output$downloadPlot <- downloadHandler(
       filename = function() {
-        paste(input$gene, "_", input$dataset, "_", input$plotTypeSel, ".", downloadPlotFileType(), sep = "")
+        paste0(Sys.Date(), "_", input$gene, "_", input$dataset, "_", input$plotTypeSel,  
+                ".", downloadPlotFileType() )
       },     
       # The argument content below takes filename as a function and returns what's printed to it.
       content = function(file) {
@@ -514,7 +515,7 @@ shinyServer(
     #' Download the survPlot
     output$downloadsurvPlot <- downloadHandler(
       filename = function() {
-        paste(input$gene, "_", input$dataset, "_survPlot.pdf", sep = "")
+        paste0(Sys.Date(), "_", input$gene, "_", input$dataset, "_survPlot.pdf")
       },      
       content = function(file) {
         plotFunction <- match.fun(downloadPlotFileType())
@@ -534,7 +535,7 @@ shinyServer(
     #' Download the kmPlot
     output$downloadkmPlot <- downloadHandler(
       filename = function() {
-        paste(input$gene, "_", input$dataset, "_kmPlot.pdf", sep = "")
+        paste0(Sys.Date(), "_", input$gene, "_", input$dataset, "_kmPlot.pdf")
       },
       content = function(file) {
         plotFunction <- match.fun(downloadPlotFileType())
@@ -593,7 +594,7 @@ shinyServer(
     #' Download the corrPlot
     output$downloadcorrPlot <- downloadHandler(
       filename = function() {
-        paste(input$gene, "_", input$dataset, "_corrPlot.pdf", sep = "")
+        paste0(Sys.Date(), "_", input$gene, "_", input$dataset, "_corrPlot.pdf")
       },
       content = function(file) {
         plotFunction <- match.fun(downloadPlotFileType())
@@ -641,7 +642,7 @@ shinyServer(
     #' Download the pairs plot
     output$downloadpairsPlot <- downloadHandler(
       filename = function() {
-        paste(input$dataset, "_pairsPlot.pdf", sep = "")
+        paste0(Sys.Date(), "_", input$dataset, "_pairsPlot.pdf")
       },
       content = function(file) {
         plotFunction <- match.fun(downloadPlotFileType())
@@ -676,7 +677,7 @@ shinyServer(
     #' Download the data
     output$downloadData <- downloadHandler(
       filename = function() {
-        paste(input$gene, "_", input$dataset, ".csv", sep="")
+        paste0(Sys.Date(), "_", input$gene, "_", input$dataset, ".csv")
       },
       content = function(file) {
         write.csv(dataTable(), file)
@@ -813,7 +814,7 @@ shinyServer(
     #' Download the subtype call
     output$downloadSvm <- downloadHandler(
       filename = function() {
-        paste("SVM_Subtype_Call.csv", sep="")
+        paste0(Sys.Date(), "_", "SVM_Subtype_Call.csv")
       },
       content = function(file) {
         write.csv(svm.call(), file)
@@ -854,7 +855,7 @@ shinyServer(
     #' Download the knn subtype call
     output$downloadKnn <- downloadHandler(
       filename = function() {
-        paste("KNN_Subtype_Call.csv", sep="")
+        paste0(Sys.Date(), "_", "KNN_Subtype_Call.csv")
       },
       content = function(file) {
         write.csv(knn.call(), file)
@@ -891,7 +892,7 @@ shinyServer(
     #' Download the subtype call
     output$downloadGsva <- downloadHandler(
       filename = function() {
-        paste("GSVA_Subtype_call.csv", sep="")
+        paste0(Sys.Date(), "_", "GSVA_Subtype_call.csv")
       },
       content = function(file) {
         write.csv(gvsa.call(), file)
@@ -956,7 +957,7 @@ shinyServer(
     #' Download the subtype call
     output$downloadSub3 <- downloadHandler(
       filename = function() {
-        paste("3_Way_Subtype_call.csv", sep="")
+        paste0(Sys.Date(), "_", "3way_Subtype_call.csv")
       },
       content = function(file) {
         write.csv(sub3.call(), file)
@@ -981,7 +982,7 @@ shinyServer(
     corrData <- reactive({  
           corr.table <- suppressWarnings(corr())  # suppressWarnings  is used to prevent the warning messages in the LGG dataset  
           if (input$sign == 0.01){
-            corr.table <- subset(corr.table, p.value <= 0.01)
+            corr.table <- subset(corr.table, adj.p.value <= 0.01)
           } 
           if (input$cor == "Positive"){
             corr.table <- subset(corr.table, r > 0)
@@ -991,7 +992,7 @@ shinyServer(
             corr.table <- subset(corr.table, r < 0)
             corr.table <- corr.table[order(corr.table$r), ]
           } else {
-            corr.table <- subset(corr.table, p.value <= 0.05)
+            corr.table <- subset(corr.table, adj.p.value <= 0.05)
           }
           corr.table
     })
@@ -1009,7 +1010,8 @@ shinyServer(
     #' Download the correlation table 
     output$downloadCorrData <- downloadHandler(
       filename = function() {
-        paste(input$geneCor, input$datasetCor, input$histologyCorrTable, "corrData.csv", sep="_")
+        paste(Sys.Date(), input$geneCor, input$datasetCor, input$histologyCorrTable, 
+              "corrData.csv", sep="_")
       },
       content = function(file) {
         write.csv(corrData(),file)
