@@ -11,7 +11,8 @@ shinyUI(
              source("tools/homeTab.R", local = TRUE)$value,  
              source("tools/exploreTab.R", local = TRUE)$value,
              source("tools/toolsTab.R", local = TRUE)$value,
-             source("tools/aboutTab.R", local = TRUE)$value
+             source("tools/aboutTab.R", local = TRUE)$value,
+             source("tools/newsTab.R", local = TRUE)$value
              
   )
 )
