@@ -310,6 +310,57 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      </tr>
 
      <tr>
+     <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/20484145" style="color: rgb(0,0,0)">Vital</a></td>
+     <td class="tg-9fhq-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE43289" style="color: rgb(0,0,0)">Microarray</a></td>      
+     <td class="tg-9fhq">0</td>
+     <td class="tg-9fhq">12</td>
+     <td class="tg-9fhq-bd">26</td>
+     <td class="tg-9fhq"></td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">✔</td>
+     </tr>
+
+<tr>
+     <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/23333277" style="color: rgb(0,0,0)">Joo</a></td>
+     <td class="tg-s6z2-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc= GSE42669" style="color: rgb(0,0,0)">Microarray</a></td>      
+     <td class="tg-s6z2">0</td>
+     <td class="tg-s6z2">0</td>
+     <td class="tg-s6z2-bd">57</td>
+     <td class="tg-s6z2"></td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
+     </tr>
+
+     <tr>
+     <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/25084005" style="color: rgb(0,0,0)">Oh</a></td>
+     <td class="tg-9fhq-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE58399" style="color: rgb(0,0,0)">Microarray</a></td>      
+     <td class="tg-9fhq">0</td>
+     <td class="tg-9fhq">0</td>
+     <td class="tg-9fhq-bd">105*</td>
+     <td class="tg-9fhq"></td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">-</td>
+     </tr>
+
+     <tr>
      <td class="tg-bd"></td>
      <td class="tg-s6z2-bd"></td>      
      <td class="tg-s6z2"></td>
@@ -328,7 +379,7 @@ tfoot {color:gray; font-size:5px; text-align: left;}
 
     <tfoot>
     <tr>
-    <td colspan="10">* more than one sample for each patients (MRI non-enhancing and contranst-enhancing)</td>
+    <td colspan="10">* more than one sample for each patients </td>
     </tr>
     </tfoot>
      </table>')
