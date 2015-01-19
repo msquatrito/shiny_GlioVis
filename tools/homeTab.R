@@ -18,7 +18,7 @@ tabPanel(title = "Home", icon = icon("home"),
                    tags$li('Select the "Explore" tab'), 
                    tags$li("Choose a dataset"), 
                    tags$li("Enter a Gene Symbol"),
-                   tags$li("Select one of the available plots (through the dropdown menu or the specific tab)")
+                   tags$li("Select one of the available plots (through the dropdown menu or a specific tab)")
                  ),
                  p(class = "outer", "Available datasets:"),                   
                  source("tools/datsets.table.R",local = TRUE)$value,

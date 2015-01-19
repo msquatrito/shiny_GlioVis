@@ -133,27 +133,30 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                           numericInput(inputId = "downloadPlotHeight", label = "Height (inches)", value = 7, min = 1, max = 100),
                           numericInput(inputId = "downloadPlotWidth", label = "Width (inches)", value = 7, min = 1, max = 100),
                           br(),
-                          br(),
                           conditionalPanel(
                             condition = "input.tab1 == 1",
-                            downloadButton(outputId = "downloadPlot", label = "Download")
+                            downloadButton(outputId = "downloadPlot", label = "Download", class= "btn-primary")
                           ),
                           conditionalPanel(
                             condition = "input.tab1 == 2 & input.tabSurv == 'km'",
-                            downloadButton(outputId = "downloadsurvPlot", label = "Download")
+                            downloadButton(outputId = "downloadsurvPlot", label = "Download", class= "btn-primary")
                           ),
                           conditionalPanel(
                             condition = "input.tab1 == 2 & input.tabSurv == 'hr'",
-                            downloadButton(outputId = "downloadkmPlot", label = "Download")
+                            downloadButton(outputId = "downloadkmPlot", label = "Download", class= "btn-primary")
                           ),
                           conditionalPanel(
                             condition = "input.tab1 == 3 & input.tabCorr == '2genes'",
-                            downloadButton(outputId = "downloadcorrPlot", label = "Download")
+                            downloadButton(outputId = "downloadcorrPlot", label = "Download", class= "btn-primary")
                           ),
                           conditionalPanel(
                             condition = "input.tab1 == 3 & input.tabCorr == 'geneslist'",
-                            downloadButton(outputId = "downloadpairsPlot", label = "Download")
+                            downloadButton(outputId = "downloadpairsPlot", label = "Download", class= "btn-primary")
                           )
+                        ),
+                        conditionalPanel(
+                          condition = "input.tab1 == 4",
+                          downloadButton(outputId = "downloadData", label = "Download table", class= "btn-primary")                        
                         )
            ),
            
@@ -241,8 +244,6 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                          tabPanel(title = "Data", icon = icon("table"), value = 4,
                                   tabsetPanel(
                                     tabPanel(title = "Table",
-                                             downloadButton(outputId = "downloadData", label = "Download table"), 
-                                             br(),
                                              br(),
                                              dataTableOutput(outputId = "table")
                                     ),

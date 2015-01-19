@@ -22,22 +22,22 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                    br(),
                                    conditionalPanel(
                                      condition = "input.tabTools == 1",
-                                     actionButton(inputId = "goSvm", label = "Submit SVM", styleclass = "primary"),
+                                     actionButton(inputId = "goSvm", label = "Submit SVM", class= "btn-success"),
                                      br()
                                    ),
                                    conditionalPanel(
                                      condition = "input.tabTools == 2",
-                                     actionButton(inputId = "goKnn", label = "Submit K-NN", styleclass = "primary"),
+                                     actionButton(inputId = "goKnn", label = "Submit K-NN", class= "btn-success"),
                                      br()
                                    ),
                                    conditionalPanel(
                                      condition = "input.tabTools == 3",
-                                     actionButton(inputId = "goGsva", label = "Submit ssGSEA", styleclass = "primary"),
+                                     actionButton(inputId = "goGsva", label = "Submit ssGSEA", class= "btn-success"),
                                      br()
                                    ),
                                    conditionalPanel(
                                      condition = "input.tabTools == 4",
-                                     actionButton(inputId = "goSub3", label = "Submit 3-Way", styleclass = "primary"),
+                                     actionButton(inputId = "goSub3", label = "Submit 3-Way", class= "btn-success"),
                                      br()
                                    )
                       ),
@@ -55,7 +55,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                    p(strong("File output format:"), "Download a .csv file containing the subtype call with the probability model."),  
                                    conditionalPanel(
                                      condition = "output.svm",
-                                     downloadButton(outputId = "downloadSvm", label = "Download data")
+                                     downloadButton(outputId = "downloadSvm", label = "Download data", class= "btn-primary")
                                    ),
                                    br(),
                                    dataTableOutput(outputId = "svm")
@@ -72,7 +72,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                    p(strong("File output format:"), "Download a .csv file containing the subtype call with the probability score."),
                                    conditionalPanel(
                                      condition = "output.knn",
-                                     downloadButton(outputId = "downloadKnn", label = "Download data")
+                                     downloadButton(outputId = "downloadKnn", label = "Download data", class= "btn-primary")
                                    ),
                                    br(),
                                    dataTableOutput(outputId = "knn")
@@ -89,7 +89,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                    p(strong("File output format:"), "Download a .csv file containing the subtype call with the enrichment score."),
                                    conditionalPanel(
                                      condition = "output.gsva",
-                                     downloadButton(outputId = "downloadGsva", label = "Download data")
+                                     downloadButton(outputId = "downloadGsva", label = "Download data", class= "btn-primary")
                                    ),
                                    br(),
                                    dataTableOutput(outputId = "gsva")
@@ -122,7 +122,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                    br(),
                                    conditionalPanel(
                                      condition = "output.sub3",
-                                     downloadButton(outputId = "downloadSub3", label = "Download data")
+                                     downloadButton(outputId = "downloadSub3", label = "Download data", class= "btn-primary")
                                    ),
                                    br(),
                                    column(width = 9,
@@ -161,7 +161,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                    conditionalPanel(
                                      condition = "output.corrData",
                                      br(),
-                                     downloadButton(outputId = "downloadCorrData", label = "Download data")
+                                     downloadButton(outputId = "downloadCorrData", label = "Download data", class= "btn-primary")
                                    )
                       ),
                       mainPanel(
