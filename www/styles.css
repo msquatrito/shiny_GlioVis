@@ -6,10 +6,10 @@
 }
 
 #footer {
-  height:40px;
+  height:50px;
 	padding-right:20px;
 	padding-left:20px;
-  padding-top: 12px;
+  padding-top: 10px;
   line-height: 18px;
   text-align: center;
 	background-color:#fafafa;
@@ -24,6 +24,10 @@
 	-moz-border-radius:4px;
 }
 
+.responsive-image{
+        height:auto;
+        width:100%;
+    }
 #home {
   margin: auto; width: 900px;
 }

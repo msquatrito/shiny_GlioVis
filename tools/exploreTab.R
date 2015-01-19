@@ -6,7 +6,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
          
          sidebarLayout(
            sidebarPanel(width = 3,
-                        img(src = "GlioVis_logo_gray.jpg"),
+                        img(src = "GlioVis_logo_gray.jpg", class="responsive-image"),
                         br(),
                         br(),
                         selectInput(inputId = "dataset", label = h4("Dataset"),
