@@ -1,3 +1,76 @@
+library(shiny)
+library(survival)
+library(weights)
+library(ggplot2)
+library(gridExtra)
+library(rCharts)
+library(dplyr)
+library(GSVA)
+library(GGally)
+library(class)
+
+`%then%` <- shiny:::`%OR%`
+
+#######################################
+############## Datasets  ##############
+#######################################
+datasets <- c("TCGA GBM", "TCGA Lgg","Rembrandt", "Gravendeel", "Phillips", "Murat", "Freije", 
+              "Reifenberger", "Bao", "Gill", "Gorovets", "Nutt", "Ducray","Grzmil","Donson","Li","Vital",
+              "Joo","Oh")
+
+noSurvDataset <- c("Bao","Reifenberger","Gill","Li", "Oh")
+
+gbm.tcga <- readRDS("data/TCGA.GBM.Rds")
+lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
+rembrandt <- readRDS("data/Rembrandt.Rds")
+freije <- readRDS("data/Freije.Rds")
+gravendeel <- readRDS("data/Gravendeel.Rds")
+murat <- readRDS("data/Murat.Rds")
+phillips <- readRDS("data/Phillips.Rds")
+reifenberger <- readRDS("data/Reifenberger.Rds")
+bao <- readRDS("data/Bao.Rds")
+gill <- readRDS("data/Gill.Rds")
+gorovets <- readRDS("data/Gorovets.Rds")
+nutt <- readRDS("data/Nutt.Rds")
+ducray <- readRDS("data/Ducray.Rds")
+grzmil <- readRDS("data/Grzmil.Rds")
+donson <- readRDS("data/Donson.Rds")
+li <- readRDS("data/Li.Rds")
+vital <- readRDS("data/Vital.Rds")
+joo <- readRDS("data/Joo.Rds")
+oh <- readRDS("data/Oh.Rds")
+
+#######################################
+########## other variables  ###########
+#######################################
+gene_names <- readRDS("data/gene_names.Rds")
+subtype_list <- readRDS("data/subtype_list.Rds")
+core.samples <- readRDS("data/TCGA.core.345samples.Rds")
+
+#######################################
+############## plotList  ##############
+#######################################
+plotList <- list("TCGA GBM" = c("Histology", "Copy number", "Subtype", "CIMP_status", "Recurrence"),
+                 "TCGA Lgg" = c("Histology", "Grade", "Copy number", "Subtype"),
+                 "Rembrandt" = c("Histology", "Grade", "Subtype", "CIMP_status"),
+                 "Gravendeel" = c("Histology", "Grade", "Subtype", "CIMP_status"),
+                 "Phillips" = c("Grade", "Subtype", "Recurrence", "CIMP_status"),
+                 "Murat" = c("Histology", "Subtype", "Recurrence", "CIMP_status"),
+                 "Freije" = c("Histology", "Grade", "Subtype", "CIMP_status"),
+                 "Reifenberger" = c("Subtype", "CIMP_status"),
+                 "Bao" = c("Histology", "Subtype", "Recurrence", "CIMP_status"),
+                 "Gill" = c("Histology", "Subtype", "CIMP_status"),
+                 "Gorovets" = c("Histology", "Grade", "Subtype"),
+                 "Nutt" = c("Histology", "Subtype", "CIMP_status"),
+                 "Ducray" = c("Subtype", "CIMP_status"),
+                 "Grzmil"= c("Histology", "Subtype", "CIMP_status"),
+                 "Donson"= c("Histology", "Subtype"),
+                 "Li" = c("Subtype", "CIMP_status"),
+                 "Vital" = c("Histology", "Grade", "Subtype"),
+                 "Joo" = c("Histology", "Subtype", "Recurrence", "CIMP_status"),
+                 "Oh" = c("Recurrence", "Subtype", "CIMP_status"))
+
+
 #########################################
 ##############  ggboxPlot  ##############
 #########################################

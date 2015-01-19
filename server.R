@@ -1,62 +1,4 @@
-library(shiny)
-library(survival)
-library(weights)
-library(ggplot2)
-library(gridExtra)
-library(rCharts)
-library(dplyr)
-library(GSVA)
-library(GGally)
-library(class)
-# library(shinysky)
-
-source("global.R")
-`%then%` <- shiny:::`%OR%`
-
-#######################################
-############## Datasets  ##############
-#######################################
-gene_names <- readRDS("data/gene_names.Rds")
-plotList <- list("TCGA GBM" = c("Histology", "Copy number", "Subtype", "CIMP_status", "Recurrence"),
-                 "TCGA Lgg" = c("Histology", "Grade", "Copy number", "Subtype"),
-                 "Rembrandt" = c("Histology", "Grade", "Subtype", "CIMP_status"),
-                 "Gravendeel" = c("Histology", "Grade", "Subtype", "CIMP_status"),
-                 "Phillips" = c("Grade", "Subtype", "Recurrence", "CIMP_status"),
-                 "Murat" = c("Histology", "Subtype", "Recurrence", "CIMP_status"),
-                 "Freije" = c("Histology", "Grade", "Subtype", "CIMP_status"),
-                 "Reifenberger" = c("Subtype", "CIMP_status"),
-                 "Bao" = c("Histology", "Subtype", "Recurrence", "CIMP_status"),
-                 "Gill" = c("Histology", "Subtype", "CIMP_status"),
-                 "Gorovets" = c("Histology", "Grade", "Subtype"),
-                 "Nutt" = c("Histology", "Subtype", "CIMP_status"),
-                 "Ducray" = c("Subtype", "CIMP_status"),
-                 "Grzmil"= c("Histology", "Subtype", "CIMP_status"),
-                 "Donson"= c("Histology", "Subtype"),
-                 "Li" = c("Subtype", "CIMP_status"))
-gbm.tcga <- readRDS("data/TCGA.GBM.Rds")
-lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
-rembrandt <- readRDS("data/Rembrandt.Rds")
-freije <- readRDS("data/Freije.Rds")
-gravendeel <- readRDS("data/Gravendeel.Rds")
-murat <- readRDS("data/Murat.Rds")
-phillips <- readRDS("data/Phillips.Rds")
-reifenberger <- readRDS("data/Reifenberger.Rds")
-bao <- readRDS("data/Bao.Rds")
-gill <- readRDS("data/Gill.Rds")
-gorovets <- readRDS("data/Gorovets.Rds")
-nutt <- readRDS("data/Nutt.Rds")
-ducray <- readRDS("data/Ducray.Rds")
-grzmil <- readRDS("data/Grzmil.Rds")
-donson <- readRDS("data/Donson.Rds")
-li <- readRDS("data/Li.Rds")
-
-noSurvDataset <- c("Bao","Reifenberger","Gill","Li")
-subtype_list <- readRDS("data/subtype_list.Rds")
-core.samples <- readRDS("data/TCGA.core.345samples.Rds")
-
-#######################################
-############## server.R  ##############
-#######################################
+# server.R for Gliovis
 shinyServer(
   function(input, output, session) {
     
@@ -80,7 +22,10 @@ shinyServer(
              "Ducray" = ducray,
              "Grzmil" = grzmil,
              "Donson" = donson,
-             "Li" = li)
+             "Li" = li,
+             "Vital" = vital,
+             "Joo" = joo,
+             "Oh" = oh)
     })
     
     #' Switch the datset for the correlation
@@ -101,7 +46,10 @@ shinyServer(
              "Ducray" = ducray,
              "Grzmil" = grzmil,
              "Donson" = donson,
-             "Li" = li)
+             "Li" = li,
+             "Vital" = vital,
+             "Joo" = joo,
+             "Oh" = oh)
     })
     
     #' Expression data
@@ -128,7 +76,7 @@ shinyServer(
     #' Required for the conditional panel 'geneslist' to work correctly
     observe({
       if(input$tab1 != 3)
-      updateTabsetPanel(session, inputId = "tabCorr", selected = "2genes")
+        updateTabsetPanel(session, inputId = "tabCorr", selected = "2genes")
     })
     
     #' When switching datasets, if the selected plot is not available it will choose the first plot of the list
@@ -156,7 +104,7 @@ shinyServer(
         NULL
       }
     })
-  
+    
     
     #' Change the plot type available for a specific dataset
     observe({
@@ -203,7 +151,7 @@ shinyServer(
       # This will change the value of input$histologyCorr, based on histological group available for that dataset
       updateSelectInput(session, inputId = "histologyCorr", choices = c("All", histo()), selected = histoCorrSelected())
     })
-      
+    
     #' Return the available histology, to be used in the updateSelectInput for correlation table
     histoCor <- reactive({
       levels(datasetInputCor()[["pData"]][,"Histology"])
@@ -213,7 +161,7 @@ shinyServer(
     observe({
       updateSelectInput(session, inputId = "histologyCorrTable", choices = c("All", histoCor()), selected = "All")
     })
-        
+    
     #' Create the dataframe to call in ggbox,Tukey and ttest
     data <- reactive({     
       validate(
@@ -244,7 +192,7 @@ shinyServer(
         }
         data
       } else if (input$plotType == "User-defined") {
-          group <- pDatas()[ ,input$plotTypeUserSel]
+        group <- pDatas()[ ,input$plotTypeUserSel]
         data <- data.frame(mRNA, group, subset(pDatas(),select = -c(Sample,survival,status))) # To exclude sample name and survival data
         data <- subset(data, !is.na(group))
         if (input$primary& any(!is.na(data$Recurrence))) {
@@ -284,7 +232,7 @@ shinyServer(
                 colStrip = input$colStrip, colorPoints = input$colorP, bw = input$bw)  
     })
     
-      
+    
     #' Summary statistic
     output$summary <- renderTable({    
       data <- data()
@@ -294,7 +242,7 @@ shinyServer(
       row.names(stat) <- stat$group
       stat <- stat[,-1]
       stat
-
+      
     })
     
     #' Tukey post-hoc test
@@ -348,7 +296,7 @@ shinyServer(
     output$downloadPlot <- downloadHandler(
       filename = function() {
         paste0(Sys.Date(), "_", input$gene, "_", input$dataset, "_", input$plotTypeSel,  
-                ".", downloadPlotFileType() )
+               ".", downloadPlotFileType() )
       },     
       # The argument content below takes filename as a function and returns what's printed to it.
       content = function(file) {
@@ -430,12 +378,13 @@ shinyServer(
     output$hazardPlot <- renderPlot({        
       validate(need(histoSurvSelected() == "GBM", "Interactive HR plot currently available only for GBM samples"))
       survNeed()
+      validate(need(!input$dataset %in% c("Grzmil","Vital"), "Sorry, too few samples to properly render the HR plot"))
       # Plot the hazardplot 
       hazardPlot(HR(), input$quantile)
       # Add a vertical line to show where the current cutoff is.
       abline(v = getCutoff(), col = 4)
     }, bg = "transparent")
-        
+    
     #' A reactive survival formula
     survivalFml <- reactive({
       # Create the groups based on which samples are above/below the cutoff
@@ -510,7 +459,7 @@ shinyServer(
           try(survivalPlot (exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, numeric = input$mInput,
                             subtype = input$subtypeSurv, gcimp = input$gcimpSurv, primary = input$primarySurv), silent = TRUE)}
     }, height = function(){if(!input$allSubSurv) {400} else {600}}, width = function(){if(!input$allSubSurv) {500} else {800}})
-
+    
     
     #' Download the survPlot
     output$downloadsurvPlot <- downloadHandler(
@@ -626,18 +575,18 @@ shinyServer(
     
     #' Generate the pairs plot
     output$pairsPlot <- renderPlot({
-#       myPairsPlot(pairsData())
-#       theme_set(theme_bw())
+      #       myPairsPlot(pairsData())
+      #       theme_set(theme_bw())
       ggpairs(pairsData(),lower=list(continuous="smooth", params=list(alpha=0.5)))  
     })
     
-#     #' Generate an HTML table view of the correlation table 
-#     output$pairsData <- renderTable({
-#       if (length(input$genelist) < 2)
-#         return()
-#       pairs.table <- rcorr(as.matrix(pairsData()))
-#       pairs.table
-#     })
+    #     #' Generate an HTML table view of the correlation table 
+    #     output$pairsData <- renderTable({
+    #       if (length(input$genelist) < 2)
+    #         return()
+    #       pairs.table <- rcorr(as.matrix(pairsData()))
+    #       pairs.table
+    #     })
     
     #' Download the pairs plot
     output$downloadpairsPlot <- downloadHandler(
@@ -734,7 +683,7 @@ shinyServer(
     observe({   
       df <- exprs()[,1:8]
       df <- df[,colSums(is.na(df)) < nrow(df)] 
-#       df <- droplevels.data.frame(subset(df, Histology != "Non-tumor")) # Exclude normal sample, not displaying properly
+      #       df <- droplevels.data.frame(subset(df, Histology != "Non-tumor")) # Exclude normal sample, not displaying properly
       groups <- names(df)[!names(df) %in% c("Sample","status","survival")]
       for (i in groups) {                                                    
         local({
@@ -820,7 +769,7 @@ shinyServer(
         write.csv(svm.call(), file)
       }
     )
-
+    
     #' Reactive function to generate k-nearest neighbour subtype call to pass to data table and download handler
     knn.call <- reactive ({
       inFile <- input$upFile
@@ -841,7 +790,7 @@ shinyServer(
       kn <- data.frame(Sample = rownames(upData), knn.subtype.call = pred, prob = attr(pred,"prob"))
       kn
     })
-      
+    
     #' Rerndering the knn subtype call as a data table
     output$knn <- renderDataTable({ 
       if (is.null(input$upFile) || input$goKnn == 0)
@@ -885,7 +834,7 @@ shinyServer(
         return(NULL)
       input$goGsva
       isolate({
-      gsva <- gsva.call()
+        gsva <- gsva.call()
       })
     })
     
@@ -909,41 +858,41 @@ shinyServer(
       sub3$majority.call <- apply(sub3[,2:4],1,maj) # compare calls
       sub3 <- as.data.frame(sub3) # the dataframe generated with dplyr gives issue when sorting the html table
     })
-
-#     output$call.identity <- renderText({
-#       sub3 <- sub3.call()
-#       m <- mean(sub3$svm.call == sub3$knn.call, na.rm=TRUE)
-#       paste(", % of identinty:", round(m*100,1))
-#     })
-#     
-#     #' subtype call summary
-#     sub3Summary <- reactive ({
-#       if (is.null(input$upFile) || input$goSub3 == 0)
-#         return(NULL)
-#       input$goSub3
-#       isolate({
-#         sub3 <- sub3.call()
-#         sub3 <- list(
-#           svm_vs_knn = table(svm = sub3$svm.call, knn = sub3$knn.call),
-#           svm_vs_gsea = table(svm = sub3$svm.call, knn = sub3$gsea.call),
-#           knn_vs_gsea = table(svm = sub3$knn.call, knn = sub3$gsea.call)
-#         )
-#       })
-#     })
-# 
-#     #' subtype call summary.1 
-#     output$sub3Summary.1 <- renderTable({
-#       sub3Summary()[[1]]
-#     })
-#     #' subtype call summary.2 
-#     output$sub3Summary.2 <- renderTable({
-#       sub3Summary()[[2]]
-#     })
-#     #' subtype call summary.3 
-#     output$sub3Summary.3 <- renderTable({ 
-#       sub3Summary()[[3]]
-#     })
-
+    
+    #     output$call.identity <- renderText({
+    #       sub3 <- sub3.call()
+    #       m <- mean(sub3$svm.call == sub3$knn.call, na.rm=TRUE)
+    #       paste(", % of identinty:", round(m*100,1))
+    #     })
+    #     
+    #     #' subtype call summary
+    #     sub3Summary <- reactive ({
+    #       if (is.null(input$upFile) || input$goSub3 == 0)
+    #         return(NULL)
+    #       input$goSub3
+    #       isolate({
+    #         sub3 <- sub3.call()
+    #         sub3 <- list(
+    #           svm_vs_knn = table(svm = sub3$svm.call, knn = sub3$knn.call),
+    #           svm_vs_gsea = table(svm = sub3$svm.call, knn = sub3$gsea.call),
+    #           knn_vs_gsea = table(svm = sub3$knn.call, knn = sub3$gsea.call)
+    #         )
+    #       })
+    #     })
+    # 
+    #     #' subtype call summary.1 
+    #     output$sub3Summary.1 <- renderTable({
+    #       sub3Summary()[[1]]
+    #     })
+    #     #' subtype call summary.2 
+    #     output$sub3Summary.2 <- renderTable({
+    #       sub3Summary()[[2]]
+    #     })
+    #     #' subtype call summary.3 
+    #     output$sub3Summary.3 <- renderTable({ 
+    #       sub3Summary()[[3]]
+    #     })
+    
     #' Rerndering the subtype call as a data table
     output$sub3 <- renderDataTable({ 
       if (is.null(input$upFile) || input$goSub3 == 0)
@@ -963,7 +912,7 @@ shinyServer(
         write.csv(sub3.call(), file)
       }
     )
-
+    
     #' Correlation method
     corrMethod <- reactive({
       switch(input$corrMethod,
@@ -980,21 +929,21 @@ shinyServer(
     
     #' Generate a reactive element of the the correlation data 
     corrData <- reactive({  
-          corr.table <- suppressWarnings(corr())  # suppressWarnings  is used to prevent the warning messages in the LGG dataset  
-          if (input$sign == 0.01){
-            corr.table <- subset(corr.table, adj.p.value <= 0.01)
-          } 
-          if (input$cor == "Positive"){
-            corr.table <- subset(corr.table, r > 0)
-            corr.table <- corr.table[order(-corr.table$r), ]
-          }
-          if (input$cor == "Negative"){
-            corr.table <- subset(corr.table, r < 0)
-            corr.table <- corr.table[order(corr.table$r), ]
-          } else {
-            corr.table <- subset(corr.table, adj.p.value <= 0.05)
-          }
-          corr.table
+      corr.table <- suppressWarnings(corr())  # suppressWarnings  is used to prevent the warning messages in the LGG dataset  
+      if (input$sign == 0.01){
+        corr.table <- subset(corr.table, adj.p.value <= 0.01)
+      } 
+      if (input$cor == "Positive"){
+        corr.table <- subset(corr.table, r > 0)
+        corr.table <- corr.table[order(-corr.table$r), ]
+      }
+      if (input$cor == "Negative"){
+        corr.table <- subset(corr.table, r < 0)
+        corr.table <- corr.table[order(corr.table$r), ]
+      } else {
+        corr.table <- subset(corr.table, adj.p.value <= 0.05)
+      }
+      corr.table
     })
     
     #' Generate an HTML table view of the correlation table 
