@@ -118,10 +118,10 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/16530701" style="color: rgb(0,0,0)">Phillips</a></td>
      <td class="tg-9fhq-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE4271" style="color: rgb(0,0,0)">Microarray</a></td>  
 <td class="tg-9fhq">0</td>
-     <td class="tg-9fhq">0</td>
-     <td class="tg-9fhq-bd">100</td>
+     <td class="tg-9fhq">24</td>
+     <td class="tg-9fhq-bd">76</td>
      <td class="tg-9fhq"></td>
-     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
