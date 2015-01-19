@@ -1,3 +1,24 @@
+# datasets
+gbm.tcga <- readRDS("data/TCGA.GBM.Rds")
+lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
+rembrandt <- readRDS("data/Rembrandt.Rds")
+freije <- readRDS("data/Freije.Rds")
+gravendeel <- readRDS("data/Gravendeel.Rds")
+murat <- readRDS("data/Murat.Rds")
+phillips <- readRDS("data/Phillips.Rds")
+reifenberger <- readRDS("data/Reifenberger.Rds")
+bao <- readRDS("data/Bao.Rds")
+gill <- readRDS("data/Gill.Rds")
+gorovets <- readRDS("data/Gorovets.Rds")
+nutt <- readRDS("data/Nutt.Rds")
+ducray <- readRDS("data/Ducray.Rds")
+grzmil <- readRDS("data/Grzmil.Rds")
+donson <- readRDS("data/Donson.Rds")
+li <- readRDS("data/Li.Rds")
+vital <- readRDS("data/Vital.Rds")
+joo <- readRDS("data/Joo.Rds")
+oh <- readRDS("data/Oh.Rds")
+
 # server.R for Gliovis
 shinyServer(
   function(input, output, session) {
