@@ -54,7 +54,7 @@ plotList <- list("TCGA GBM" = c("Histology", "Copy number", "Subtype", "CIMP_sta
                  "TCGA Lgg" = c("Histology", "Grade", "Copy number", "Subtype"),
                  "Rembrandt" = c("Histology", "Grade", "Subtype", "CIMP_status"),
                  "Gravendeel" = c("Histology", "Grade", "Subtype", "CIMP_status"),
-                 "Phillips" = c("Grade", "Subtype", "Recurrence", "CIMP_status"),
+                 "Phillips" = c("Histology", "Grade", "Subtype", "Recurrence", "CIMP_status"),
                  "Murat" = c("Histology", "Subtype", "Recurrence", "CIMP_status"),
                  "Freije" = c("Histology", "Grade", "Subtype", "CIMP_status"),
                  "Reifenberger" = c("Subtype", "CIMP_status"),
@@ -91,7 +91,8 @@ ggboxPlot <- function(data,  scale = FALSE, xlabel, stat = FALSE, colBox = FALSE
   } else {
     strip <- geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5)
   }
-  p <- ggplot(data, aes(x=group, y = mRNA)) + ylab(ylab) + xlab(xlabel) 
+  p <- ggplot(data, aes(x=group, y = mRNA)) + ylab(ylab) + xlab(paste0("\n",xlabel)) +
+    theme(axis.title.y=element_text(vjust=1)) 
   p <- p + box + strip 
   if (bw) {
     p <- p + theme_bw () 
@@ -179,8 +180,6 @@ hazardPlot <- function (HRdata, quantile) {
 ## Survival plot ##
 ###################
 survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FALSE, primary = FALSE) {
-  df <- subset(df, !is.na(df$status))
-  # Select the samples, for the specified histology,that have survival data
   if (group != "All") {
     df <- subset (df, Histology == group) 
   }
@@ -196,6 +195,7 @@ survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FAL
   if (gcimp){
     df <- subset (df, CIMP_status != "G-CIMP")
   } 
+  # Select the samples that have survival data
   df <- subset(df, !is.na(df$status))
   mRNA <- df[ ,gene]
   surv.status <- df[ ,"status"]
@@ -203,6 +203,7 @@ survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FAL
   my.Surv <- Surv(time = surv.time, event = surv.status== 1)
   smax <- max(surv.time, na.rm = TRUE)
   tmax <- smax-(25*smax)/100
+  xmax <- (95*tmax)/100
   mRNA.q <- quantile(mRNA, probs=c(0.25, 0.5, 0.75), na.rm = TRUE)
   
   if(cutoff == "Use a specific mRNA value") {
@@ -243,9 +244,9 @@ survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FAL
     legend("topright", legend = c(paste(gene," High ", paste("(n=", surv$records[1]),", events=", surv$events[1],", median=",surv$median[1],")", sep = ""), 
                                   paste(gene," Low ", paste("(n=", surv$records[2]),", events=", surv$events[2],", median=",surv$median[2],")", sep = "")),
            col= c("red", "blue"), lty = 1, cex = 1)
-    text (tmax-10, 0.725, paste("HR = ",HR, " (", HR.lower, "-", HR.upper,")", sep=""), cex = 1)
-    text (tmax-10, 0.65, paste (star.log, "Log-rank p value=", log.rank.p), cex = 1)
-    text (tmax-10, 0.575, paste (star.mcox, "Wilcoxon p value=", mantle.cox.p), cex = 1)
+    text (xmax, 0.725, paste("HR = ",HR, " (", HR.lower, "-", HR.upper,")", sep=""), cex = 1)
+    text (xmax, 0.65, paste (star.log, "Log-rank p value=", log.rank.p), cex = 1)
+    text (xmax, 0.575, paste (star.mcox, "Wilcoxon p value=", mantle.cox.p), cex = 1)
   }
   
   if (cutoff == "quartiles"){
@@ -530,13 +531,10 @@ ggally_cor <- function(data, mapping, corAlignPercent = 0.6, ...){
     }
   }
   
-  
-  # splits <- str_c(as.character(mapping$group), as.character(mapping$colour), sep = ", ", collapse = ", ")
-  # splits <- str_c(colorCol, sep = ", ", collapse = ", ")
   final_text <- ""
   if(length(colorCol) < 1)
     colorCol <- "ggally_NO_EXIST"
-  # browser()
+
   if(colorCol != "ggally_NO_EXIST" && colorCol %in% colnames(data)) {
     
     txt <- str_c("ddply(data, .(", colorCol, "), summarize, ggally_cor = cor(", xCol,", ", yCol,"))[,c('", colorCol, "', 'ggally_cor')]")
@@ -545,7 +543,6 @@ ggally_cor <- function(data, mapping, corAlignPercent = 0.6, ...){
     on.exit(close(con))
     cord <- eval(parse(con))
     
-    # browser()
     cord$ggally_cor <- signif(as.numeric(cord$ggally_cor), 3)
     
     # put in correct order
@@ -558,8 +555,7 @@ ggally_cor <- function(data, mapping, corAlignPercent = 0.6, ...){
         }
       }
     }
-    # print(order(ord[ord >= 0]))
-    # print(lev)
+
     cord <- cord[order(ord[ord >= 0]), ]
     
     cord$label <- str_c(cord[[colorCol]], ": ", cord$ggally_cor)
@@ -572,8 +568,7 @@ ggally_cor <- function(data, mapping, corAlignPercent = 0.6, ...){
     ymax <- max(yVal)
     yrange <- c(ymin-.01*(ymax-ymin),ymax+.01*(ymax-ymin))
     
-    
-    # print(cord)
+
     p <- ggally_text(
       label   = str_c("Cor : ", signif(cor(xVal,yVal),3)),
       mapping = mapping,
@@ -590,8 +585,6 @@ ggally_cor <- function(data, mapping, corAlignPercent = 0.6, ...){
     xPos <- rep(corAlignPercent, nrow(cord)) * diff(xrange) + min(xrange)
     yPos <- seq(from = 0.9, to = 0.2, length.out = nrow(cord) + 1) * diff(yrange) + min(yrange)
     yPos <- yPos[-1]
-    # print(range(yVal))
-    # print(yPos)
     cordf <- data.frame(xPos = xPos, yPos = yPos, labelp = cord$label)
     p <- p + geom_text(
       data=cordf,
