@@ -192,7 +192,7 @@ survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FAL
     df <- subset (df, Subtype == subtype)
   }
   # Remove G-CIMP, when selected
-  if (gcimp){
+  if (gcimp& any(!is.na(df$CIMP_status))){
     df <- subset (df, CIMP_status != "G-CIMP")
   } 
   # Select the samples that have survival data
