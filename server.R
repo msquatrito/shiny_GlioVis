@@ -111,8 +111,8 @@ shinyServer(
     
     #' Return the names of the available user-defined plots
     plotUserSelection <- reactive ({
-      data <- pDatas()[,!names(pDatas())%in%c("Sample","Histology","Grade","Recurrence","Subtype", "CIMP_status",  "survival","status", "Age",
-                                              "ID","Patient_ID","Sample_ID")] # Exlude pre-defined plots and numeric variables
+      data <- pDatas()[,!names(pDatas())%in%c("Sample","Histology","Grade","Recurrence","Subtype", "CIMP_status", "survival",
+                                              "status", "Age", "ID","Patient_ID","Sample_ID")] # Exlude pre-defined plots and numeric variables
       n <- colnames(data)
       n
     })
@@ -186,9 +186,9 @@ shinyServer(
     #' Create the dataframe to call in ggbox,Tukey and ttest
     data <- reactive({     
       validate(
-        need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
+        need(input$gene != "", "\n Please, enter a gene name in the panel on the left")%then%
           # Not all genes are available for all the dataset
-          need(input$gene %in% names(exprs()),"Gene not available for this dataset"),
+          need(input$gene %in% names(exprs()),"\n Gene not available for this dataset"),
         # Trying to avoid an error when switching datasets in case the plotType is not available.
         need(plotSelected() %in% plotList[[input$dataset]],""),
         need(plotUserSelected() %in% plotUserSelection(),"")
@@ -208,7 +208,7 @@ shinyServer(
         }
         data <- data.frame(mRNA, group, subset(pDatas(),select = -c(Sample,survival,status))) # To exclude sample name and survival data
         data <- subset(data, !is.na(group))
-        if (input$primary& any(!is.na(data$Recurrence))) {
+        if (input$primary & any(!is.na(data$Recurrence))) {
           data <- subset (data, Recurrence == "Primary")
         }
         data
@@ -216,7 +216,7 @@ shinyServer(
         group <- pDatas()[ ,input$plotTypeUserSel]
         data <- data.frame(mRNA, group, subset(pDatas(),select = -c(Sample,survival,status))) # To exclude sample name and survival data
         data <- subset(data, !is.na(group))
-        if (input$primary& any(!is.na(data$Recurrence))) {
+        if (input$primary & any(!is.na(data$Recurrence))) {
           data <- subset (data, Recurrence == "Primary")
         }
         data
@@ -257,9 +257,9 @@ shinyServer(
     #' Summary statistic
     output$summary <- renderTable({    
       data <- data()
-      stat <- data.frame(data%>%
-                           dplyr::group_by(group)%>%
-                           dplyr::summarise(count = n(),mean = mean(mRNA, na.rm=T), sd = sd(mRNA, na.rm=T)))
+      stat <- data.frame(data %>%
+                           dplyr::group_by(group) %>%
+                           dplyr::summarise(count = n(), mean = mean(mRNA, na.rm=T), sd = sd(mRNA, na.rm=T)))
       row.names(stat) <- stat$group
       stat <- stat[,-1]
       stat
@@ -278,7 +278,9 @@ shinyServer(
     #' Pairwise t test
     output$pairwiseTtest <- renderTable({     
       data <- data()
-      pttest <- pairwise.t.test(data$mRNA, data$group, na.rm= TRUE, p.adj = "bonferroni", paired = FALSE)[[3]]
+      x <- data [,1] # mRNA
+      y <- data [,2] # group
+      pttest <- pairwise.t.test(x, y, na.rm= TRUE, p.adj = "bonferroni", paired = FALSE)[[3]]
       pttest
     })
     
@@ -388,18 +390,26 @@ shinyServer(
     #' Requirements for all the survival plots
     survNeed <- reactive({
       validate(
-        need(!input$dataset %in% noSurvDataset, "Sorry, no survival data are available for this dataset")%then%
-          need(input$histologySurv != "Non-tumor","Sorry, no survival data are available for this group")%then%
-          need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
-          need(input$gene %in% names(exprs()),"Gene not available for this dataset")
+        need(!input$dataset %in% noSurvDataset, "\n Sorry, no survival data are available for this dataset")%then%
+          need(input$histologySurv != "Non-tumor","\n Sorry, no survival data are available for this group")%then%
+          need(input$gene != "", "\n Please, enter a gene name in the panel on the left")%then%
+          need(input$gene %in% names(exprs()),"\n Gene not available for this dataset")
       )
     })
+    
+    #' busy indicator when switching surv tab
+    #' http://stackoverflow.com/questions/18237987/show-that-shiny-is-busy-or-loading-when-changing-tab-panels
+    output$activeTabSurv <- reactive({
+      return(input$tabSurv)
+    })
+    outputOptions(output, 'activeTabSurv', suspendWhenHidden=FALSE)
     
     #' Render a plot to show the the Hazard ratio for the gene's expression values
     output$hazardPlot <- renderPlot({        
       validate(need(histoSurvSelected() == "GBM", "Interactive HR plot currently available only for GBM samples"))
       survNeed()
       validate(need(!input$dataset %in% c("Grzmil","Vital"), "Sorry, too few samples to properly render the HR plot"))
+      input$tabSurv
       # Plot the hazardplot 
       hazardPlot(HR(), input$quantile)
       # Add a vertical line to show where the current cutoff is.
@@ -533,10 +543,10 @@ shinyServer(
     #' Generate the correlation plot
     output$corrPlot <- renderPlot({    
       validate(
-        need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
-          need(input$gene %in% names(exprs()),"Gene not available for this dataset"),
-        need(input$gene2 != "", "Please enter Gene 2")%then%
-          need(input$gene2 %in% names(exprs()),"Gene not available for this dataset"),
+        need(input$gene != "", "\n Please, enter a gene name in the panel on the left")%then%
+          need(input$gene %in% names(exprs()),"\n Gene not available for this dataset"),
+        need(input$gene2 != "", "\n Please enter Gene 2")%then%
+          need(input$gene2 %in% names(exprs()),"\n Gene not available for this dataset"),
         # Trying to avoid an error when switching datasets in case the choosen histology is not available.
         need(input$histologyCorr %in% c("All",histo()),"")
       )
@@ -579,8 +589,8 @@ shinyServer(
     pairsData <- reactive({
       validate(
         # Need two or more genes
-        need(length(input$genelist) > 1, "Please enter 2 or more genes in the panel on the left")%then%
-          need(input$genelist %in% names(exprs()),"Gene not available for this dataset")%then%         
+        need(length(input$genelist) > 1, "\n Please enter 2 or more genes in the panel on the left")%then%
+          need(input$genelist %in% names(exprs()),"\n Gene not available for this dataset")%then%         
           # Trying to avoid an error when switching datasets in case the choosen histology is not available.
           need(input$histologyCorr %in% c("All",histo()),"")
       )
@@ -704,7 +714,6 @@ shinyServer(
     observe({   
       df <- exprs()[,1:8]
       df <- df[,colSums(is.na(df)) < nrow(df)] 
-      #       df <- droplevels.data.frame(subset(df, Histology != "Non-tumor")) # Exclude normal sample, not displaying properly
       groups <- names(df)[!names(df) %in% c("Sample","status","survival")]
       for (i in groups) {                                                    
         local({
@@ -724,6 +733,13 @@ shinyServer(
         })
       }
     })
+    
+    #' Reactivity required to display download button after file upload
+    output$finishedUploading <- reactive({
+      if (is.null(input$upFile))
+        { 0 } else { 1 }
+    })
+    outputOptions(output, 'finishedUploading', suspendWhenHidden=FALSE)
     
     #' Reactive function to generate SVM subtype call to pass to data table and download handler
     svm.call <- reactive ({
@@ -970,9 +986,9 @@ shinyServer(
     #' Generate an HTML table view of the correlation table 
     output$corrData <- renderDataTable({
       validate(
-        need(input$geneCor != "", "Please, enter a gene name in the panel on the left")%then%
+        need(input$geneCor != "", "\n Please, enter a gene name in the panel on the left")%then%
           # Not all genes are available for all the dataset
-          need(input$geneCor %in% names(datasetInputCor()[["expr"]]),"Gene not available for this dataset")
+          need(input$geneCor %in% names(datasetInputCor()[["expr"]]),"\n Gene not available for this dataset")
       )   
       corr.table <- corrData()
     }, options = list(orderClasses = TRUE))

@@ -21,22 +21,22 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                    hr(),
                                    br(),
                                    conditionalPanel(
-                                     condition = "input.tabTools == 1",
+                                     condition = "input.tabTools == 1 & output.finishedUploading",
                                      actionButton(inputId = "goSvm", label = "Submit SVM", class= "btn-success"),
                                      br()
                                    ),
                                    conditionalPanel(
-                                     condition = "input.tabTools == 2",
+                                     condition = "input.tabTools == 2 & output.finishedUploading",
                                      actionButton(inputId = "goKnn", label = "Submit K-NN", class= "btn-success"),
                                      br()
                                    ),
                                    conditionalPanel(
-                                     condition = "input.tabTools == 3",
+                                     condition = "input.tabTools == 3 & output.finishedUploading",
                                      actionButton(inputId = "goGsva", label = "Submit ssGSEA", class= "btn-success"),
                                      br()
                                    ),
                                    conditionalPanel(
-                                     condition = "input.tabTools == 4",
+                                     condition = "input.tabTools == 4 & output.finishedUploading",
                                      actionButton(inputId = "goSub3", label = "Submit 3-Way", class= "btn-success"),
                                      br()
                                    )
@@ -52,7 +52,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                        p("Be patients, switching to another tab will crash GlioVis ...")
                                    ),
                                    p(class = "lead","Supported vector machine learning"),
-                                   p(strong("File output format:"), "Download a .csv file containing the subtype call with the probability model."),  
+                                   p(strong("File output format:"), "Subtype calls with the probability model."),  
                                    conditionalPanel(
                                      condition = "output.svm",
                                      downloadButton(outputId = "downloadSvm", label = "Download data", class= "btn-primary")
@@ -69,7 +69,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                        p("Be patients, switching to another tab will crash GlioVis ...")
                                    ),
                                    p(class = "lead","K-nearest neighbors prediction"),
-                                   p(strong("File output format:"), "Download a .csv file containing the subtype call with the probability score."),
+                                   p(strong("File output format:"), "Subtype calls with the probability score."),
                                    conditionalPanel(
                                      condition = "output.knn",
                                      downloadButton(outputId = "downloadKnn", label = "Download data", class= "btn-primary")
@@ -86,7 +86,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                        p("Be patients, switching to another tab will crash GlioVis ...")
                                    ),
                                    p(class = "lead","Single sample Gene Set Enrichment Analysis"),
-                                   p(strong("File output format:"), "Download a .csv file containing the subtype call with the enrichment score."),
+                                   p(strong("File output format:"), "Subtype calls with the enrichment score."),
                                    conditionalPanel(
                                      condition = "output.gsva",
                                      downloadButton(outputId = "downloadGsva", label = "Download data", class= "btn-primary")

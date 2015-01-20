@@ -44,7 +44,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                           checkboxInput(inputId = "colBox", label = "Color box", value = FALSE),
                           checkboxInput(inputId = "colStrip", label = "Color stripchart", value = FALSE),
                           conditionalPanel(
-                            condition = "input.colStrip == true",
+                            condition = "input.colStrip",
                             uiOutput("colorPoints")
                           ),
                           hr(),
@@ -235,8 +235,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                               ),
                                               tabPanel(title = "Multiple-Genes", value = "geneslist",
                                                        plotOutput(outputId = "pairsPlot")
-                                                       #                                                        ,
-                                                       #                                                        tableOutput(outputId = "pairsData")
+#                                                        ,tableOutput(outputId = "pairsData")
                                               )
                                   )
                          ),
@@ -249,8 +248,8 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                     ),
                                     tabPanel(title = "Summary plots",
                                              splitLayout(
-                                               uiOutput(outputId = "survPlots", inline = TRUE), # inline = TRUE not working
-                                               uiOutput(outputId = "piePlots", inline = TRUE) 
+                                               uiOutput(outputId = "survPlots"),
+                                               uiOutput(outputId = "piePlots") 
                                              )
                                     )
                                   )
