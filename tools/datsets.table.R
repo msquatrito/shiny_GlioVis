@@ -85,9 +85,9 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      <tr>
      <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/19208739" style="color: rgb(0,0,0)">Rembrandt</a></td>
 <td class="tg-9fhq-bd"><a href="https://caintegrator.nci.nih.gov/rembrandt/" style="color: rgb(0,0,0)">Microarray</a></td>      
-<td class="tg-9fhq">21</td>
-     <td class="tg-9fhq">200</td>
-     <td class="tg-9fhq-bd">184</td>
+<td class="tg-9fhq">28</td>
+     <td class="tg-9fhq">225</td>
+     <td class="tg-9fhq-bd">219</td>
      <td class="tg-9fhq"></td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
