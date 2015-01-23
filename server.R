@@ -461,18 +461,19 @@ shinyServer(
     #' Create a rug plot with the mRNA expression value for the manual cutoff
     output$boxmRNA <- renderPlot({    
       validate(need(input$mInput, ""))      
-      mRNA <- mRNAsurv()
+      mRNA <- round(mRNAsurv(),2)
       xrange <-range(mRNA)
       par(mar = c(0,0,0,0)) 
       plot(0, 0, type = "n", xlim = c(xrange[1] + 0.25, xrange[2]) , ylim = c(-0.1,  + 0.1), ylab ="", xlab = "", axes = FALSE)
       points(x = mRNA, y = rep(0, length(mRNA)), pch="|")
       # Add a red line to show which  is the current cutoff.
       points(x = input$mInput, y = 0, pch = "|", col="red",cex = 1.5)
-    }, bg = "transparent", width = 225)
+    }, bg = "transparent")
     
     #' Generate the slider for the manual cutoff
     output$numericCutoff <- renderUI({
-      sliderInput(inputId = "mInput",label = NULL, min = min(mRNAsurv()), max = max(mRNAsurv()), value = median(mRNAsurv()))
+      sliderInput(inputId = "mInput",label = NULL, min = min(mRNAsurv()), max = max(mRNAsurv()), 
+                  value = median(mRNAsurv()),step = 0.05,round = -2)
     })
     
     #' Create a Kaplan Meier plot with cutoff based on quantiles or manual selection
