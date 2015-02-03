@@ -671,7 +671,7 @@ shinyServer(
       data <- data[,colSums(is.na(data)) < nrow(data)] # Removing unavailable (all NA) groups
       plot_output_list <- lapply(names(data), function(i) {
         plotname <- paste("plot", i, sep="")
-        chartOutput(plotname, "nvd3") # "highcharts" for h plots
+        htmlOutput(plotname)
       })
       # Convert the list to a tagList - this is necessary for the list of items to display properly.
       do.call(tagList, plot_output_list)
@@ -685,12 +685,11 @@ shinyServer(
         local({
           my_i <-i
           plotname <- paste("plot", my_i, sep="")
-          output[[plotname]] <- renderChart2({
+          output[[plotname]] <- renderGvis({
             plotData <- data.frame(table(data[, my_i]))
-            n1 <- nPlot(x = "Var1", y = "Freq", data = plotData, type = "pieChart")
-            n1$addParams(height = 400, width = 400)      
-            #             n1$chart(showLegend = FALSE)
-            n1
+            pie <-gvisPieChart(labelvar = "Var1", numvar = "Freq", data = plotData, 
+                               options = list(width=400, height=300, pieSliceText='label', chartArea.left = 1), chartid= plotname) # title = my_i,
+            return(pie)
           })
         })
       }
@@ -707,7 +706,7 @@ shinyServer(
       groups <- names(df)[!names(df) %in% c("Sample","status","survival")]
       plot_output_list <- lapply(groups, function(i) {
         plot_surv_name <- paste("plotSurv", i, sep = "")
-        plotOutput(plot_surv_name, height = 400, width = 400)
+        plotOutput(plot_surv_name, height = 300, width = 400)
       })
       do.call(tagList, plot_output_list)
     })  
@@ -773,7 +772,6 @@ shinyServer(
       learn.1 <- learn.1[!is.na(learn.1[,1]),]
       df.learn <- learn.1- rowMeans(learn.1)
       Training <- train$Subtype
-      require(kernlab)
       svm <- ksvm(t(df.train), #Training matrix
                   Training, # "Truth" factor
                   cross=10, # 10 fold cross validation to learn which SVM is best
@@ -991,8 +989,37 @@ shinyServer(
           # Not all genes are available for all the dataset
           need(input$geneCor %in% names(datasetInputCor()[["expr"]]),"\n Gene not available for this dataset")
       )   
-      corr.table <- corrData()
-    }, options = list(orderClasses = TRUE))
+      corrData()
+    }, options = list(orderClasses = TRUE), callback = "function(table) {
+      table.on('click.dt', 'tr', function() {
+            table.$('tr.selected').removeClass('selected');
+            $(this).toggleClass('selected');            
+        Shiny.onInputChange('rows',
+                            table.rows('.selected').data()[0][0]);
+      });
+    }")
+    
+  
+    #' Generate the correlation plot
+    output$corrDataPlot <- renderPlot({
+#       if (is.null(input$rows) || input$rows== "")
+#         return(NULL)
+      input$rows
+      validate(
+        need(input$geneCor != "" & input$rows!= "","")
+      )
+      df <- datasetInputCor()[["expr"]]
+      if (input$histologyCorrTable != "All") {
+        df <- subset (df, Histology == input$histologyCorrTable)
+      } else {
+        df <- df
+      }
+      aes_scatter <- aes_string(x = input$geneCor, y = input$rows)
+      ggplot(df,mapping = aes_scatter) + theme(legend.position=c(1,1),legend.justification=c(1,1)) +
+        geom_point(alpha=.5) + geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1)
+
+    })
+    
     
     #' Download the correlation table 
     output$downloadCorrData <- downloadHandler(

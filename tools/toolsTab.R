@@ -167,7 +167,12 @@ tabPanel(title = "Tools", icon = icon("gear"),
                       mainPanel(
                         column(width = 8,
                                dataTableOutput(outputId = "corrData")
-                        )
+                        ),
+                        column(width = 4,
+                               br(),
+                               br(),
+                               plotOutput(outputId = "corrDataPlot")
+                               )
                       )
                     )
            )
