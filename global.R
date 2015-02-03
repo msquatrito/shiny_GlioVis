@@ -3,11 +3,12 @@ library(survival)
 library(weights)
 library(ggplot2)
 library(gridExtra)
-library(rCharts)
+library(googleVis)
 library(dplyr)
 library(GSVA)
 library(GGally)
 library(class)
+library(kernlab)
 
 `%then%` <- shiny:::`%OR%`
 
