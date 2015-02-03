@@ -249,7 +249,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                     tabPanel(title = "Summary plots",
                                              splitLayout(
                                                uiOutput(outputId = "survPlots"),
-                                               uiOutput(outputId = "piePlots") 
+                                               htmlOutput(outputId = "piePlots") 
                                              )
                                     )
                                   )
