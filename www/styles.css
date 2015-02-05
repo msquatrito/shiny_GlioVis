@@ -62,6 +62,19 @@ ol.outer {
   border-radius: 5px;
 }
 
+.well {
+  padding: 12px;
+  margin-bottom: 5px;
+}
+
+.col-sm-4 {
+  max-width: 300px;
+}
+
+.nav-tabs {
+  margin-bottom: 10px;
+}
+
 /*
 .table-bordered
 {

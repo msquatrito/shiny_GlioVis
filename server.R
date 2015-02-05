@@ -186,9 +186,9 @@ shinyServer(
     #' Create the dataframe to call in ggbox,Tukey and ttest
     data <- reactive({     
       validate(
-        need(input$gene != "", "\n Please, enter a gene name in the panel on the left")%then%
+        need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
           # Not all genes are available for all the dataset
-          need(input$gene %in% names(exprs()),"\n Gene not available for this dataset"),
+          need(input$gene %in% names(exprs()),"Gene not available for this dataset"),
         # Trying to avoid an error when switching datasets in case the plotType is not available.
         need(plotSelected() %in% plotList[[input$dataset]],""),
         need(plotUserSelected() %in% plotUserSelection(),"")
@@ -390,10 +390,10 @@ shinyServer(
     #' Requirements for all the survival plots
     survNeed <- reactive({
       validate(
-        need(!input$dataset %in% noSurvDataset, "\n Sorry, no survival data are available for this dataset")%then%
-          need(input$histologySurv != "Non-tumor","\n Sorry, no survival data are available for this group")%then%
-          need(input$gene != "", "\n Please, enter a gene name in the panel on the left")%then%
-          need(input$gene %in% names(exprs()),"\n Gene not available for this dataset")
+        need(!input$dataset %in% noSurvDataset, "Sorry, no survival data are available for this dataset")%then%
+          need(input$histologySurv != "Non-tumor","Sorry, no survival data are available for this group")%then%
+          need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
+          need(input$gene %in% names(exprs()),"Gene not available for this dataset")
       )
     })
     
@@ -544,10 +544,10 @@ shinyServer(
     #' Generate the correlation plot
     output$corrPlot <- renderPlot({    
       validate(
-        need(input$gene != "", "\n Please, enter a gene name in the panel on the left")%then%
-          need(input$gene %in% names(exprs()),"\n Gene not available for this dataset"),
-        need(input$gene2 != "", "\n Please enter Gene 2")%then%
-          need(input$gene2 %in% names(exprs()),"\n Gene not available for this dataset"),
+        need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
+          need(input$gene %in% names(exprs()),"Gene not available for this dataset"),
+        need(input$gene2 != "", "Please enter Gene 2")%then%
+          need(input$gene2 %in% names(exprs()),"Gene not available for this dataset"),
         # Trying to avoid an error when switching datasets in case the choosen histology is not available.
         need(input$histologyCorr %in% c("All",histo()),"")
       )
@@ -590,8 +590,8 @@ shinyServer(
     pairsData <- reactive({
       validate(
         # Need two or more genes
-        need(length(input$genelist) > 1, "\n Please enter 2 or more genes in the panel on the left")%then%
-          need(input$genelist %in% names(exprs()),"\n Gene not available for this dataset")%then%         
+        need(length(input$genelist) > 1, "Please enter 2 or more genes in the panel on the left")%then%
+          need(input$genelist %in% names(exprs()),"Gene not available for this dataset")%then%         
           # Trying to avoid an error when switching datasets in case the choosen histology is not available.
           need(input$histologyCorr %in% c("All",histo()),"")
       )
@@ -985,9 +985,9 @@ shinyServer(
     #' Generate an HTML table view of the correlation table 
     output$corrData <- renderDataTable({
       validate(
-        need(input$geneCor != "", "\n Please, enter a gene name in the panel on the left")%then%
+        need(input$geneCor != "", "Please, enter a gene name in the panel on the left")%then%
           # Not all genes are available for all the dataset
-          need(input$geneCor %in% names(datasetInputCor()[["expr"]]),"\n Gene not available for this dataset")
+          need(input$geneCor %in% names(datasetInputCor()[["expr"]]),"Gene not available for this dataset")
       )   
       corrData()
     }, options = list(orderClasses = TRUE), callback = "function(table) {
