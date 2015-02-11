@@ -131,8 +131,12 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                                   options = list(placeholder = "Enter gene, eg: EGFR", plugins = list('restore_on_backspace'))),
                                    hr(),
                                    selectInput(inputId = "cor", label = h5("Correlation:"), choices = c("All", "Positive", "Negative")),
-                                   selectInput(inputId = "sign", label = h5("Signficance:"), choices = c(0.05, 0.01)),
-                                   selectInput(inputId = "corrMethod",label = h5("Method:"), choices = c("Pearson", "Spearman")),
+                                   conditionalPanel(
+                                     condition = "input.cor == 'All'",
+                                   sliderInput("range", "Range:",min = -1, max = 1, value = c(-0.3,0.3),step = 0.1,round = FALSE)
+                                   ),
+                                   radioButtons(inputId = "sign", label = h5("Signficance:"), choices = c(0.05, 0.01),inline = TRUE),
+                                   radioButtons(inputId = "corrMethod",label = h5("Method:"), choices = c("Pearson", "Spearman"),inline = TRUE),
                                    hr(),
                                    conditionalPanel(
                                      condition = "output.corrData",

@@ -966,9 +966,7 @@ shinyServer(
     #' Generate a reactive element of the the correlation data 
     corrData <- reactive({  
       corr.table <- suppressWarnings(corr())  # suppressWarnings  is used to prevent the warning messages in the LGG dataset  
-      if (input$sign == 0.01){
-        corr.table <- subset(corr.table, adj.p.value <= 0.01)
-      } 
+      corr.table <- subset(corr.table, adj.p.value <= as.numeric(input$sign))
       if (input$cor == "Positive"){
         corr.table <- subset(corr.table, r > 0)
         corr.table <- corr.table[order(-corr.table$r), ]
@@ -976,8 +974,10 @@ shinyServer(
       if (input$cor == "Negative"){
         corr.table <- subset(corr.table, r < 0)
         corr.table <- corr.table[order(corr.table$r), ]
-      } else {
-        corr.table <- subset(corr.table, adj.p.value <= 0.05)
+      } 
+      if (input$cor == "All"){
+        corr.table <- subset(corr.table, r <= input$range[1] | r >= input$range[2])
+#         corr.table <- corr.table[order(-corr.table$r), ]
       }
       corr.table
     })
