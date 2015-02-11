@@ -1,23 +1,23 @@
 # datasets
-gbm.tcga <- readRDS("data/TCGA.GBM.Rds")
-lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
-rembrandt <- readRDS("data/Rembrandt.Rds")
-freije <- readRDS("data/Freije.Rds")
-gravendeel <- readRDS("data/Gravendeel.Rds")
-murat <- readRDS("data/Murat.Rds")
-phillips <- readRDS("data/Phillips.Rds")
-reifenberger <- readRDS("data/Reifenberger.Rds")
-bao <- readRDS("data/Bao.Rds")
-gill <- readRDS("data/Gill.Rds")
-gorovets <- readRDS("data/Gorovets.Rds")
-nutt <- readRDS("data/Nutt.Rds")
-ducray <- readRDS("data/Ducray.Rds")
-grzmil <- readRDS("data/Grzmil.Rds")
-donson <- readRDS("data/Donson.Rds")
-li <- readRDS("data/Li.Rds")
-vital <- readRDS("data/Vital.Rds")
-joo <- readRDS("data/Joo.Rds")
-oh <- readRDS("data/Oh.Rds")
+# gbm.tcga <- readRDS("data/TCGA.GBM.Rds")
+# lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
+# rembrandt <- readRDS("data/Rembrandt.Rds")
+# freije <- readRDS("data/Freije.Rds")
+# gravendeel <- readRDS("data/Gravendeel.Rds")
+# murat <- readRDS("data/Murat.Rds")
+# phillips <- readRDS("data/Phillips.Rds")
+# reifenberger <- readRDS("data/Reifenberger.Rds")
+# bao <- readRDS("data/Bao.Rds")
+# gill <- readRDS("data/Gill.Rds")
+# gorovets <- readRDS("data/Gorovets.Rds")
+# nutt <- readRDS("data/Nutt.Rds")
+# ducray <- readRDS("data/Ducray.Rds")
+# grzmil <- readRDS("data/Grzmil.Rds")
+# donson <- readRDS("data/Donson.Rds")
+# li <- readRDS("data/Li.Rds")
+# vital <- readRDS("data/Vital.Rds")
+# joo <- readRDS("data/Joo.Rds")
+# oh <- readRDS("data/Oh.Rds")
 
 # server.R for Gliovis
 shinyServer(
@@ -737,7 +737,7 @@ shinyServer(
     #' Reactivity required to display download button after file upload
     output$finishedUploading <- reactive({
       if (is.null(input$upFile))
-        { 0 } else { 1 }
+      { 0 } else { 1 }
     })
     outputOptions(output, 'finishedUploading', suspendWhenHidden=FALSE)
     
@@ -960,7 +960,7 @@ shinyServer(
     corr <- reactive ({
       corr <- getCorr(datasetInputCor()[["expr"]], input$geneCor, input$histologyCorrTable, corrMethod())
       corr <- corr[order(-abs(corr$r)), ]
-      corr
+      corr <- corr [-1,]
     })
     
     #' Generate a reactive element of the the correlation data 
@@ -999,14 +999,21 @@ shinyServer(
       });
     }")
     
-  
+    #' Generate a reactive value for the input$rows that set to NULL when the dataset change
+    v <- reactiveValues(rows = NULL)
+    observeEvent(input$rows, {
+      v$rows <- input$rows
+    })
+    observeEvent(datasetInputCor(), {
+      v$rows <- NULL
+    })
+    
     #' Generate the correlation plot
     output$corrDataPlot <- renderPlot({
-#       if (is.null(input$rows) || input$rows== "")
-#         return(NULL)
-      input$rows
+      v$rows
       validate(
-        need(input$geneCor != "" & input$rows!= "","")
+        need(input$geneCor != "","")%then%
+          need(v$rows!= "","Click on a row to see the corresponding correlation plot.")
       )
       df <- datasetInputCor()[["expr"]]
       if (input$histologyCorrTable != "All") {
@@ -1014,10 +1021,10 @@ shinyServer(
       } else {
         df <- df
       }
-      aes_scatter <- aes_string(x = input$geneCor, y = input$rows)
+      aes_scatter <- aes_string(x = input$geneCor, y = v$rows)
       ggplot(df,mapping = aes_scatter) + theme(legend.position=c(1,1),legend.justification=c(1,1)) +
         geom_point(alpha=.5) + geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1)
-
+      
     })
     
     

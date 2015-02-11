@@ -44,91 +44,76 @@ tabPanel(title = "Tools", icon = icon("gear"),
                       mainPanel(
                         tabsetPanel(id = "tabTools",
                                     
-                          tabPanel(title = "SVM", id = "SVM", value = 1,
-                                   div(class = "busy",  
-                                       p("Calculating, please wait"),
-                                       img(src="Rotating_brain.gif"),
-                                       hr(),
-                                       p("Be patients, switching to another tab will crash GlioVis ...")
-                                   ),
-                                   p(class = "lead","Supported vector machine learning"),
-                                   p(strong("File output format:"), "Subtype calls with the probability model."),  
-                                   conditionalPanel(
-                                     condition = "output.svm",
-                                     downloadButton(outputId = "downloadSvm", label = "Download data", class= "btn-primary")
-                                   ),
-                                   br(),
-                                   dataTableOutput(outputId = "svm")
-                          ),
-                          
-                          tabPanel(title = "K-NN", id = "K-NN", value = 2,
-                                   div(class = "busy",  
-                                       p("Calculating, please wait"),
-                                       img(src="Rotating_brain.gif"),
-                                       hr(),
-                                       p("Be patients, switching to another tab will crash GlioVis ...")
-                                   ),
-                                   p(class = "lead","K-nearest neighbors prediction"),
-                                   p(strong("File output format:"), "Subtype calls with the probability score."),
-                                   conditionalPanel(
-                                     condition = "output.knn",
-                                     downloadButton(outputId = "downloadKnn", label = "Download data", class= "btn-primary")
-                                   ),
-                                   br(),
-                                   dataTableOutput(outputId = "knn")
-                          ),
-                          
-                          tabPanel(title = "ssGSEA", id = "GSVA", value = 3,
-                                   div(class = "busy",  
-                                       p("Calculating, please wait"),
-                                       img(src="Rotating_brain.gif"),
-                                       hr(),
-                                       p("Be patients, switching to another tab will crash GlioVis ...")
-                                   ),
-                                   p(class = "lead","Single sample Gene Set Enrichment Analysis"),
-                                   p(strong("File output format:"), "Subtype calls with the enrichment score."),
-                                   conditionalPanel(
-                                     condition = "output.gsva",
-                                     downloadButton(outputId = "downloadGsva", label = "Download data", class= "btn-primary")
-                                   ),
-                                   br(),
-                                   dataTableOutput(outputId = "gsva")
-                          ),
-                          
-                          tabPanel(title = "3-Way", id = "3-Way", value = 4,
-                                   div(class = "busy",  
-                                       p("Calculating, please wait"),
-                                       img(src="Rotating_brain.gif"),
-                                       hr(),
-                                       p("Be patients, it could take a couple of minutes ...")
-                                   ),
-                                   p(class = "lead","Generate and compare subtype calls by SVM, K-NN and ssGSEA"),
-#                                    conditionalPanel(
-#                                      condition = "output.sub3",
-#                                      p(strong("svm_vs_knn"),textOutput(outputId = "call.identity",inline = TRUE)),
-#                                      tableOutput(outputId = "sub3Summary.1"),
-#                                      br(),
-#                                      fluidRow(
-#                                        column(width = 5,
-#                                               p(strong("svm_vs_gsea")),
-#                                               tableOutput(outputId = "sub3Summary.2")
-#                                        ),
-#                                        column(width = 5, offset = 1,
-#                                               p(strong("knn_vs_gsea")),
-#                                               tableOutput(outputId = "sub3Summary.3")
-#                                        )
-#                                      )
-#                                    ),
-                                   br(),
-                                   conditionalPanel(
-                                     condition = "output.sub3",
-                                     downloadButton(outputId = "downloadSub3", label = "Download data", class= "btn-primary")
-                                   ),
-                                   br(),
-                                   column(width = 9,
-                                    dataTableOutput(outputId = "sub3")
-                                   )
-                          )
+                                    tabPanel(title = "SVM", id = "SVM", value = 1,
+                                             p(class = "lead","Supported vector machine learning"),
+                                             p(strong("File output format:"), "Subtype calls with the probability model."),  
+                                             conditionalPanel(
+                                               condition = "output.svm",
+                                               downloadButton(outputId = "downloadSvm", label = "Download data", class= "btn-primary")
+                                             ),
+                                             br(),
+                                             div(class = "busy",  
+                                                 p("Calculating, please wait"),
+                                                 img(src="Rotating_brain.gif"),
+                                                 hr(),
+                                                 p("Be patients, switching to another tab will crash GlioVis ...")
+                                             ),
+                                             dataTableOutput(outputId = "svm")
+                                    ),
+                                    
+                                    tabPanel(title = "K-NN", id = "K-NN", value = 2,
+                                             
+                                             p(class = "lead","K-nearest neighbors prediction"),
+                                             p(strong("File output format:"), "Subtype calls with the probability score."),
+                                             conditionalPanel(
+                                               condition = "output.knn",
+                                               downloadButton(outputId = "downloadKnn", label = "Download data", class= "btn-primary")
+                                             ),
+                                             br(),
+                                             div(class = "busy",  
+                                                 p("Calculating, please wait"),
+                                                 img(src="Rotating_brain.gif"),
+                                                 hr(),
+                                                 p("Be patients, switching to another tab will crash GlioVis ...")
+                                             ),
+                                             dataTableOutput(outputId = "knn")
+                                    ),
+                                    
+                                    tabPanel(title = "ssGSEA", id = "GSVA", value = 3,
+                                             p(class = "lead","Single sample Gene Set Enrichment Analysis"),
+                                             p(strong("File output format:"), "Subtype calls with the enrichment score."),
+                                             conditionalPanel(
+                                               condition = "output.gsva",
+                                               downloadButton(outputId = "downloadGsva", label = "Download data", class= "btn-primary")
+                                             ),
+                                             br(),
+                                             div(class = "busy",  
+                                                 p("Calculating, please wait"),
+                                                 img(src="Rotating_brain.gif"),
+                                                 hr(),
+                                                 p("Be patients, switching to another tab will crash GlioVis ...")
+                                             ),
+                                             dataTableOutput(outputId = "gsva")
+                                    ),
+                                    
+                                    tabPanel(title = "3-Way", id = "3-Way", value = 4,
+                                             p(class = "lead","Generate and compare subtype calls by SVM, K-NN and ssGSEA"),
+                                             br(),
+                                             conditionalPanel(
+                                               condition = "output.sub3",
+                                               downloadButton(outputId = "downloadSub3", label = "Download data", class= "btn-primary")
+                                             ),
+                                             br(),
+                                             div(class = "busy",  
+                                                 p("Calculating, please wait"),
+                                                 img(src="Rotating_brain.gif"),
+                                                 hr(),
+                                                 p("Be patients, switching to another tab will crash GlioVis ...")
+                                             ),
+                                             column(width = 9,
+                                                    dataTableOutput(outputId = "sub3")
+                                             )
+                                    )
                         )
                       )
                     )
@@ -136,26 +121,17 @@ tabPanel(title = "Tools", icon = icon("gear"),
            
            tabPanel(title = "CorrelateME", 
                     p(class = "lead","Correlate expression of a gene with all the genes in the dataset"),
-#                     br(),
                     sidebarLayout(
                       sidebarPanel(width = 3,
                                    selectInput(inputId = "datasetCor", label = h4("Dataset"),
                                                choices = datasets,
                                                selected = "TCGA GBM", selectize = TRUE),
-#                                    br(),
                                    selectInput(inputId = "histologyCorrTable", label = h4("Histology:"), choices = ""),
-#                                    br(),
                                    selectizeInput(inputId = "geneCor", label = h4("Gene"), choices = NULL, selected = NULL,
                                                   options = list(placeholder = "Enter gene, eg: EGFR", plugins = list('restore_on_backspace'))),
-                                   div(class = "busy",  
-                                       p("Calculating, please wait"),
-                                       img(src="Rotating_brain.gif") 
-                                   ),
                                    hr(),
                                    selectInput(inputId = "cor", label = h5("Correlation:"), choices = c("All", "Positive", "Negative")),
-#                                    br(),
                                    selectInput(inputId = "sign", label = h5("Signficance:"), choices = c(0.05, 0.01)),
-#                                    br(),
                                    selectInput(inputId = "corrMethod",label = h5("Method:"), choices = c("Pearson", "Spearman")),
                                    hr(),
                                    conditionalPanel(
@@ -165,14 +141,22 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                    )
                       ),
                       mainPanel(
-                        column(width = 7,
-                               dataTableOutput(outputId = "corrData")
+                        div(class = "busy",  
+                            p("Calculating, please wait"),
+                            img(src="Rotating_brain.gif") 
                         ),
-                        column(width = 5,
-                               br(),
-                               br(),
-                               plotOutput(outputId = "corrDataPlot")
-                               )
+                        splitLayout(cellWidths = c("60%", "40%"),
+                                    dataTableOutput(outputId = "corrData"),
+                                    plotOutput(outputId = "corrDataPlot")
+                        )
+#                         column(width = 8,
+#                                dataTableOutput(outputId = "corrData")
+#                         ),
+#                         column(width = 4,
+#                                br(),
+#                                br(),
+#                                plotOutput(outputId = "corrDataPlot")
+#                         )
                       )
                     )
            )
