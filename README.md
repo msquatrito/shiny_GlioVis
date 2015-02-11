@@ -3,8 +3,14 @@ GlioVis
 
 A shiny app for data visualization of glioma datasets
 
-The GlioVis is licensed under the [AGPLv3](http://www.tldrlegal.com/l/AGPL3) 
+GlioVis code is licensed under the [MIT License](http://opensource.org/licenses/mit-license.html):   
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.   
 
-As a summary, the AGPLv3 license requires, attribution, include copyright and license in copies of the software, state changes if you modify the code, and disclose all source code. 
+&copy; Massimo Squatrito (2014) <a rel="license" href="http://www.creativecommons.org/licenses/by-nc/4.0/"><img alt="Creative Commons License" style="border-width:0" src="cc.png" /></a><br />This work is licensed under a <a rel="license" href="http://www.creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0 International License</a>. 
 
-&copy; Massimo Squatrito (2014) 
