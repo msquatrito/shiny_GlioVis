@@ -75,6 +75,16 @@ ol.outer {
   margin-bottom: 10px;
 }
 
+.checkbox {
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+
+.form-group {
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+
 /*
 .table-bordered
 {
