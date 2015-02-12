@@ -345,12 +345,40 @@ shinyServer(
       }
     }, priority=100)
     
+    #' Reactive expressions for the conditonal panel to work in the right way
+    gcimpSurv <- reactive ({
+      if(input$histologySurv == "GBM") {
+        gcimpSurv <- input$gcimpSurv
+      } else {
+        gcimpSurv <- FALSE
+      }
+      gcimpSurv
+    })
+    
+    primarySurv <- reactive ({
+      if(input$histologySurv == "GBM") {
+        primarySurv <- input$primarySurv
+      } else {
+        primarySurv <- FALSE
+      }
+      primarySurv
+    })
+    
+    allSubSurv <- reactive ({
+      if(input$histologySurv == "GBM" & input$subtypeSurv == "All") {
+        allSubSurv <- input$allSubSurv
+      } else {
+        allSubSurv <- FALSE
+      }
+      allSubSurv
+    })
+    
     #' Extract the GBM samples for the interactive HR plot.
     survData <- reactive({    
       df <- exprs()
       df <- subset(df, !is.na(df$status))
       # subset to primary GBM, in case both primary and recurrent samples are available
-      if (any(!is.na(df$Recurrence))) {
+      if (primarySurv() & any(!is.na(df$Recurrence))) {
         df <- subset (df, Histology == "GBM" & Recurrence == "Primary")
       }
       df <- subset (df, Histology == "GBM")
@@ -358,7 +386,7 @@ shinyServer(
         df <- subset (df, Subtype == input$subtypeSurv)
       }
       # exclude G-CIMP is selected
-      if (input$gcimpSurv){
+      if (gcimpSurv()){
         df <- subset (df, CIMP_status != "G-CIMP")
       }
       df
@@ -446,10 +474,10 @@ shinyServer(
       if (input$histologySurv == "GBM" & input$subtypeSurv != "All") {
         df <- subset (df, Subtype == input$subtypeSurv)
       }
-      if (input$gcimpSurv){
+      if (gcimpSurv()){
         df <- subset (df, CIMP_status != "G-CIMP")
       }
-      if (input$primarySurv & any(!is.na(df$Recurrence))) {
+      if (primarySurv() & any(!is.na(df$Recurrence))) {
         df <- subset (df, Recurrence == "Primary")
       }
       mRNA <- df[ ,input$gene]
@@ -481,16 +509,16 @@ shinyServer(
       survNeed ()
       validate(need(input$histologySurv %in% c("All", histo()),""))   
       # Use 'try' to suppress a message throwed the first time manual cutoff is selected
-      if(input$allSubSurv) {
+      if(allSubSurv()) {
         try({
           par(mfrow=c(2,2), mar=c(3,3,3,1), mgp=c(2.2,.95,0))
           for (i in c("Classical","Mesenchymal","Neural","Proneural")) {
             survivalPlot (exprs(), input$gene, group = "GBM", cutoff = input$cutoff, numeric = input$mInput,
-                          subtype = i, gcimp = input$gcimpSurv, primary = input$primarySurv)}
+                          subtype = i, gcimp = gcimpSurv(), primary = primarySurv())}
         }, silent = TRUE)} else {
           try(survivalPlot (exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, numeric = input$mInput,
-                            subtype = input$subtypeSurv, gcimp = input$gcimpSurv, primary = input$primarySurv), silent = TRUE)}
-    }, height = function(){if(!input$allSubSurv) {400} else {600}}, width = function(){if(!input$allSubSurv) {500} else {800}})
+                            subtype = input$subtypeSurv, gcimp = gcimpSurv(), primary = primarySurv()), silent = TRUE)}
+    }, height = function(){if(!allSubSurv()) {400} else {600}}, width = function(){if(!allSubSurv()) {500} else {800}})
     
     
     #' Download the survPlot
@@ -501,14 +529,14 @@ shinyServer(
       content = function(file) {
         plotFunction <- match.fun(downloadPlotFileType())
         plotFunction(file, width = downloadPlotWidth(), height = downloadPlotHeight())
-        if(input$allSubSurv) {
+        if(allSubSurv()) {
           par(mfrow=c(2,2), mar=c(3,3,3,1), mgp=c(2.2,.95,0))
           for (i in c("Classical","Mesenchymal","Neural","Proneural")) {
             survivalPlot (exprs(), input$gene, group = "GBM", cutoff = input$cutoff, numeric = input$mInput,
-                          subtype = i, gcimp = input$gcimpSurv, primary = input$primarySurv)}
+                          subtype = i, gcimp = gcimpSurv(), primary = primarySurv())}
         } else {
           survivalPlot (exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, numeric = input$mInput,
-                        subtype = input$subtypeSurv, gcimp = input$gcimpSurv, primary = input$primarySurv)}
+                        subtype = input$subtypeSurv, gcimp = gcimpSurv(), primary = primarySurv())}
         dev.off()
       }
     ) 
