@@ -345,7 +345,7 @@ shinyServer(
       }
     }, priority=100)
     
-    #' Reactive expressions for the conditonal panel to work in the right way
+    #' Reactive expressions for the conditonal panels to work in the right way
     gcimpSurv <- reactive ({
       if(input$histologySurv == "GBM") {
         gcimpSurv <- input$gcimpSurv
@@ -495,13 +495,13 @@ shinyServer(
       plot(0, 0, type = "n", xlim = c(xrange[1] + 0.25, xrange[2]) , ylim = c(-0.1,  + 0.1), ylab ="", xlab = "", axes = FALSE)
       points(x = mRNA, y = rep(0, length(mRNA)), pch="|")
       # Add a red line to show which  is the current cutoff.
-      points(x = input$mInput, y = 0, pch = "|", col="red",cex = 1.5)
+      points(x = input$mInput, y = 0, pch = "|", col="red", cex = 1.5)
     }, bg = "transparent")
     
     #' Generate the slider for the manual cutoff
     output$numericCutoff <- renderUI({
       sliderInput(inputId = "mInput",label = NULL, min = min(mRNAsurv()), max = max(mRNAsurv()), 
-                  value = median(mRNAsurv()),step = 0.05,round = -2)
+                  value = median(mRNAsurv()), step = 0.05, round = -2)
     })
     
     #' Create a Kaplan Meier plot with cutoff based on quantiles or manual selection
@@ -780,11 +780,12 @@ shinyServer(
       upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote)
       if (input$tumorType == "gbm") {
         train <- gbm.tcga[["expr"]]
+        train <- train[train$Sample %in% core.samples,]
       } else if (input$tumorType == "lgg") {
-        train <- gorovets[["expr"]]
+        train <- lgg.tcga[["expr"]]
+        train <- train[train$Sample %in% lgg.core.samples,]
       }
       row.names(train) <- train[,"Sample"]
-      train <- train[core.samples,]
       train.exp <- data.frame(t(train[,-c(1:8)]))
       row.names(upData) <- upData[,"Sample"]
       upData <- upData [,-1]
@@ -808,7 +809,9 @@ shinyServer(
                   prob.model=TRUE,  # We want a probability model included so we can give each predicted sample a score, not just a class
                   scale=FALSE)  # We already scaled before by mean-centering the data.
       svm.subtype.call <- as.matrix(predict(svm, t(df.learn)))
-      svm.subtype.call <- factor(svm.subtype.call,levels = c("Classical", "Mesenchymal", "Neural", "Proneural"))
+      if (input$tumorType == "gbm") {
+        svm.subtype.call <- factor(svm.subtype.call,levels = c("Classical", "Mesenchymal", "Neural", "Proneural"))
+      }
       prob <- as.matrix(predict(svm, t(df.learn), type="probabilities"))
       svm.call <- data.frame(Sample = rownames(upData), svm.subtype.call, prob)
       svm.call
@@ -840,11 +843,12 @@ shinyServer(
       upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote)
       if (input$tumorType == "gbm") {
         train <- gbm.tcga[["expr"]]
+        train <- train[train$Sample %in% core.samples,]
       } else if (input$tumorType == "lgg") {
-        train <- gorovets[["expr"]]
+        train <- lgg.tcga[["expr"]]
+        train <- train[train$Sample %in% lgg.core.samples,]
       }
       row.names(train) <- train[,"Sample"]
-      train <- train[core.samples,]
       train.exp <- as.matrix(train[,-c(1:8)])
       row.names(upData) <- upData[,"Sample"]
       learn.exp <-as.matrix(upData [,-1])
@@ -876,6 +880,8 @@ shinyServer(
     )  
     #' Reactive function to generate ssGSEA call to pass to data table and download handler
     gsva.call <- reactive ({
+      validate(
+        need(input$tumorType == "gbm","ssGSEA analysis currently available for GBM samples only"))
       inFile <- input$upFile
       upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote)
       if (input$tumorType == "gbm") {
@@ -888,7 +894,8 @@ shinyServer(
       gsva_results <- gsva(expr=as.matrix(exprs), gset.idx.list = gene_list, method="ssgsea", rnaseq=FALSE,
                            min.sz=0, max.sz=10000, verbose=FALSE)
       subtype_scores <- t(gsva_results)
-      subtype_final <- data.frame(Sample = rownames(upData), gsea.subtype.call = names(subtype_list)[apply(subtype_scores,1,which.max)], subtype_scores) 
+      subtype_final <- data.frame(Sample = rownames(upData), gsea.subtype.call = names(subtype_list)[apply(subtype_scores,1,which.max)], 
+                                  subtype_scores) 
       subtype_final
     })
     
@@ -914,6 +921,8 @@ shinyServer(
     
     #' Reactive function to generate the 3 subtype calls to pass to data table and download handler
     sub3.call <- reactive ({
+      validate(
+        need(input$tumorType == "gbm","ssGSEA analysis currently available for GBM samples only"))
       inFile <- input$upFile
       upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote)
       sub3 <- data_frame(Sample = upData$Sample, svm.call = svm.call()[,"svm.subtype.call"], 
@@ -1005,7 +1014,6 @@ shinyServer(
       } 
       if (input$cor == "All"){
         corr.table <- subset(corr.table, r <= input$range[1] | r >= input$range[2])
-#         corr.table <- corr.table[order(-corr.table$r), ]
       }
       corr.table
     })
