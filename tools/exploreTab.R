@@ -1,7 +1,7 @@
 # UI-elements for Explore tab
 tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
          
-         # link to the style.css file. Currently need only for the positioning of the progress bar
+         # link to the style.css file.
          tags$link(rel = 'stylesheet', type = 'text/css', href = 'styles.css'),
          
          sidebarLayout(
@@ -12,12 +12,10 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                         selectInput(inputId = "dataset", label = h4("Dataset"),
                                     choices = datasets,
                                     selected = "TCGA GBM", selectize = TRUE),
-#                         br(),
                         conditionalPanel(
                           condition = "input.tabCorr == '2genes'",
                           selectizeInput(inputId = "gene", label = h4("Gene"), choices = NULL, selected = NULL, 
                                          options = list(placeholder = "Enter gene, eg: EGFR", plugins = list('restore_on_backspace'))),
-#                           br(),
                           conditionalPanel(
                             condition = "input.tab1 == 1", 
                             radioButtons(inputId ="plotType", label = h4("Plot type"), choices = c("Pre-defined","User-defined"),selected = NULL, inline = T)
@@ -34,7 +32,6 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                         conditionalPanel(
                           condition = "input.tab1 == 1",
                           checkboxInput(inputId = "primary", label = "Primary samples only", value = FALSE),
-#                           br(),
                           helpPopup(title = "Help me pleaseeeeee", content = includeMarkdown("tools/help.Rmd"), 
                                     placement = "bottom", trigger = "click"),
                           hr(),
@@ -61,7 +58,6 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                             condition = "input.histologySurv == 'GBM'",
                             checkboxInput(inputId = "gcimpSurv", label = "Exclude G-CIMP samples", value = FALSE),
                             checkboxInput(inputId = "primarySurv", label = "Exclude Recurrent samples", value = FALSE)
-#                             ,br()
                           ),
                           conditionalPanel(
                             condition = "input.histologySurv == 'GBM'",
@@ -100,11 +96,9 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                         ),
                         conditionalPanel(
                           condition = "input.tab1 == 3",  
-#                           br(),
                           selectInput(inputId = "histologyCorr", label = h4("Histology:"), choices = ""),
                           conditionalPanel(
                             condition = "input.histologyCorr == 'GBM'",
-#                             br(),
                             selectInput(inputId = "subtype", label = h4("Subtype:"), 
                                         choices = c("All", "Classical", "Mesenchymal", "Neural", "Proneural"))
                           ),
@@ -153,10 +147,6 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                             condition = "input.tab1 == 3 & input.tabCorr == 'geneslist'",
                             downloadButton(outputId = "downloadpairsPlot", label = "Download", class= "btn-primary")
                           )
-                        ),
-                        conditionalPanel(
-                          condition = "input.tab1 == 4",
-                          downloadButton(outputId = "downloadData", label = "Download table", class= "btn-primary")                        
                         )
            ),
            
@@ -209,7 +199,6 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                                               to update the survival plot. The blue line represents the current selection.")),
                                                                 br(),
                                                                 checkboxInput(inputId = "quantile", label = "Show quantiles", value = TRUE),
-                                                                # This busy gif does not activate when switching tab
                                                                 div(class = "busy",  
                                                                     p("Calculating, please wait"),
                                                                     img(src="Rotating_brain.gif") 
@@ -235,7 +224,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                               ),
                                               tabPanel(title = "Multiple-Genes", value = "geneslist",
                                                        plotOutput(outputId = "pairsPlot")
-#                                                        ,tableOutput(outputId = "pairsData")
+                                                       #                                                        ,tableOutput(outputId = "pairsData")
                                               )
                                   )
                          ),
@@ -244,9 +233,17 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                   tabsetPanel(
                                     tabPanel(title = "Table",
                                              br(),
+                                             downloadButton(outputId = "downloadData", label = "Download table", class= "btn-primary"),
                                              dataTableOutput(outputId = "table")
                                     ),
-                                    tabPanel(title = "Summary plots",
+                                    tabPanel(title = "Report",
+                                             div(class = "busy",  
+                                                 p("Rendering report, please wait"),
+                                                 img(src="Rotating_brain.gif") 
+                                             ),
+                                             uiOutput(outputId = "reportPlots")
+                                    ),
+                                    tabPanel(title = "Dataset summary plots",
                                              splitLayout(
                                                uiOutput(outputId = "survPlots"),
                                                htmlOutput(outputId = "piePlots") 
