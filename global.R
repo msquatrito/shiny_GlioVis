@@ -45,15 +45,17 @@ oh <- readRDS("data/Oh.Rds")
 ########## other variables  ###########
 #######################################
 gene_names <- readRDS("data/gene_names.Rds")
-subtype_list <- readRDS("data/subtype_list.Rds")
-core.samples <- readRDS("data/TCGA.core.345samples.Rds")
+genes <- readRDS("data/genes.Rds")
+gene_names <- as.character(genes[,"Gene"])
+gbm.subtype.list <- readRDS("data/subtype_list.Rds")
+gbm.core.samples <- readRDS("data/TCGA.core.345samples.Rds")
 lgg.core.samples <- readRDS("data/lgg.core.460samples.Rds")
 
 #######################################
 ############## plotList  ##############
 #######################################
-plotList <- list("TCGA GBM" = c("Histology", "Copy number", "Subtype", "CIMP_status", "Recurrence"),
-                 "TCGA Lgg" = c("Histology", "Grade", "Copy number", "Subtype"),
+plotList <- list("TCGA GBM" = c("Histology", "Copy_number", "Subtype", "CIMP_status", "Recurrence"),
+                 "TCGA Lgg" = c("Histology", "Grade", "Copy_number", "Subtype"),
                  "Rembrandt" = c("Histology", "Grade", "Subtype", "CIMP_status"),
                  "Gravendeel" = c("Histology", "Grade", "Subtype", "CIMP_status"),
                  "Phillips" = c("Histology", "Grade", "Subtype", "Recurrence", "CIMP_status"),
@@ -72,52 +74,6 @@ plotList <- list("TCGA GBM" = c("Histology", "Copy number", "Subtype", "CIMP_sta
                  "Joo" = c("Histology", "Subtype", "Recurrence", "CIMP_status"),
                  "Oh" = c("Recurrence", "Subtype", "CIMP_status"))
 
-
-#########################################
-##############  ggboxPlot  ##############
-#########################################
-ggboxPlot <- function(data,  scale = FALSE, xlabel, stat = FALSE, colBox = FALSE, colStrip = FALSE, colorPoints, bw = FALSE, ...) {
-  if (scale) {
-    ylab <- "Normalized mRNA expression"
-  } else {
-    ylab <- "mRNA expression (log2)"
-  }
-  if (colBox) {
-    box <- geom_boxplot(aes(fill = group), outlier.size = 0) # It works but not the right way to approach this issue
-  } else {
-    box <- geom_boxplot(outlier.size = 0)
-  }
-  if (colStrip) {
-    col <- aes_string(color = colorPoints)
-    strip <- geom_jitter(position = position_jitter(width = .2), col, size = 2, alpha = 0.75)
-  } else {
-    strip <- geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5)
-  }
-  p <- ggplot(data, aes(x=group, y = mRNA)) + ylab(ylab) + xlab(paste0("\n",xlabel)) +
-    theme(axis.title.y=element_text(vjust=1)) 
-  p <- p + box + strip 
-  if (bw) {
-    p <- p + theme_bw () 
-  }
-  if (stat) {
-    tukey <- data.frame(TukeyHSD(aov(mRNA ~ group, data = data))[[1]])
-    tukey <<- tukey ##  see scoping rules http://shiny.rstudio.com/articles/scoping.html
-    tukey$Significance <- as.factor(starmaker(tukey$p.adj,p.levels=c(.001, .01, .05, 1), 
-                                              symbols=c("***", "**", "*", "ns")))
-    tukey$comparison <- row.names(tukey)
-    
-    t <- ggplot(tukey, aes(reorder(comparison, diff), diff, ymin = lwr, ymax= upr, colour = Significance)) +
-      geom_point() + geom_errorbar(width = 0.25) + 
-      ylab("Differences in mean levels") + xlab("") + 
-      geom_hline(xintercept = 0, colour="darkgray", linetype = "longdash") + coord_flip()
-    if (bw) {
-      t <- t + theme_bw ()
-    }
-    grid.arrange(p, t, ncol=2, widths = c(3,2))
-  } else {
-    print(p) 
-  }
-}
 
 ######################################
 ############## Get HR  ###############
