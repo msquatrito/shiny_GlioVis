@@ -6,13 +6,13 @@
 * Copy number alterations (obtained through the [GISTIC 2.0](http://www.broadinstitute.org/cgi-bin/cancer/publications/pub_paper.cgi?mode=view&paper_id=216&p=t) algorithm) were downloaded from the [cBioPortal](http://www.cbioportal.org/public-portal/index.do) using the[‘cgdsr’](http://cran.r-project.org/web/packages/cgdsr/cgdsr.pdf) package.   
 
 **Survival**         
-* Kaplan–Meier survival analysis were completed using the [‘survival’](http://cran.r-project.org/web/packages/survival/survival.pdf) package in R. Hazard ratios were determined utilizing the ‘coxph’ function from the ‘survival’ package. To generate HR plot we partially use some code previously describend in [*Cutoff finder*](http://molpath.charite.de/cutoff/index.jsp).    
+* Kaplan–Meier survival analysis were completed using the [‘survival’](http://cran.r-project.org/web/packages/survival/survival.pdf) package in R. Hazard ratios were determined utilizing the `coxph` function from the ‘survival’ package. To generate HR plot we partially use some code previously describend in [*Cutoff finder*](http://molpath.charite.de/cutoff/index.jsp).    
 
 **Classification**   
 For the GBM subtype classification we use 4 subtypes (Classical, Mesenchymal, Neural, Proneural) as defined in [Verhaak RG. et al. 2010](http://www.ncbi.nlm.nih.gov/pubmed/20129251).   
-* The Subtype call generated applying a **Support Vector Machine (SVM)** algorithm, is done performing a linear Kernel with 10-fold cross validation, using the ‘ksvm’ function of the [‘kernlab’](http://cran.r-project.org/web/packages/kernlab/kernlab.pdf) package. As training dataset we use the TCGA GBM samples described in [Brennan C. et al. 2013](http://www.ncbi.nlm.nih.gov/pubmed/24120142).
-* The **K-nearest neighbor (K-NN)** Subtype calls, are obtained using the ‘knn’ function of the [‘class’](http://cran.r-project.org/web/packages/class/class.pdf) package. For GBM samples classification we use the 4 subtypes as in the SVM calls.  
-* The Subtype call generated  by single sample **Gene Set Enrichment Analysis (ssGSEA)**, is done using the ‘gsva’ function of the [‘gsva’](http://www.bioconductor.org/packages/2.12/bioc/html/GSVA.html) package. For GBM samples classification we uses the 840 gene classifier as defined in [Verhaak RG. et al. 2010](http://www.ncbi.nlm.nih.gov/pubmed/20129251).
+* The Subtype call generated applying a **Support Vector Machine (SVM)** algorithm, is done performing a linear Kernel with 10-fold cross validation, using the `ksvm` function of the [‘kernlab’](http://cran.r-project.org/web/packages/kernlab/kernlab.pdf) package. As training dataset we use the TCGA GBM samples described in [Brennan C. et al. 2013](http://www.ncbi.nlm.nih.gov/pubmed/24120142).
+* The **K-nearest neighbor (K-NN)** Subtype calls, are obtained using the `knn` function of the [‘class’](http://cran.r-project.org/web/packages/class/class.pdf) package. For GBM samples classification we use the 4 subtypes as in the SVM calls.  
+* The Subtype call generated  by single sample **Gene Set Enrichment Analysis (ssGSEA)**, is done using the `gsva` function of the [‘gsva’](http://www.bioconductor.org/packages/2.12/bioc/html/GSVA.html) package. For GBM samples classification we uses the 840 gene classifier as defined in [Verhaak RG. et al. 2010](http://www.ncbi.nlm.nih.gov/pubmed/20129251).
 
 ### App info
 
