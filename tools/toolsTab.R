@@ -2,6 +2,52 @@
 tabPanel(title = "Tools", icon = icon("gear"),
          tabsetPanel(
            
+           tabPanel(title = "CorrelateME", 
+                    p(class = "lead","Correlate expression of a gene with all the genes in the dataset"),
+                    sidebarLayout(
+                      sidebarPanel(width = 3,
+                                   selectInput(inputId = "datasetCor", label = h4("Dataset"),
+                                               choices = datasets,
+                                               selected = "TCGA GBM", selectize = TRUE),
+                                   selectInput(inputId = "histologyCorrTable", label = h4("Histology:"), choices = ""),
+                                   selectizeInput(inputId = "geneCor", label = h4("Gene"), choices = NULL, selected = NULL,
+                                                  options = list(placeholder = "Enter gene, eg: EGFR", plugins = list('restore_on_backspace'))),
+                                   hr(),
+                                   selectInput(inputId = "cor", label = h5("Correlation:"), choices = c("All", "Positive", "Negative")),
+                                   conditionalPanel(
+                                     condition = "input.cor == 'All'",
+                                     sliderInput("range", "Range:",min = -1, max = 1, value = c(-0.3,0.3),step = 0.1,round = FALSE)
+                                   ),
+                                   radioButtons(inputId = "sign", label = h5("Signficance:"), choices = c(0.05, 0.01),inline = TRUE),
+                                   radioButtons(inputId = "corrMethod",label = h5("Method:"), choices = c("Pearson", "Spearman"),inline = TRUE),
+                                   hr(),
+                                   conditionalPanel(
+                                     condition = "output.corrData",
+                                     br(),
+                                     downloadButton(outputId = "downloadCorrData", label = "Download data", class= "btn-primary")
+                                   )
+                      ),
+                      mainPanel(
+                        div(class = "busy",  
+                            p("Calculating, please wait"),
+                            img(src="Rotating_brain.gif") 
+                        ),
+                        splitLayout(cellWidths = c("60%", "40%"),
+                                    dataTableOutput(outputId = "corrData"),
+                                    plotOutput(outputId = "corrDataPlot")
+                        )
+                        #                         column(width = 8,
+                        #                                dataTableOutput(outputId = "corrData")
+                        #                         ),
+                        #                         column(width = 4,
+                        #                                br(),
+                        #                                br(),
+                        #                                plotOutput(outputId = "corrDataPlot")
+                        #                         )
+                      )
+                    )
+           ),
+           
            tabPanel(title ="SubtypeME",
                     p(class = "lead","Classify tumor samples based on mRNA expression profiles"),
                     sidebarLayout(
@@ -115,52 +161,6 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                              )
                                     )
                         )
-                      )
-                    )
-           ),
-           
-           tabPanel(title = "CorrelateME", 
-                    p(class = "lead","Correlate expression of a gene with all the genes in the dataset"),
-                    sidebarLayout(
-                      sidebarPanel(width = 3,
-                                   selectInput(inputId = "datasetCor", label = h4("Dataset"),
-                                               choices = datasets,
-                                               selected = "TCGA GBM", selectize = TRUE),
-                                   selectInput(inputId = "histologyCorrTable", label = h4("Histology:"), choices = ""),
-                                   selectizeInput(inputId = "geneCor", label = h4("Gene"), choices = NULL, selected = NULL,
-                                                  options = list(placeholder = "Enter gene, eg: EGFR", plugins = list('restore_on_backspace'))),
-                                   hr(),
-                                   selectInput(inputId = "cor", label = h5("Correlation:"), choices = c("All", "Positive", "Negative")),
-                                   conditionalPanel(
-                                     condition = "input.cor == 'All'",
-                                   sliderInput("range", "Range:",min = -1, max = 1, value = c(-0.3,0.3),step = 0.1,round = FALSE)
-                                   ),
-                                   radioButtons(inputId = "sign", label = h5("Signficance:"), choices = c(0.05, 0.01),inline = TRUE),
-                                   radioButtons(inputId = "corrMethod",label = h5("Method:"), choices = c("Pearson", "Spearman"),inline = TRUE),
-                                   hr(),
-                                   conditionalPanel(
-                                     condition = "output.corrData",
-                                     br(),
-                                     downloadButton(outputId = "downloadCorrData", label = "Download data", class= "btn-primary")
-                                   )
-                      ),
-                      mainPanel(
-                        div(class = "busy",  
-                            p("Calculating, please wait"),
-                            img(src="Rotating_brain.gif") 
-                        ),
-                        splitLayout(cellWidths = c("60%", "40%"),
-                                    dataTableOutput(outputId = "corrData"),
-                                    plotOutput(outputId = "corrDataPlot")
-                        )
-#                         column(width = 8,
-#                                dataTableOutput(outputId = "corrData")
-#                         ),
-#                         column(width = 4,
-#                                br(),
-#                                br(),
-#                                plotOutput(outputId = "corrDataPlot")
-#                         )
                       )
                     )
            )
