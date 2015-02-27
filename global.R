@@ -1,3 +1,10 @@
+pkg <- c("shiny", "survival", "weights", "googleVis", "dplyr", 
+         "ggplot2", "GSVA", "gridExtra", "class", "kernlab")
+new.pkg <- pkg[!(pkg %in% installed.packages())]
+if (length(new.pkg)) {
+  install.packages(new.pkg)
+}
+
 library(shiny)
 library(survival)
 library(weights)
@@ -73,6 +80,53 @@ plotList <- list("TCGA GBM" = c("Histology", "Copy_number", "Subtype", "CIMP_sta
                  "Vital" = c("Histology", "Grade", "Subtype"),
                  "Joo" = c("Histology", "Subtype", "Recurrence", "CIMP_status"),
                  "Oh" = c("Recurrence", "Subtype", "CIMP_status"))
+
+
+#########################################
+##############  ggboxPlot  ##############
+#########################################
+ggboxPlot <- function(data,  scale = FALSE, xlabel, stat = FALSE, colBox = FALSE, colStrip = FALSE, colorPoints, bw = FALSE, ...) {
+  if (scale) {
+    ylab <- "Normalized mRNA expression"
+  } else {
+    ylab <- "mRNA expression (log2)"
+  }
+  if (colBox) {
+    box <- geom_boxplot(aes(fill = group), outlier.size = 0) # It works but not the right way to approach this issue
+  } else {
+    box <- geom_boxplot(outlier.size = 0)
+  }
+  if (colStrip) {
+    col <- aes_string(color = colorPoints)
+    strip <- geom_jitter(position = position_jitter(width = .2), col, size = 2, alpha = 0.75)
+  } else {
+    strip <- geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5)
+  }
+  p <- ggplot(data, aes(x=group, y = mRNA)) + ylab(ylab) + xlab(paste0("\n",xlabel)) +
+    theme(axis.title.y=element_text(vjust=1)) 
+  p <- p + box + strip 
+  if (bw) {
+    p <- p + theme_bw () 
+  }
+  if (stat) {
+    tukey <- data.frame(TukeyHSD(aov(mRNA ~ group, data = data))[[1]])
+    tukey <<- tukey ##  see scoping rules http://shiny.rstudio.com/articles/scoping.html
+    tukey$Significance <- as.factor(starmaker(tukey$p.adj,p.levels=c(.001, .01, .05, 1), 
+                                              symbols=c("***", "**", "*", "ns")))
+    tukey$comparison <- row.names(tukey)
+    
+    t <- ggplot(tukey, aes(reorder(comparison, diff), diff, ymin = lwr, ymax= upr, colour = Significance)) +
+      geom_point() + geom_errorbar(width = 0.25) + 
+      ylab("Differences in mean levels") + xlab("") + 
+      geom_hline(xintercept = 0, colour="darkgray", linetype = "longdash") + coord_flip()
+    if (bw) {
+      t <- t + theme_bw ()
+    }
+    grid.arrange(p, t, ncol=2, widths = c(3,2))
+  } else {
+    print(p) 
+  }
+}
 
 
 ######################################
@@ -230,15 +284,15 @@ survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FAL
 #####################
 # To use to get correlation data (r an p value) on the fly. 
 # using Hadley suggestion: https://stat.ethz.ch/pipermail/r-help/2008-November/181049.html
-getCorr <- function (df, gene, histology, corrMethod) {
+getCorr <- function (data, gene, histology, corrMethod) {
   if (histology != "All") {
-    df <- subset (df, Histology == histology)
+    data <- subset (data, Histology == histology)
   } else {
-    df <- df
+    data <- data
   }
-  df <- df[,9:ncol(df)]
-  mRNA <- df[ ,gene, drop = F]
-  r <- apply(mRNA, 2, function(x) { apply(df, 2, function(y) { cor(x,y, method = corrMethod) })})
+  data <- data[,9:ncol(data)]
+  mRNA <- data[ ,gene, drop = F]
+  r <- apply(mRNA, 2, function(x) { apply(data, 2, function(y) { cor(x,y, method = corrMethod) })})
   df <- nrow(mRNA) - 2
   t <- sqrt(df) * r / sqrt(1 - r ^ 2)
   p <- pt(t, df)

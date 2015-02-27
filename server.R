@@ -211,6 +211,14 @@ shinyServer(
       data$group <- data[,plotType()]
       data <- subset(data,!is.na(group))
     })
+
+    #' Generate radiobuttons for the various categories in the pData
+    output$colorPoints <- renderUI({
+      validate(need(input$gene != "",""))
+      colnames <- names(data())[!names(data()) %in% c("group","mRNA","Sample","status","survival")]
+      # Create the radiobuttons for the different pData categories
+      radioButtons("colorP", "Color by:", choices  = colnames, selected = plotType())
+    })
     
     plotType <- reactive({
       if (input$plotType == "Pre-defined"){
@@ -220,67 +228,15 @@ shinyServer(
       }
     })
     
-    #' Reactive expression to generate the box plots to pass to renderPlot and download handler
-    boxPlot <- reactive({
-      data <- data()
-      if (input$scale) {
-        ylab <- "Normalized mRNA expression"
-      } else {
-        ylab <- "mRNA expression (log2)"
-      }
-      if (input$colBox) {
-        box <- geom_boxplot(aes(fill = group), outlier.size = 0) # It works but not the right way to approach this issue
-      } else {
-        box <- geom_boxplot(outlier.size = 0)
-      }
-      if (input$colStrip) {
-        col <- aes_string(color = input$colorP)
-        strip <- geom_jitter(position = position_jitter(width = .2), col, size = 2, alpha = 0.75)
-      } else {
-        strip <- geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5)
-      }
-      p <- ggplot(data, aes(x=group, y = mRNA)) + ylab(ylab) + xlab(paste0("\n",plotType())) +
-        theme(axis.title.y=element_text(vjust=1)) 
-      p <- p + box + strip 
-      if (input$bw) {
-        p <- p + theme_bw () 
-      }
-      if (input$tukeyPlot) {
-        tukey <- data.frame(TukeyHSD(aov(mRNA ~ group, data = data))[[1]])
-        tukey$Significance <- as.factor(starmaker(tukey$p.adj,p.levels=c(.001, .01, .05, 1), symbols=c("***", "**", "*", "ns")))
-        tukey$comparison <- row.names(tukey)
-        t <- ggplot(tukey, aes(reorder(comparison, diff), diff, ymin = lwr, ymax= upr, colour = Significance)) +
-          geom_point() + geom_errorbar(width = 0.25) + 
-          ylab("Differences in mean levels") + xlab("") + 
-          geom_hline(xintercept = 0, colour="darkgray", linetype = "longdash") + coord_flip()
-        if (input$bw) {
-          t <- t + theme_bw ()
-        }
-        grid.arrange(p, t, ncol=2, widths = c(3,2))
-      } else {
-        p
-      }
-    })
-    
-    
-    #' Generate radiobuttons for the various categories in the pData
-    output$colorPoints <- renderUI({
-      if (input$gene == "")
-        return()
-      data <- subset(data(),select = -c(group,mRNA,Sample,survival,status)) # to remove mRNA 
-      colnames <- names(data)
-      # Create the radiobuttons for the different pData categories
-      radioButtons("colorP", "Color by:", choices  = colnames, selected = NULL)
-    })
-    
-    
     #' Create the selected plot
     output$plot <- renderPlot({
     # To avoid an error when switching datasets in case the colStrip is not available.
       if(input$colStrip){
-        validate(need(input$colorP %in% names(data()),""))
+        colnames <- names(data())[!names(data()) %in% c("group","mRNA","Sample","status","survival")]
+        validate(need(input$colorP %in% colnames,""))
       }
-      print(boxPlot())
+      ggboxPlot(data = data (), xlabel = plotType(), scale = input$scale, stat = input$tukeyPlot, colBox = input$colBox, 
+                colStrip = input$colStrip, colorPoints = input$colorP, bw = input$bw) 
     })
        
     #' Summary statistic
@@ -354,7 +310,8 @@ shinyServer(
         # Gets the name of the function to use from the downloadFileType reactive element.
         plotFunction <- match.fun(downloadPlotFileType())
         plotFunction(file, width = downloadPlotWidth(), height = downloadPlotHeight())
-        print(boxPlot()) 
+        ggboxPlot(data = data (), xlabel = plotType(), scale = input$scale, stat = input$tukeyPlot, colBox = input$colBox, 
+                  colStrip = input$colStrip, colorPoints = input$colorP, bw = input$bw)   
         dev.off(which=dev.cur())
       }
     )
@@ -1012,7 +969,7 @@ shinyServer(
     corr <- reactive ({
       corr <- getCorr(datasetInputCor()[["expr"]], input$geneCor, input$histologyCorrTable, corrMethod())
       corr  <- merge(genes, corr, by="Gene")
-      corr <- corr [-1,]
+#       corr <- corr [-1,]
       corr <- corr[order(-abs(corr$r)), ]
     })
     
