@@ -231,18 +231,29 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                          
                          tabPanel(title = "Data", icon = icon("table"), value = 4,
                                   tabsetPanel(
-                                    tabPanel(title = "Table",
-                                             br(),
-                                             downloadButton(outputId = "downloadData", label = "Download table", class= "btn-primary"),
-                                             dataTableOutput(outputId = "table")
-                                    ),
+                                    
                                     tabPanel(title = "Report",
                                              div(class = "busy",  
                                                  p("Rendering report, please wait"),
                                                  img(src="Rotating_brain.gif") 
                                              ),
-                                             uiOutput(outputId = "reportPlots")
+                                             fluidRow(
+                                               column(width = 5,
+                                                      uiOutput(outputId = "reportPlots")
+                                               ),
+                                               column(width = 5,
+                                                      uiOutput(outputId = "reportTables")
+                                               )
+                                             )
                                     ),
+                                    
+                                    tabPanel(title = "Table",
+                                             br(),
+                                             downloadButton(outputId = "downloadData", label = "Download table", class= "btn-primary"),
+                                             br(),br(),
+                                             dataTableOutput(outputId = "table")
+                                    ),
+
                                     tabPanel(title = "Dataset summary plots",
                                              splitLayout(
                                                uiOutput(outputId = "survPlots"),

@@ -112,7 +112,7 @@ shinyServer(
     #' Return the names of the available user-defined plots
     plotUserSelection <- reactive ({
       data <- pDatas()[,!names(pDatas())%in%c("Sample","Histology","Grade","Recurrence","Subtype", "CIMP_status", "survival",
-                                              "status", "Age", "ID","Patient_ID","Sample_ID","title")] # Exlude pre-defined plots and numeric variables
+                                              "status", "Age", "ID","Patient_ID","Sample_ID", "Matching.sample", "Therapy_Class","title")] # Exlude pre-defined plots and numeric variables
       n <- colnames(data)
       n
     })
@@ -749,12 +749,11 @@ shinyServer(
       groups <- c(plotList[[input$dataset]], plotUserSelection())
       plot_output_list <- lapply(groups, function(i) {
         plot_report <- paste("plotReport", i, sep = "")
-        plotOutput(plot_report, height = 300, width = 500)
+        plotOutput(plot_report, height = 300)
       })
       do.call(tagList, plot_output_list)
     })  
-    
-    
+      
     observe({
       data <- data()
       groups <- c(plotList[[input$dataset]], plotUserSelection())
@@ -765,7 +764,7 @@ shinyServer(
           output[[plot_report]] <- renderPlot({
             data <- subset(data,!is.na(data[,my_i]))
             p <- ggplot(data, mapping=aes_string(x=my_i, y = "mRNA")) + geom_boxplot(outlier.size = 0) +  
-              geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5) +
+              geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5) + theme_bw() +
               ylab("mRNA expression (log2)") + xlab(paste0("\n",my_i)) + theme(axis.title.y=element_text(vjust=1)) 
             print(p)
           })
@@ -773,6 +772,43 @@ shinyServer(
       }
     })
     
+    #' Generate reports table
+    output$reportTables <- renderUI({
+      data <- data()
+      groups <- c(plotList[[input$dataset]], plotUserSelection())
+      plot_output_list <- lapply(groups, function(i) {
+        plot_report_summary <- paste("plotTable", i, sep = "")
+        box(height = 280, title = paste0(i), width = NULL, solidHeader = TRUE, color = "primary",
+        tableOutput(plot_report_summary)
+        )
+      })
+      do.call(tagList, plot_output_list)
+    }) 
+    
+    observe({
+      groups <- c(plotList[[input$dataset]], plotUserSelection())
+      for (i in groups) {
+        local({
+          my_i <- i
+          plot_report_summary <- paste("plotTable", my_i, sep = "")
+          output[[plot_report_summary]] <- renderTable({ 
+            data <- data()
+            validate(need(my_i %in% names(data),""))
+            data <- subset(data,!is.na(data[,my_i]))
+            stat <- substitute(data %>%
+                                 group_by(x) %>%
+                                 summarise(Sample_count = paste0(n()," (", round(n()*100/dim(data())[1],2), "%)" ), # prop.table
+                                           median = median (mRNA, na.rm=T), mad = mad(mRNA, na.rm=T),mean = mean(mRNA, na.rm=T), 
+                                           sd = sd(mRNA, na.rm=T)),
+                                 list(x = as.name(my_i)))
+            stat <- data.frame(eval(stat))
+            row.names(stat) <- stat[,my_i]
+            stat <- stat[,-1]
+            stat      
+          })
+        })
+      }
+    })
     
     #' Reactivity required to display download button after file upload
     output$finishedUploading <- reactive({
