@@ -4,6 +4,7 @@ new.pkg <- pkg[!(pkg %in% installed.packages())]
 if (length(new.pkg)) {
   install.packages(new.pkg)
 }
+if (!require("shinydashboard")) devtools::install_github("rstudio/shinydashboard")
 
 library(shiny)
 library(survival)
@@ -16,6 +17,7 @@ library(GSVA)
 library(GGally)
 library(class)
 library(kernlab)
+library(shinydashboard)
 
 `%then%` <- shiny:::`%OR%`
 
