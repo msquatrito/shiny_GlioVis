@@ -778,7 +778,7 @@ shinyServer(
       groups <- c(plotList[[input$dataset]], plotUserSelection())
       plot_output_list <- lapply(groups, function(i) {
         plot_report_summary <- paste("plotTable", i, sep = "")
-        box(height = 280, title = paste0(i), width = NULL, solidHeader = TRUE, color = "primary",
+        box(height = 280, title = paste0(i), width = NULL, solidHeader = TRUE, status = "primary",
         tableOutput(plot_report_summary)
         )
       })
