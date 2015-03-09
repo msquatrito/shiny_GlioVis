@@ -1,5 +1,4 @@
-GlioVis
-=============
+![alt text](www/Gliovis_logo_transparent.gif)
 
 A shiny app for data visualization of glioma datasets
 
@@ -12,5 +11,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.   
 
-&copy; Massimo Squatrito (2014) <a rel="license" href="http://www.creativecommons.org/licenses/by-nc/4.0/"><img alt="Creative Commons License" style="border-width:0" src="cc.png" /></a><br />This work is licensed under a <a rel="license" href="http://www.creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0 International License</a>. 
+&copy; Massimo Squatrito (2014) ![http://www.creativecommons.org/licenses/by-nc/4.0/](www/cc.png)
+
 
