@@ -25,6 +25,10 @@ shinyServer(
     
     options(shiny.maxRequestSize=30*1024^2)    
     
+    observe({
+      if (input$nav == "quit") stopApp()
+    })
+    
     #' Return the requested dataset
     datasetInput <- reactive({
       switch(input$dataset, 
@@ -246,9 +250,22 @@ shinyServer(
                            summarise(Sample_count = paste0(n()," (", round(n()*100/dim(data())[1],2), "%)" ), # prop.table
                                      median = median (mRNA, na.rm=T), mad = mad(mRNA, na.rm=T),mean = mean(mRNA, na.rm=T), sd = sd(mRNA, na.rm=T)))
       row.names(stat) <- stat$group
+      tot <- data() %>%
+              summarise(Sample_count = n(),median = median (mRNA, na.rm=T), 
+                        mad = mad(mRNA, na.rm=T),mean = mean(mRNA, na.rm=T), sd = sd(mRNA, na.rm=T))
       stat <- stat[,-1]
-      stat      
+      stat <- rbind(stat,TOTAL = tot)
+      stat 
     }, align='rrrrrr')
+    
+    
+#     output$summaryPie <- renderGvis({
+#       data <- data()
+#       plotData <- data.frame(table(data[, plotType()]))
+#       pie <-gvisPieChart(labelvar = "Var1", numvar = "Freq", data = plotData, 
+#                          options = list(width=300, height=300, pieSliceText='label', chartArea.left = 1)) # title = my_i,
+#       return(pie)
+#     })
     
     #' Tukey post-hoc test
     output$tukeyTest <- renderTable({    
@@ -749,7 +766,9 @@ shinyServer(
       groups <- c(plotList[[input$dataset]], plotUserSelection())
       plot_output_list <- lapply(groups, function(i) {
         plot_report <- paste("plotReport", i, sep = "")
-        plotOutput(plot_report, height = 300)
+        box(height = 300, title = paste0(i), width = NULL, solidHeader = TRUE, status = "primary",
+        plotOutput(plot_report, height = 245)
+        )
       })
       do.call(tagList, plot_output_list)
     })  
@@ -763,52 +782,31 @@ shinyServer(
           plot_report <- paste("plotReport", my_i, sep = "")
           output[[plot_report]] <- renderPlot({
             data <- subset(data,!is.na(data[,my_i]))
+            #         validate(need(my_i %in% names(data),""))
             p <- ggplot(data, mapping=aes_string(x=my_i, y = "mRNA")) + geom_boxplot(outlier.size = 0) +  
-              geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5) + theme_bw() +
-              ylab("mRNA expression (log2)") + xlab(paste0("\n",my_i)) + theme(axis.title.y=element_text(vjust=1)) 
-            print(p)
-          })
-        })
-      }
-    })
-    
-    #' Generate reports table
-    output$reportTables <- renderUI({
-      data <- data()
-      groups <- c(plotList[[input$dataset]], plotUserSelection())
-      plot_output_list <- lapply(groups, function(i) {
-        plot_report_summary <- paste("plotTable", i, sep = "")
-        box(height = 280, title = paste0(i), width = NULL, solidHeader = TRUE, status = "primary",
-        tableOutput(plot_report_summary)
-        )
-      })
-      do.call(tagList, plot_output_list)
-    }) 
-    
-    observe({
-      groups <- c(plotList[[input$dataset]], plotUserSelection())
-      for (i in groups) {
-        local({
-          my_i <- i
-          plot_report_summary <- paste("plotTable", my_i, sep = "")
-          output[[plot_report_summary]] <- renderTable({ 
-            data <- data()
-            validate(need(my_i %in% names(data),""))
-            data <- subset(data,!is.na(data[,my_i]))
+              geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5) + 
+              ylab("mRNA expression (log2)") + theme(axis.title.x = element_blank()) + theme(axis.title.y=element_text(vjust=1)) 
             stat <- substitute(data %>%
                                  group_by(x) %>%
                                  summarise(Sample_count = paste0(n()," (", round(n()*100/dim(data())[1],2), "%)" ), # prop.table
-                                           median = median (mRNA, na.rm=T), mad = mad(mRNA, na.rm=T),mean = mean(mRNA, na.rm=T), 
-                                           sd = sd(mRNA, na.rm=T)),
-                                 list(x = as.name(my_i)))
+                                           median = round(median (mRNA, na.rm=T),2), mad = round(mad(mRNA, na.rm=T),2),
+                                           mean = round(mean(mRNA, na.rm=T),2), sd = round(sd(mRNA, na.rm=T),2)),
+                               list(x = as.name(my_i)))
             stat <- data.frame(eval(stat))
             row.names(stat) <- stat[,my_i]
+            tot <- eval(substitute(data %>%
+                                     summarise(Sample_count = n(), median = round(median (mRNA, na.rm=T),2), mad = round(mad(mRNA, na.rm=T),2),
+                                               mean = round(mean(mRNA, na.rm=T),2), sd = round(sd(mRNA, na.rm=T),2)),
+                                   list(x = as.name(my_i))))
             stat <- stat[,-1]
-            stat      
+            stat <- rbind(stat,TOTAL = tot)
+            t <- tableGrob(stat, gp = gpar(fontsize=14),row.just = "right", core.just = "right")
+            grid.arrange(p, t, nrow = 1, just = c("left", "top")) # `just` it's not working
           })
         })
       }
     })
+    
     
     #' Reactivity required to display download button after file upload
     output$finishedUploading <- reactive({

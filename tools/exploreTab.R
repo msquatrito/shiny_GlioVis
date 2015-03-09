@@ -162,14 +162,15 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                   br(),
                                   conditionalPanel(
                                     condition = "input.statSummary",
-                                    strong("Summary statistics"),
-                                    br(),
+                                    p(style = "background-color: #F5F5F5; padding-left:10px; border: 1px solid #E3E3E3;", 
+                                      strong("Summary statistics")),
                                     tableOutput(outputId = "summary"),
                                     hr()
                                   ),
                                   conditionalPanel(
                                     condition = "input.tukeyHSD",
-                                    strong("Tukey's Honest Significant Difference (HSD)"),
+                                    p(style = "background-color: #F5F5F5; padding-left:10px; border: 1px solid #E3E3E3;",
+                                      strong("Tukey's Honest Significant Difference (HSD)")),
                                     helpText("The table shows the difference between pairs, the 95% confidence interval and the p-value of the pairwise comparisons:"),
                                     checkboxInput(inputId = "tukeyPlot", label = "Show the results in the plot", value = FALSE),
                                     tableOutput(outputId = "tukeyTest"),
@@ -177,7 +178,8 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                   ),
                                   conditionalPanel(
                                     condition = "input.tTest",
-                                    strong("Pairwise t tests"),
+                                    p(style = "background-color: #F5F5F5; padding-left:10px; border: 1px solid #E3E3E3;",
+                                      strong("Pairwise t tests")),
                                     helpText("Pairwise comparisons between group levels with corrections for multiple testing (p-values with Bonferroni correction):"),
                                     tableOutput(outputId = "pairwiseTtest")
                                   )
@@ -212,7 +214,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                   )
                          ),
                          
-                         tabPanel(title = "Correlations", icon = icon("list-alt"),  value = 3,
+                         tabPanel(title = "Correlations", icon = icon("line-chart"),  value = 3,
                                   tabsetPanel(id = "tabCorr",
                                               tabPanel(title = "2-Genes",  value = "2genes",
                                                        plotOutput(outputId = "corrPlot"), 
@@ -229,25 +231,19 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                   )
                          ),
                          
-                         tabPanel(title = "Data", icon = icon("table"), value = 4,
+                         tabPanel(title = "Summary", icon =  icon("pie-chart") , value = 4,
                                   tabsetPanel(
                                     
-                                    tabPanel(title = "Report",
+                                    tabPanel(title = "Plots", icon = icon("bar-chart"),
                                              div(class = "busy",  
                                                  p("Rendering report, please wait"),
                                                  img(src="Rotating_brain.gif") 
                                              ),
-                                             fluidRow(
-                                               column(width = 5,
-                                                      uiOutput(outputId = "reportPlots")
-                                               ),
-                                               column(width = 5,
-                                                      uiOutput(outputId = "reportTables")
-                                               )
-                                             )
+                                             uiOutput(outputId = "reportPlots")
+
                                     ),
                                     
-                                    tabPanel(title = "Table",
+                                    tabPanel(title = "Data", icon = icon("table"),
                                              br(),
                                              downloadButton(outputId = "downloadData", label = "Download table", class= "btn-primary"),
                                              br(),br(),
