@@ -1,6 +1,6 @@
 ![http://www.gliovis.com](www/GlioVis_logo_trasnparent.gif)
 
-A shiny app for data visualization of glioma datasets
+**A shiny app for visualization of glioma datasets**   
 
 GlioVis code is licensed under the [MIT License](http://opensource.org/licenses/mit-license.html):   
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR

@@ -20,7 +20,10 @@ tabPanel(title = "Home", icon = icon("home"),
                tags$li("Enter a Gene Symbol"),
                tags$li("Select one of the available plots (through the dropdown menu or a specific tab)")
              ),
-             p(class = "outer",'An overview of all the plots available for a specific dataset can be found "Explore/Summary/Plots".'),
+             h4(class = "outer", "What type of plots are available?"),             
+             p(class = "outer",'For each dataset is available a list of "pre-defined" plots (see the table below) and 
+                                a list of "user-defined" box plots specific for a given dataset. An overview of all the box plots available for a 
+                                particular dataset can be found at "Explore/Summary/Plots".'),
              p(class = "outer", "Available datasets:"),                   
              source("tools/datsets.table.R",local = TRUE)$value,
              br(),
