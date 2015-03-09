@@ -1,4 +1,4 @@
-![http://www.gliovis.com](www/Gliovis_logo_transparent.gif)
+![http://www.gliovis.com](www/GlioVis_logo_transparent.gif)
 
 A shiny app for data visualization of glioma datasets
 
