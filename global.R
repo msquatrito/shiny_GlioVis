@@ -1,10 +1,11 @@
-pkg <- c("shiny", "survival", "weights", "googleVis", "dplyr", 
-         "ggplot2", "GSVA", "gridExtra", "class", "kernlab")
-new.pkg <- pkg[!(pkg %in% installed.packages())]
-if (length(new.pkg)) {
-  install.packages(new.pkg)
-}
-if (!require("shinydashboard")) devtools::install_github("rstudio/shinydashboard")
+# pkg <- c("shiny", "survival", "weights", "googleVis", "dplyr", 
+#          "ggplot2", "GSVA", "gridExtra", "class", "kernlab")
+# new.pkg <- pkg[!(pkg %in% installed.packages())]
+# if (length(new.pkg)) {
+#   install.packages(new.pkg)
+# }
+# if (!require("shinydashboard")) devtools::install_github("rstudio/shinydashboard")
+# if (!require("DT")) devtools::install_github("rstudio/DT")
 
 library(shiny)
 library(survival)
@@ -18,6 +19,7 @@ library(GGally)
 library(class)
 library(kernlab)
 library(shinydashboard)
+library(DT)
 
 `%then%` <- shiny:::`%OR%`
 
@@ -112,12 +114,10 @@ ggboxPlot <- function(data,  scale = FALSE, xlabel, stat = FALSE, colBox = FALSE
   }
   if (stat) {
     tukey <- data.frame(TukeyHSD(aov(mRNA ~ group, data = data))[[1]])
-    tukey <<- tukey ##  see scoping rules http://shiny.rstudio.com/articles/scoping.html
-    tukey$Significance <- as.factor(starmaker(tukey$p.adj,p.levels=c(.001, .01, .05, 1), 
-                                              symbols=c("***", "**", "*", "ns")))
-    tukey$comparison <- row.names(tukey)
-    
-    t <- ggplot(tukey, aes(reorder(comparison, diff), diff, ymin = lwr, ymax= upr, colour = Significance)) +
+    t <- tukey %>%
+      mutate(Significance = as.factor(starmaker(p.adj, p.levels = c(.001, .01, .05, 1), symbols=c("***", "**", "*", "ns"))),
+             comparison = row.names(.)) %>%
+      ggplot(aes(reorder(comparison, diff), diff, ymin = lwr, ymax= upr, colour = Significance)) +
       geom_point() + geom_errorbar(width = 0.25) + 
       ylab("Differences in mean levels") + xlab("") + 
       geom_hline(xintercept = 0, colour="darkgray", linetype = "longdash") + coord_flip()
@@ -195,22 +195,22 @@ hazardPlot <- function (HRdata, quantile) {
 ###################
 survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FALSE, primary = FALSE) {
   if (group != "All") {
-    df <- subset (df, Histology == group) 
+    df <- filter(df, Histology == group) 
   }
   # For GBM, select only primary tumors
   if (primary & any(!is.na(df$Recurrence))) {
-    df <- subset (df, Recurrence == "Primary")
+    df <- filter(df, Recurrence == "Primary")
   }
   # Select a specific subtype
   if (group == "GBM" & subtype != "All") {
-    df <- subset (df, Subtype == subtype)
+    df <- filter(df, Subtype == subtype)
   }
   # Remove G-CIMP, when selected
   if (gcimp& any(!is.na(df$CIMP_status))){
-    df <- subset (df, CIMP_status != "G-CIMP")
+    df <- filter(df, CIMP_status != "G-CIMP")
   } 
   # Select the samples that have survival data
-  df <- subset(df, !is.na(df$status))
+  df <- filter(df, !is.na(df$status))
   mRNA <- df[ ,gene]
   surv.status <- df[ ,"status"]
   surv.time <- df[ ,"survival"]
@@ -231,14 +231,17 @@ survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FAL
   }
   
   if (cutoff != "quartiles") {
-    cut <- switch(cutoff, 
-           "median" = mRNA.q[2],
-           "lower quartile" = mRNA.q [1],
-           "upper quartile" = mRNA.q [3],
-           "Use a specific mRNA value" = numeric)
-
-    f <- function(x) ifelse(x >= cut, c("high"),c("low"))
-    strat <- f(mRNA)
+    if (cutoff == "high vs low") {
+      strat <- ifelse(mRNA >= mRNA.q [3], "high", ifelse(mRNA <= mRNA.q [1], "low",NA))
+    } else {
+      cut <- switch(cutoff, 
+                    "median" = mRNA.q[2],
+                    "lower quartile" = mRNA.q [1],
+                    "upper quartile" = mRNA.q [3],
+                    "Use a specific mRNA value" = numeric)
+      f <- function(x) ifelse(x >= cut, c("high"),c("low"))
+      strat <- f(mRNA)
+    }
     expr.surv <- survfit(my.Surv ~ strat, conf.type = "none")
     log.rank <- survdiff(my.Surv ~ strat, rho = 0)
     mantle.cox <- survdiff(my.Surv~ strat, rho = 1)
@@ -288,9 +291,7 @@ survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FAL
 # using Hadley suggestion: https://stat.ethz.ch/pipermail/r-help/2008-November/181049.html
 getCorr <- function (data, gene, histology, corrMethod) {
   if (histology != "All") {
-    data <- subset (data, Histology == histology)
-  } else {
-    data <- data
+    data <- filter (data, Histology == histology)
   }
   data <- data[,9:ncol(data)]
   mRNA <- data[ ,gene, drop = F]
@@ -310,12 +311,10 @@ getCorr <- function (data, gene, histology, corrMethod) {
 ######################################################
 myCorggPlot <- function (df, gene1, gene2, histo = "All", subtype = "All", colorBy = "none", separateBy = "none",...) {
   if (histo != "All") {
-    df <- subset (df, Histology == histo)
-  } else {
-    df <- df
-  }
+    df <- filter (df, Histology == histo)
+  } 
   if (histo == "GBM" & subtype != "All") {
-    df <- subset (df, Subtype == subtype)
+    df <- filter (df, Subtype == subtype)
   }
   #  empy plot to used in grid.arrange 
   empty <- ggplot() + geom_point(aes(1,1), colour="white") + 
@@ -368,15 +367,11 @@ myCorggPlot <- function (df, gene1, gene2, histo = "All", subtype = "All", color
 # Use to generate summary data for the correlation analysis
 myCorrTest <- function (df, gene1, gene2, histo = "All", subtype = "All", colorBy = "none", separateBy = "none",...) {
   if (histo != "All") {
-    df <- subset (df, Histology == histo)
-  } else {
-    df <- df
-  }
+    df <- filter (df, Histology == histo)
+  } 
   if (histo == "GBM" & subtype != "All") {
-    df <- subset (df, Subtype == subtype)
+    df <- filter (df, Subtype == subtype)
   }
-  Gene1 <- df[ ,gene1]
-  Gene2 <- df[ ,gene2]
   if (separateBy == "Histology") {
     cor <- substitute(df %>%
                         group_by(Histology)%>%
@@ -392,7 +387,7 @@ myCorrTest <- function (df, gene1, gene2, histo = "All", subtype = "All", colorB
                       list(x = as.name(gene1), y = as.name(gene2)))
     cor <- data.frame(eval(cor))
   } else if (separateBy == "none"){
-    cor <- cor.test(Gene1, Gene2, use = "complete.obs")
+    cor <- cor.test(df[ ,gene1], df[ ,gene2], use = "complete.obs")
   }
   cor
 }
@@ -496,6 +491,23 @@ helpPopup <- function(title, content,
     ),
     tags$style(type='text/css', ".popover { width: 1200px; relative; top: 20px; left: 20px !important; }")
   )
+}
+
+helpModal <- function(modal_title, link, help_file) {
+  sprintf("<div class='modal fade' id='%s' tabindex='-1' role='dialog' aria-labelledby='%s_label' aria-hidden='true'>
+            <div class='modal-dialog'>
+              <div class='modal-content'>
+                <div class='modal-header'>
+                  <button type='button' class='close' data-dismiss='modal' aria-label='Close'><span aria-hidden='true'>&times;</span></button>
+                  <h4 class='modal-title' id='%s_label'>%s</h4>
+                  </div>
+                <div class='modal-body'>%s</div>
+              </div>
+            </div>
+           </div>
+           <i title='Help' class='fa fa-question-circle' data-toggle='modal' data-target='#%s'></i>",
+          link, link, link, modal_title, help_file, link) %>%
+    enc2utf8 %>% HTML
 }
 
 #####################################
