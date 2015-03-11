@@ -32,8 +32,10 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                         conditionalPanel(
                           condition = "input.tab1 == 1",
                           checkboxInput(inputId = "primary", label = "Primary samples only", value = FALSE),
-                          helpPopup(title = "Help me pleaseeeeee", content = includeMarkdown("tools/help.Rmd"), 
-                                    placement = "bottom", trigger = "click"),
+                          helpModal(modal_title ="Help me pleaseeeeee", link = "help", 
+                                    help_file = includeMarkdown("tools/help.Rmd")),
+#                           helpPopup(title = "Help me pleaseeeeee", content = includeMarkdown("tools/help.Rmd"), 
+#                                     placement = "bottom", trigger = "click"),
                           hr(),
                           h5("Plot options:"),
                           checkboxInput(inputId = "scale", label = "Scale y axis", value = FALSE),
@@ -72,8 +74,10 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                           conditionalPanel(
                             condition = "input.tab1 == 2 & input.tabSurv == 'km'",
                             selectInput(inputId = "cutoff", label = h5("Select cutoff:"), 
-                                        choices = c("Use a specific mRNA value", "median", "lower quartile", "upper quartile", "quartiles"),
+                                        choices = c("Use a specific mRNA value", "median", "lower quartile", "upper quartile", "high vs low", "quartiles"),
                                         selected = "median"),
+                            helpModal(modal_title ="Cutoff selection", link = "helpSurv", 
+                                      help_file = includeMarkdown("tools/help_surv.Rmd")),
                             conditionalPanel(
                               condition = "input.cutoff == 'Use a specific mRNA value'",
                               br(),
@@ -226,7 +230,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                               ),
                                               tabPanel(title = "Multiple-Genes", value = "geneslist",
                                                        plotOutput(outputId = "pairsPlot")
-                                                       #                                                        ,tableOutput(outputId = "pairsData")
+                                                       #                ,tableOutput(outputId = "pairsData")
                                               )
                                   )
                          ),
@@ -245,9 +249,9 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                     
                                     tabPanel(title = "Data", icon = icon("table"),
                                              br(),
-                                             downloadButton(outputId = "downloadData", label = "Download table", class= "btn-primary"),
+#                                              downloadButton(outputId = "downloadData", label = "Download table", class= "btn-primary"),
                                              br(),br(),
-                                             dataTableOutput(outputId = "table")
+                                             DT::dataTableOutput(outputId = "table")
                                     ),
 
                                     tabPanel(title = "Dataset summary plots",

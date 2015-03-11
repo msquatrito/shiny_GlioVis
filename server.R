@@ -115,9 +115,10 @@ shinyServer(
     
     #' Return the names of the available user-defined plots
     plotUserSelection <- reactive ({
-      data <- pDatas()[,!names(pDatas())%in%c("Sample","Histology","Grade","Recurrence","Subtype", "CIMP_status", "survival",
-                                              "status", "Age", "ID","Patient_ID","Sample_ID", "Matching.sample", "Therapy_Class","title")] # Exlude pre-defined plots and numeric variables
-      n <- colnames(data)
+      drop <- c("Sample","Histology","Grade","Recurrence","Subtype", "CIMP_status", "survival",
+                "status", "Age", "ID","Patient_ID","Sample_ID", "Matching.sample", "Therapy_Class","title") 
+      data <- pDatas()[,!names(pDatas()) %in% drop]
+      n <- names(data)
       n
     })
     
@@ -209,11 +210,11 @@ shinyServer(
         data <- cbind(Copy_number,data)
       }
       if (input$primary & any(!is.na(data$Recurrence))) {
-        data <- subset (data, Recurrence == "Primary")
+        data <- filter (data, Recurrence == "Primary")
       }
       data <- data[,colSums(is.na(data)) < nrow(data)] 
       data$group <- data[,plotType()]
-      data <- subset(data,!is.na(group))
+      data <- filter(data,!is.na(group))
     })
 
     #' Generate radiobuttons for the various categories in the pData
@@ -377,18 +378,18 @@ shinyServer(
     #' Extract the GBM samples for the interactive HR plot.
     survData <- reactive({    
       df <- exprs()
-      df <- subset(df, !is.na(df$status))
+      df <- filter(df, !is.na(status))
       # subset to primary GBM, in case both primary and recurrent samples are available
       if (primarySurv() & any(!is.na(df$Recurrence))) {
-        df <- subset (df, Histology == "GBM" & Recurrence == "Primary")
+        df <- filter (df, Histology == "GBM" & Recurrence == "Primary")
       }
-      df <- subset (df, Histology == "GBM")
+      df <- filter (df, Histology == "GBM")
       if (input$subtypeSurv != "All") {
-        df <- subset (df, Subtype == input$subtypeSurv)
+        df <- filter (df, Subtype == input$subtypeSurv)
       }
       # exclude G-CIMP is selected
       if (gcimpSurv()){
-        df <- subset (df, CIMP_status != "G-CIMP")
+        df <- filter (df, CIMP_status != "G-CIMP")
       }
       df
     })
@@ -678,11 +679,25 @@ shinyServer(
     })
     
     #' Generate an HTML table view of the data
-    output$table <- renderDataTable({
-      if (input$gene == "")
-        return(pDatas())
-      dataTable()
-    }, options = list(orderClasses = TRUE, lengthMenu = c(10, 30, 50), pageLength = 10))
+    output$table <- DT::renderDataTable({
+      if (input$gene == "") {
+        pData <- pDatas()
+      } else {
+        pData <- dataTable()
+      }
+      DT::datatable(pData, rownames = FALSE, extensions = c("FixedColumns", "TableTools"),
+                    options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, 
+                                   lengthMenu = c(10, 30, 50), pageLength = 10, dom = 'T<"clear">lfrtip',
+                                   tableTools = list(sSwfPath = copySWF(dest = "www"))))
+    })
+
+
+#     #' Generate an HTML table view of the data
+#     output$table <- renderDataTable({
+#       if (input$gene == "")
+#         return(pDatas())
+#       dataTable()
+#     }, options = list(orderClasses = TRUE, lengthMenu = c(10, 30, 50), pageLength = 10))
     
     #' Download the data
     output$downloadData <- downloadHandler(
@@ -801,7 +816,7 @@ shinyServer(
             stat <- stat[,-1]
             stat <- rbind(stat,TOTAL = tot)
             t <- tableGrob(stat, gp = gpar(fontsize=14),row.just = "right", core.just = "right")
-            grid.arrange(p, t, nrow = 1, just = c("left", "top")) # `just` it's not working
+            grid.arrange(p, t, ncol = 2, just = c("center", "top")) # `just` it's not working
           })
         })
       }
@@ -1004,7 +1019,7 @@ shinyServer(
       corr <- getCorr(datasetInputCor()[["expr"]], input$geneCor, input$histologyCorrTable, corrMethod())
       corr  <- merge(genes, corr, by="Gene")
 #       corr <- corr [-1,]
-      corr <- corr[order(-abs(corr$r)), ]
+      corr <- arrange(corr, desc(abs(r)))
     })
     
     #' Generate a reactive element of the the correlation data 
@@ -1012,15 +1027,15 @@ shinyServer(
       corr.table <- suppressWarnings(corr())  # suppressWarnings  is used to prevent the warning messages in the LGG dataset  
       corr.table <- subset(corr.table, adj.p.value <= as.numeric(input$sign))
       if (input$cor == "Positive"){
-        corr.table <- subset(corr.table, r > 0)
-        corr.table <- corr.table[order(-corr.table$r), ]
+        corr.table <- filter(corr.table, r > 0)
+        corr.table <- arrange(corr.table,desc(r))
       }
       if (input$cor == "Negative"){
-        corr.table <- subset(corr.table, r < 0)
-        corr.table <- corr.table[order(corr.table$r), ]
+        corr.table <- filter(corr.table, r < 0)
+        corr.table <- arrange(corr.table,r)
       } 
       if (input$cor == "All"){
-        corr.table <- subset(corr.table, r <= input$range[1] | r >= input$range[2])
+        corr.table <- filter(corr.table, r <= input$range[1] | r >= input$range[2])
       }
       corr.table
     })
