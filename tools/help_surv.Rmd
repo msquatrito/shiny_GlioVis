@@ -1,0 +1,11 @@
+---
+title: "Cutoff selection"
+output: html_document
+---
+
+**Median**: split in two groups by the median (`quantile(mRNA)[2]`)   
+**Lower quartile**: split in two groups, 25% lower expressing vs the rest (`quantile(mRNA)[1]`)   
+**Upper quartile**: split in two groups, 25% higher expressing vs the rest (`quantile(mRNA)[3]`)   
+**High vs low**: split in two groups, 25% lower expressing vs 25% higher expressing   
+**Quartiles**: split in 4 groups (`quantile(mRNA)`)   
+**Use a specific mRNA value**: manually select a precise mRNA value  
