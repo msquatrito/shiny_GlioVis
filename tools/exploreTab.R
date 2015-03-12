@@ -250,7 +250,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                     tabPanel(title = "Data", icon = icon("table"),
                                              br(),
 #                                              downloadButton(outputId = "downloadData", label = "Download table", class= "btn-primary"),
-                                             br(),br(),
+#                                              br(),br(),
                                              DT::dataTableOutput(outputId = "table")
                                     ),
 

@@ -681,22 +681,26 @@ shinyServer(
     #' Generate an HTML table view of the data
     output$table <- DT::renderDataTable({
       if (input$gene == "") {
-        pData <- pDatas()
+        data <- pDatas()
+        data <- data[,colSums(is.na(data)) < nrow(data)]
       } else {
-        pData <- dataTable()
+        data <- dataTable()
       }
-      DT::datatable(pData, rownames = FALSE, extensions = c("FixedColumns", "TableTools"),
+      DT::datatable(data, rownames = FALSE, extensions = c("FixedColumns", "TableTools"),
                     options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, 
                                    lengthMenu = c(10, 30, 50), pageLength = 10, dom = 'T<"clear">lfrtip',
-                                   tableTools = list(sSwfPath = copySWF(dest = "www"))))
+                                   tableTools = list(aButtons = c("copy","csv","xls","print"),
+                                                     sSwfPath = copySWF(dest = "www"))))
     })
-
 
 #     #' Generate an HTML table view of the data
 #     output$table <- renderDataTable({
-#       if (input$gene == "")
-#         return(pDatas())
-#       dataTable()
+#       if (input$gene == "") {
+#         data <- pDatas()
+#       } else {
+#         data <- dataTable()
+#       }
+#       data
 #     }, options = list(orderClasses = TRUE, lengthMenu = c(10, 30, 50), pageLength = 10))
     
     #' Download the data
@@ -1041,21 +1045,25 @@ shinyServer(
     })
     
     #' Generate an HTML table view of the correlation table 
-    output$corrData <- renderDataTable({
+    output$corrData <- DT::renderDataTable({
       validate(
         need(input$geneCor != "", "Please, enter a gene name in the panel on the left")%then%
           # Not all genes are available for all the dataset
           need(input$geneCor %in% names(datasetInputCor()[["expr"]]),"Gene not available for this dataset")
       )   
-      corrData()
-    }, options = list(orderClasses = TRUE), callback = "function(table) {
-      table.on('click.dt', 'tr', function() {
-            table.$('tr.selected').removeClass('selected');
-            $(this).toggleClass('selected');            
-        Shiny.onInputChange('rows',
-                            table.rows('.selected').data()[0][0]);
-      });
-    }")
+      DT::datatable(corrData(), rownames = FALSE, extensions = "TableTools",
+                    options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
+                                   dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
+                                                                               sSwfPath = copySWF(dest = "www"))),
+                    callback = "function(table) {
+                                    table.on('click.dt', 'tr', function() {
+                                          table.$('tr.selected').removeClass('selected');
+                                          $(this).toggleClass('selected');            
+                                      Shiny.onInputChange('rows',
+                                                          table.rows('.selected').data()[0][0]);
+                                    });
+                  }")
+    })
     
     #' Generate a reactive value for the input$rows that set to NULL when the dataset change
     v <- reactiveValues(rows = NULL)
@@ -1084,20 +1092,19 @@ shinyServer(
       }
       aes_scatter <- aes_string(x = input$geneCor, y = v$rows)
       ggplot(df,mapping = aes_scatter) + theme(legend.position=c(1,1),legend.justification=c(1,1)) +
-        geom_point(alpha=.5) + geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1)
+        geom_point(alpha=.5) + geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1) + theme_bw()
       
     })
-    
-    
-    #' Download the correlation table 
-    output$downloadCorrData <- downloadHandler(
-      filename = function() {
-        paste(Sys.Date(), input$geneCor, input$datasetCor, input$histologyCorrTable, 
-              "corrData.csv", sep="_")
-      },
-      content = function(file) {
-        write.csv(corrData(),file)
-      }
-    )
-    
+      
+#     #' Download the correlation table 
+#     output$downloadCorrData <- downloadHandler(
+#       filename = function() {
+#         paste(Sys.Date(), input$geneCor, input$datasetCor, input$histologyCorrTable, 
+#               "corrData.csv", sep="_")
+#       },
+#       content = function(file) {
+#         write.csv(corrData(),file)
+#       }
+#     )
+#     
   })

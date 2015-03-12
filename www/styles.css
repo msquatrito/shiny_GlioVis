@@ -525,6 +525,9 @@ ol.outer {
 	background:url(../img/ajax-loader1.gif) 50% 50% no-repeat
 }
 
+.dataTables_filter input { 
+  width: 60px 
+  }
 
 /*
 .table-bordered
