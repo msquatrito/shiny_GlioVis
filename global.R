@@ -1,11 +1,11 @@
-# pkg <- c("shiny", "survival", "weights", "googleVis", "dplyr", 
-#          "ggplot2", "GSVA", "gridExtra", "class", "kernlab")
-# new.pkg <- pkg[!(pkg %in% installed.packages())]
-# if (length(new.pkg)) {
-#   install.packages(new.pkg)
-# }
-# if (!require("shinydashboard")) devtools::install_github("rstudio/shinydashboard")
-# if (!require("DT")) devtools::install_github("rstudio/DT")
+pkg <- c("shiny", "survival", "weights", "googleVis", "dplyr", 
+         "ggplot2", "GSVA", "gridExtra", "class", "kernlab")
+new.pkg <- pkg[!(pkg %in% installed.packages())]
+if (length(new.pkg)) {
+  install.packages(new.pkg)
+}
+if (!require("shinydashboard")) devtools::install_github("rstudio/shinydashboard")
+if (!require("DT")) devtools::install_github("rstudio/DT")
 
 library(shiny)
 library(survival)
