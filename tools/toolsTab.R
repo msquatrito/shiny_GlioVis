@@ -85,11 +85,11 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                     
                                     tabPanel(title = "SVM", id = "SVM", value = 1,
                                              p(class = "lead","Supported vector machine learning"),
-                                             p(strong("File output format:"), "Subtype calls with the probability model."),  
-                                             conditionalPanel(
-                                               condition = "output.svm",
-                                               downloadButton(outputId = "downloadSvm", label = "Download data", class= "btn-primary")
-                                             ),
+                                             p(strong("Output format:"), "Subtype calls with the probability model."),  
+#                                              conditionalPanel(
+#                                                condition = "output.svm",
+#                                                downloadButton(outputId = "downloadSvm", label = "Download data", class= "btn-primary")
+#                                              ),
                                              br(),
                                              div(class = "busy",  
                                                  p("Calculating, please wait"),
@@ -97,17 +97,19 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                                  hr(),
                                                  p("Be patients, switching to another tab will crash GlioVis ...")
                                              ),
-                                             dataTableOutput(outputId = "svm")
+                                              column(width = 9,
+                                                     DT::dataTableOutput(outputId = "svm")
+                                              )
                                     ),
                                     
                                     tabPanel(title = "K-NN", id = "K-NN", value = 2,
                                              
                                              p(class = "lead","K-nearest neighbors prediction"),
-                                             p(strong("File output format:"), "Subtype calls with the probability score."),
-                                             conditionalPanel(
-                                               condition = "output.knn",
-                                               downloadButton(outputId = "downloadKnn", label = "Download data", class= "btn-primary")
-                                             ),
+                                             p(strong("Output format:"), "Subtype calls with the probability score."),
+#                                              conditionalPanel(
+#                                                condition = "output.knn",
+#                                                downloadButton(outputId = "downloadKnn", label = "Download data", class= "btn-primary")
+#                                              ),
                                              br(),
                                              div(class = "busy",  
                                                  p("Calculating, please wait"),
@@ -115,16 +117,18 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                                  hr(),
                                                  p("Be patients, switching to another tab will crash GlioVis ...")
                                              ),
-                                             dataTableOutput(outputId = "knn")
+                                             column(width = 8,
+                                                    DT::dataTableOutput(outputId = "knn")
+                                             )
                                     ),
                                     
                                     tabPanel(title = "ssGSEA", id = "GSVA", value = 3,
                                              p(class = "lead","Single sample Gene Set Enrichment Analysis"),
-                                             p(strong("File output format:"), "Subtype calls with the enrichment score."),
-                                             conditionalPanel(
-                                               condition = "output.gsva",
-                                               downloadButton(outputId = "downloadGsva", label = "Download data", class= "btn-primary")
-                                             ),
+                                             p(strong("Output format:"), "Subtype calls with the enrichment score."),
+#                                              conditionalPanel(
+#                                                condition = "output.gsva",
+#                                                downloadButton(outputId = "downloadGsva", label = "Download data", class= "btn-primary")
+#                                              ),
                                              br(),
                                              div(class = "busy",  
                                                  p("Calculating, please wait"),
@@ -132,16 +136,18 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                                  hr(),
                                                  p("Be patients, switching to another tab will crash GlioVis ...")
                                              ),
-                                             dataTableOutput(outputId = "gsva")
+                                              column(width = 9,
+                                                     DT::dataTableOutput(outputId = "gsva")
+                                              )
                                     ),
                                     
                                     tabPanel(title = "3-Way", id = "3-Way", value = 4,
                                              p(class = "lead","Generate and compare subtype calls by SVM, K-NN and ssGSEA"),
-                                             br(),
-                                             conditionalPanel(
-                                               condition = "output.sub3",
-                                               downloadButton(outputId = "downloadSub3", label = "Download data", class= "btn-primary")
-                                             ),
+#                                              br(),
+#                                              conditionalPanel(
+#                                                condition = "output.sub3",
+#                                                downloadButton(outputId = "downloadSub3", label = "Download data", class= "btn-primary")
+#                                              ),
                                              br(),
                                              div(class = "busy",  
                                                  p("Calculating, please wait"),
@@ -150,7 +156,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                                  p("Be patients, switching to another tab will crash GlioVis ...")
                                              ),
                                              column(width = 9,
-                                                    dataTableOutput(outputId = "sub3")
+                                                    DT::dataTableOutput(outputId = "sub3")
                                              )
                                     )
                         )

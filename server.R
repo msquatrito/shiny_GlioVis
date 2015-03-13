@@ -872,29 +872,33 @@ shinyServer(
         svm.subtype.call <- factor(svm.subtype.call,levels = c("Classical", "Mesenchymal", "Neural", "Proneural"))
       }
       prob <- as.matrix(predict(svm, t(df.learn), type="probabilities"))
-      svm.call <- data.frame(Sample = rownames(upData), svm.subtype.call, prob)
+      svm.call <- data.frame(Sample = rownames(upData), svm.subtype.call, round(prob,3))
       svm.call
     })
     
     #' Rerndering the subtype call as a data table
-    output$svm <- renderDataTable({ 
+    output$svm <- DT::renderDataTable({ 
       if (is.null(input$upFile) || input$goSvm == 0)
         return(NULL)
       input$goSvm
       isolate({
-        svm <- svm.call()
+        DT::datatable(svm.call(), rownames = FALSE, extensions = "TableTools",
+                      options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
+                                     dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
+                                                                                 sSwfPath = copySWF(dest = "www"))))
+#         svm <- svm.call()
       })
     })
     
-    #' Download the subtype call
-    output$downloadSvm <- downloadHandler(
-      filename = function() {
-        paste0(Sys.Date(), "_", "SVM_Subtype_Call.csv")
-      },
-      content = function(file) {
-        write.csv(svm.call(), file)
-      }
-    )
+#     #' Download the subtype call
+#     output$downloadSvm <- downloadHandler(
+#       filename = function() {
+#         paste0(Sys.Date(), "_", "SVM_Subtype_Call.csv")
+#       },
+#       content = function(file) {
+#         write.csv(svm.call(), file)
+#       }
+#     )
     
     #' Reactive function to generate k-nearest neighbour subtype call to pass to data table and download handler
     knn.call <- reactive ({
@@ -919,24 +923,29 @@ shinyServer(
     })
     
     #' Rerndering the knn subtype call as a data table
-    output$knn <- renderDataTable({ 
+    output$knn <- DT::renderDataTable({ 
       if (is.null(input$upFile) || input$goKnn == 0)
         return(NULL)
       input$goknn
       isolate({
-        knn <- knn.call()
+        DT::datatable(knn.call(), rownames = FALSE, extensions = "TableTools",
+                      options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
+                                     dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
+                                                                                 sSwfPath = copySWF(dest = "www"))))
+#         knn <- knn.call()
       })
     })
     
-    #' Download the knn subtype call
-    output$downloadKnn <- downloadHandler(
-      filename = function() {
-        paste0(Sys.Date(), "_", "KNN_Subtype_Call.csv")
-      },
-      content = function(file) {
-        write.csv(knn.call(), file)
-      }
-    )  
+#     #' Download the knn subtype call
+#     output$downloadKnn <- downloadHandler(
+#       filename = function() {
+#         paste0(Sys.Date(), "_", "KNN_Subtype_Call.csv")
+#       },
+#       content = function(file) {
+#         write.csv(knn.call(), file)
+#       }
+#     )  
+
     #' Reactive function to generate ssGSEA call to pass to data table and download handler
     gsva.call <- reactive ({
       validate(
@@ -952,31 +961,35 @@ shinyServer(
       exprs <- data.frame(t(upData[,-1]))
       gsva_results <- gsva(expr=as.matrix(exprs), gset.idx.list = gene_list, method="ssgsea", rnaseq=FALSE,
                            min.sz=0, max.sz=10000, verbose=FALSE)
-      subtype_scores <- t(gsva_results)
+      subtype_scores <- round(t(gsva_results),3)
       subtype_final <- data.frame(Sample = rownames(upData), gsea.subtype.call = names(gbm.subtype.list)[apply(subtype_scores,1,which.max)], 
                                   subtype_scores) 
       subtype_final
     })
     
     #' Rerndering the subtype call as a data table
-    output$gsva <- renderDataTable({ 
+    output$gsva <- DT::renderDataTable({ 
       if (is.null(input$upFile) || input$goGsva == 0)
         return(NULL)
       input$goGsva
       isolate({
-        gsva <- gsva.call()
+        DT::datatable(gsva.call(), rownames = FALSE, extensions = "TableTools",
+                      options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
+                                     dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
+                                                                                 sSwfPath = copySWF(dest = "www"))))
+#         gsva <- gsva.call()
       })
     })
     
-    #' Download the subtype call
-    output$downloadGsva <- downloadHandler(
-      filename = function() {
-        paste0(Sys.Date(), "_", "GSVA_Subtype_call.csv")
-      },
-      content = function(file) {
-        write.csv(gvsa.call(), file)
-      }
-    )
+#     #' Download the subtype call
+#     output$downloadGsva <- downloadHandler(
+#       filename = function() {
+#         paste0(Sys.Date(), "_", "GSVA_Subtype_call.csv")
+#       },
+#       content = function(file) {
+#         write.csv(gvsa.call(), file)
+#       }
+#     )
     
     #' Reactive function to generate the 3 subtype calls to pass to data table and download handler
     sub3.call <- reactive ({
@@ -992,24 +1005,28 @@ shinyServer(
     })
     
     #' Rerndering the subtype call as a data table
-    output$sub3 <- renderDataTable({ 
+    output$sub3 <- DT::renderDataTable({ 
       if (is.null(input$upFile) || input$goSub3 == 0)
         return(NULL)
       input$goSub3
       isolate({
-        sub3 <- sub3.call()
+        DT::datatable(sub3.call(), rownames = FALSE, extensions = "TableTools",
+                      options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
+                                     dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
+                                                                                 sSwfPath = copySWF(dest = "www"))))
+#         sub3 <- sub3.call()
       })
     })
     
-    #' Download the subtype call
-    output$downloadSub3 <- downloadHandler(
-      filename = function() {
-        paste0(Sys.Date(), "_", "3way_Subtype_call.csv")
-      },
-      content = function(file) {
-        write.csv(sub3.call(), file)
-      }
-    )
+#     #' Download the subtype call
+#     output$downloadSub3 <- downloadHandler(
+#       filename = function() {
+#         paste0(Sys.Date(), "_", "3way_Subtype_call.csv")
+#       },
+#       content = function(file) {
+#         write.csv(sub3.call(), file)
+#       }
+#     )
     
     #' Correlation method
     corrMethod <- reactive({
