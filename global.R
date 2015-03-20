@@ -62,7 +62,6 @@ gene_names <- as.character(genes[,"Gene"])
 gbm.subtype.list <- readRDS("data/subtype_list.Rds")
 gbm.core.samples <- readRDS("data/TCGA.core.345samples.Rds")
 lgg.core.samples <- readRDS("data/lgg.core.460samples.Rds")
-gbm.rppa <- readRDS("data/RPPA.GBM.Rds")
 
 #######################################
 ############## plotList  ##############
