@@ -92,6 +92,11 @@ shinyServer(
       datasetInput()[["cna"]]
     })
     
+    #' RPPA data
+    rppas <- reactive({
+      datasetInput()[["rppa"]]
+    })
+    
     #' Text matching with the gene names list
     updateSelectizeInput(session, inputId = "gene", choices = gene_names, server = TRUE)
     updateSelectizeInput(session, inputId = "geneCor", choices = gene_names, server = TRUE)
@@ -210,13 +215,13 @@ shinyServer(
         data <- cbind(Copy_number,data)
       }
       if (input$primary & any(!is.na(data$Recurrence))) {
-        data <- filter (data, Recurrence == "Primary")
+        data <- filter(data, Recurrence == "Primary")
       }
-      data <- data[,colSums(is.na(data)) < nrow(data)] 
-      data$group <- data[,plotType()]
-      data <- filter(data,!is.na(group))
+      data <- data[ ,colSums(is.na(data)) < nrow(data)] 
+      data$group <- data[ ,plotType()]
+      data <- filter(data, !is.na(group))
     })
-
+    
     #' Generate radiobuttons for the various categories in the pData
     output$colorPoints <- renderUI({
       validate(need(input$gene != "",""))
@@ -235,7 +240,7 @@ shinyServer(
     
     #' Create the selected plot
     output$plot <- renderPlot({
-    # To avoid an error when switching datasets in case the colStrip is not available.
+      # To avoid an error when switching datasets in case the colStrip is not available.
       if(input$colStrip){
         colnames <- names(data())[!names(data()) %in% c("group","mRNA","Sample","status","survival")]
         validate(need(input$colorP %in% colnames,""))
@@ -243,7 +248,7 @@ shinyServer(
       ggboxPlot(data = data (), xlabel = plotType(), scale = input$scale, stat = input$tukeyPlot, colBox = input$colBox, 
                 colStrip = input$colStrip, colorPoints = input$colorP, bw = input$bw) 
     })
-       
+    
     #' Summary statistic
     output$summary <- renderTable({    
       stat <- data.frame(data() %>%
@@ -252,21 +257,21 @@ shinyServer(
                                      median = median (mRNA, na.rm=T), mad = mad(mRNA, na.rm=T),mean = mean(mRNA, na.rm=T), sd = sd(mRNA, na.rm=T)))
       row.names(stat) <- stat$group
       tot <- data() %>%
-              summarise(Sample_count = n(),median = median (mRNA, na.rm=T), 
-                        mad = mad(mRNA, na.rm=T),mean = mean(mRNA, na.rm=T), sd = sd(mRNA, na.rm=T))
+        summarise(Sample_count = n(),median = median (mRNA, na.rm=T), 
+                  mad = mad(mRNA, na.rm=T),mean = mean(mRNA, na.rm=T), sd = sd(mRNA, na.rm=T))
       stat <- stat[,-1]
       stat <- rbind(stat,TOTAL = tot)
       stat 
     }, align='rrrrrr')
     
     
-#     output$summaryPie <- renderGvis({
-#       data <- data()
-#       plotData <- data.frame(table(data[, plotType()]))
-#       pie <-gvisPieChart(labelvar = "Var1", numvar = "Freq", data = plotData, 
-#                          options = list(width=300, height=300, pieSliceText='label', chartArea.left = 1)) # title = my_i,
-#       return(pie)
-#     })
+    #     output$summaryPie <- renderGvis({
+    #       data <- data()
+    #       plotData <- data.frame(table(data[, plotType()]))
+    #       pie <-gvisPieChart(labelvar = "Var1", numvar = "Freq", data = plotData, 
+    #                          options = list(width=300, height=300, pieSliceText='label', chartArea.left = 1)) # title = my_i,
+    #       return(pie)
+    #     })
     
     #' Tukey post-hoc test
     output$tukeyTest <- renderTable({    
@@ -333,6 +338,114 @@ shinyServer(
         dev.off(which=dev.cur())
       }
     )
+    
+    #' RPPA data analysis
+    rppaRNA <- reactive({
+      validate(
+        need(input$dataset %in% c("TCGA GBM","TCGA Lgg"), "")%then%
+          need(input$gene != "", "")%then%
+          need(input$gene %in% names(exprs()),"")
+      )
+      samples <- intersect(row.names(rppas()),exprs()[,"Sample"])
+      mRNA <- round(exprs()[samples,input$gene],2)
+    })
+    
+    #' Create a rug plot with the mRNA expression value for the manual cutoff
+    output$boxRppaRNA <- renderPlot({    
+      validate(need(input$rppaCut, ""))      
+      mRNA <- rppaRNA()
+      q <- quantile(mRNA)
+      xrange <-range(mRNA)
+      par(mar = c(0,0,0,0)) 
+      plot(0, 0, type = "n", xlim = c(xrange[1] + 0.25, xrange[2]) , ylim = c(-0.1,  + 0.1), ylab ="", xlab = "", axes = FALSE)
+      points(x = mRNA, y = rep(0, length(mRNA)), pch="|")
+      # Add a red line to show which  is the current cutoff.
+      points(x = input$rppaCut, y = 0, pch = "|", col="red", cex = 2)
+      points(x = q[2:4], y = rep(0,3), pch = "|", col="blue", cex = 2)
+#       abline(v= q[2:4], col="blue")
+    }, bg = "transparent")
+    
+    output$rppaCutoff <- renderUI({
+      sliderInput(inputId = "rppaCut",label = "mRNA cutoff", min = min(rppaRNA()), max = max(rppaRNA()), 
+                  value = median(rppaRNA()), step = 0.05, round = -2)
+    })
+
+    
+    output$rppaTable <- DT::renderDataTable({
+      validate(
+        need(input$dataset %in% c("TCGA GBM","TCGA Lgg"), "RPPA data available only for TCGA datasets")%then%
+          need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
+          need(input$gene %in% names(exprs()),"Gene not available for this dataset")%then%
+          need(input$rppaCut != "", "")
+      )
+      rppa <- rppas()
+      samples <- intersect(row.names(rppa),exprs()[,"Sample"])
+      mRNA <- round(exprs()[samples,input$gene],2)
+      strat <- ifelse(mRNA >= input$rppaCut, c("high"),c("low"))
+      strat <- factor(strat,levels = c("low", "high"))
+      d <- NULL
+      results <- for (i in names(rppa)) {
+        prot <- rppa[, i]
+        t <- t.test(prot~strat)
+        est <- t$estimate
+        p <-  t$p.value
+        x <- c(est,p)
+        names(x) <- c("low","high","p.value")
+        d= rbind(d,t(data.frame(x)))
+      }
+      row.names(d) <- names(rppa)
+      d <- data.frame(Protein = row.names(d), round(d,5))
+      # d$adj.p.value <- p.adjust(d$p, method = "bonferroni")
+      d <- d[order(d$p.value),]
+      datatable(d, rownames = FALSE, options = list(lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full"),
+                callback = "function(table) {
+                                                table.on('click.dt', 'tr', function() {
+                                                table.$('tr.selected').removeClass('selected');
+                                                $(this).toggleClass('selected');            
+                                                Shiny.onInputChange('rppa.rows',
+                                                table.rows('.selected').data()[0][0]);
+                                                    });
+                                                }"
+      )
+    })
+    
+    #' Generate a reactive value for the input$rows that set to NULL when the dataset change
+    rp <- reactiveValues(rppa.rows = NULL)
+    observeEvent(input$rppa.rows, {
+      rp$rppa.rows <- input$rppa.rows
+    })
+    observeEvent(datasetInput(), {
+      rp$rppa.rows <- NULL
+    })
+    observeEvent(input$histology, {
+      rp$rppa.rows <- NULL
+    })
+    
+    observeEvent(input$gene, {
+      rp$rppa.rows <- NULL
+    })
+    
+    #' Generate the RPPA box plot
+    output$rppaPlot <- renderPlot({
+      rp$rppa.rows
+      validate(
+        need(input$dataset %in% c("TCGA GBM","TCGA Lgg"), "")%then%
+          need(input$gene != "","")%then%
+          need(rp$rppa.rows!= "","Click on a row to see the corresponding box plot.")
+      )
+      mRNA <- rppaRNA()
+      strat <- ifelse(mRNA >= input$rppaCut, c("high"),c("low"))
+      strat <- factor(strat,levels = c("low", "high"))
+      data <- data.frame(mRNA, strat, rppa = rppas()[,rp$rppa.rows])
+      p1 <- ggplot(data, aes(x=strat, y = rppa)) + geom_boxplot(outlier.size = 0) + 
+        geom_jitter(aes(colour = strat), position = position_jitter(width = .2), size = 2, alpha = 0.5) + 
+        xlab(paste(input$gene, "mRNA")) + ylab(paste(rp$rppa.rows,"RPPA score")) + 
+        guides(colour=FALSE) + theme_bw()
+      p2 <- ggplot(data, aes(x=mRNA, y = rppa)) + geom_point(aes(colour = strat), alpha=.5) +
+         geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1) + theme_bw() +
+        xlab(paste(input$gene, "mRNA (log2)")) + ylab(paste(rp$rppa.rows,"RPPA score")) + theme(legend.position = "none")
+      grid.arrange(p1, p2, ncol=1)
+    },height = 700)
     
     # Need a wrapper around the hrClick input so we can manage whether or 
     # not the click occured on the current Gene. If it occured on a previous
@@ -469,18 +582,18 @@ shinyServer(
       survNeed()
       validate(need(input$histologySurv %in% c("All", histo()),""))      
       df <- exprs()
-      df <- subset(df, !is.na(df$status))
+      df <- filter(df, !is.na(df$status))
       if (input$histologySurv != "All"){
-        df <- subset(exprs(), Histology == input$histologySurv)
+        df <- filter(exprs(), Histology == input$histologySurv)
       }
       if (input$histologySurv == "GBM" & input$subtypeSurv != "All") {
-        df <- subset (df, Subtype == input$subtypeSurv)
+        df <- filter (df, Subtype == input$subtypeSurv)
       }
       if (gcimpSurv()){
-        df <- subset (df, CIMP_status != "G-CIMP")
+        df <- filter (df, CIMP_status != "G-CIMP")
       }
       if (primarySurv() & any(!is.na(df$Recurrence))) {
-        df <- subset (df, Recurrence == "Primary")
+        df <- filter (df, Recurrence == "Primary")
       }
       mRNA <- df[ ,input$gene]
       mRNA.values <- round(mRNA[!is.na(mRNA)],2)
@@ -627,10 +740,10 @@ shinyServer(
       )
       df <- exprs()
       if (input$histologyCorr != "All") {
-        df <- subset (df, Histology == input$histologyCorr)
+        df <- filter(df, Histology == input$histologyCorr)
       } 
       if (input$histologyCorr == "GBM" & input$subtype != "All") {
-        df <- subset (df, Subtype == input$subtype)
+        df <- filter(df, Subtype == input$subtype)
       }
       df <- df[ ,input$genelist] 
     })
@@ -692,16 +805,16 @@ shinyServer(
                                    tableTools = list(aButtons = c("copy","csv","xls","print"),
                                                      sSwfPath = copySWF(dest = "www"))))
     })
-
-#     #' Generate an HTML table view of the data
-#     output$table <- renderDataTable({
-#       if (input$gene == "") {
-#         data <- pDatas()
-#       } else {
-#         data <- dataTable()
-#       }
-#       data
-#     }, options = list(orderClasses = TRUE, lengthMenu = c(10, 30, 50), pageLength = 10))
+    
+    #     #' Generate an HTML table view of the data
+    #     output$table <- renderDataTable({
+    #       if (input$gene == "") {
+    #         data <- pDatas()
+    #       } else {
+    #         data <- dataTable()
+    #       }
+    #       data
+    #     }, options = list(orderClasses = TRUE, lengthMenu = c(10, 30, 50), pageLength = 10))
     
     #' Download the data
     output$downloadData <- downloadHandler(
@@ -786,12 +899,12 @@ shinyServer(
       plot_output_list <- lapply(groups, function(i) {
         plot_report <- paste("plotReport", i, sep = "")
         box(height = 300, title = paste0(i), width = NULL, solidHeader = TRUE, status = "primary",
-        plotOutput(plot_report, height = 245)
+            plotOutput(plot_report, height = 245)
         )
       })
       do.call(tagList, plot_output_list)
     })  
-      
+    
     observe({
       data <- data()
       groups <- c(plotList[[input$dataset]], plotUserSelection())
@@ -800,7 +913,7 @@ shinyServer(
           my_i <- i
           plot_report <- paste("plotReport", my_i, sep = "")
           output[[plot_report]] <- renderPlot({
-            data <- subset(data,!is.na(data[,my_i]))
+            data <- filter(data,!is.na(data[,my_i]))
             #         validate(need(my_i %in% names(data),""))
             p <- ggplot(data, mapping=aes_string(x=my_i, y = "mRNA")) + geom_boxplot(outlier.size = 0) +  
               geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5) + 
@@ -886,19 +999,19 @@ shinyServer(
                       options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
                                      dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
                                                                                  sSwfPath = copySWF(dest = "www"))))
-#         svm <- svm.call()
+        #         svm <- svm.call()
       })
     })
     
-#     #' Download the subtype call
-#     output$downloadSvm <- downloadHandler(
-#       filename = function() {
-#         paste0(Sys.Date(), "_", "SVM_Subtype_Call.csv")
-#       },
-#       content = function(file) {
-#         write.csv(svm.call(), file)
-#       }
-#     )
+    #     #' Download the subtype call
+    #     output$downloadSvm <- downloadHandler(
+    #       filename = function() {
+    #         paste0(Sys.Date(), "_", "SVM_Subtype_Call.csv")
+    #       },
+    #       content = function(file) {
+    #         write.csv(svm.call(), file)
+    #       }
+    #     )
     
     #' Reactive function to generate k-nearest neighbour subtype call to pass to data table and download handler
     knn.call <- reactive ({
@@ -932,20 +1045,20 @@ shinyServer(
                       options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
                                      dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
                                                                                  sSwfPath = copySWF(dest = "www"))))
-#         knn <- knn.call()
+        #         knn <- knn.call()
       })
     })
     
-#     #' Download the knn subtype call
-#     output$downloadKnn <- downloadHandler(
-#       filename = function() {
-#         paste0(Sys.Date(), "_", "KNN_Subtype_Call.csv")
-#       },
-#       content = function(file) {
-#         write.csv(knn.call(), file)
-#       }
-#     )  
-
+    #     #' Download the knn subtype call
+    #     output$downloadKnn <- downloadHandler(
+    #       filename = function() {
+    #         paste0(Sys.Date(), "_", "KNN_Subtype_Call.csv")
+    #       },
+    #       content = function(file) {
+    #         write.csv(knn.call(), file)
+    #       }
+    #     )  
+    
     #' Reactive function to generate ssGSEA call to pass to data table and download handler
     gsva.call <- reactive ({
       validate(
@@ -977,19 +1090,19 @@ shinyServer(
                       options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
                                      dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
                                                                                  sSwfPath = copySWF(dest = "www"))))
-#         gsva <- gsva.call()
+        #         gsva <- gsva.call()
       })
     })
     
-#     #' Download the subtype call
-#     output$downloadGsva <- downloadHandler(
-#       filename = function() {
-#         paste0(Sys.Date(), "_", "GSVA_Subtype_call.csv")
-#       },
-#       content = function(file) {
-#         write.csv(gvsa.call(), file)
-#       }
-#     )
+    #     #' Download the subtype call
+    #     output$downloadGsva <- downloadHandler(
+    #       filename = function() {
+    #         paste0(Sys.Date(), "_", "GSVA_Subtype_call.csv")
+    #       },
+    #       content = function(file) {
+    #         write.csv(gvsa.call(), file)
+    #       }
+    #     )
     
     #' Reactive function to generate the 3 subtype calls to pass to data table and download handler
     sub3.call <- reactive ({
@@ -1014,19 +1127,19 @@ shinyServer(
                       options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
                                      dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
                                                                                  sSwfPath = copySWF(dest = "www"))))
-#         sub3 <- sub3.call()
+        #         sub3 <- sub3.call()
       })
     })
     
-#     #' Download the subtype call
-#     output$downloadSub3 <- downloadHandler(
-#       filename = function() {
-#         paste0(Sys.Date(), "_", "3way_Subtype_call.csv")
-#       },
-#       content = function(file) {
-#         write.csv(sub3.call(), file)
-#       }
-#     )
+    #     #' Download the subtype call
+    #     output$downloadSub3 <- downloadHandler(
+    #       filename = function() {
+    #         paste0(Sys.Date(), "_", "3way_Subtype_call.csv")
+    #       },
+    #       content = function(file) {
+    #         write.csv(sub3.call(), file)
+    #       }
+    #     )
     
     #' Correlation method
     corrMethod <- reactive({
@@ -1039,17 +1152,17 @@ shinyServer(
     corr <- reactive ({
       corr <- getCorr(datasetInputCor()[["expr"]], input$geneCor, input$histologyCorrTable, corrMethod())
       corr  <- merge(genes, corr, by="Gene")
-#       corr <- corr [-1,]
+      #       corr <- corr [-1,]
       corr <- arrange(corr, desc(abs(r)))
     })
     
     #' Generate a reactive element of the the correlation data 
     corrData <- reactive({  
       corr.table <- suppressWarnings(corr())  # suppressWarnings  is used to prevent the warning messages in the LGG dataset  
-      corr.table <- subset(corr.table, adj.p.value <= as.numeric(input$sign))
+      corr.table <- filter(corr.table, adj.p.value <= as.numeric(input$sign))
       if (input$cor == "Positive"){
         corr.table <- filter(corr.table, r > 0)
-        corr.table <- arrange(corr.table,desc(r))
+        corr.table <- arrange(corr.table, desc(r))
       }
       if (input$cor == "Negative"){
         corr.table <- filter(corr.table, r < 0)
@@ -1103,7 +1216,7 @@ shinyServer(
       )
       df <- datasetInputCor()[["expr"]]
       if (input$histologyCorrTable != "All") {
-        df <- subset (df, Histology == input$histologyCorrTable)
+        df <- filter (df, Histology == input$histologyCorrTable)
       } else {
         df <- df
       }
@@ -1112,16 +1225,16 @@ shinyServer(
         geom_point(alpha=.5) + geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1) + theme_bw()
       
     })
-      
-#     #' Download the correlation table 
-#     output$downloadCorrData <- downloadHandler(
-#       filename = function() {
-#         paste(Sys.Date(), input$geneCor, input$datasetCor, input$histologyCorrTable, 
-#               "corrData.csv", sep="_")
-#       },
-#       content = function(file) {
-#         write.csv(corrData(),file)
-#       }
-#     )
-#     
+    
+    #     #' Download the correlation table 
+    #     output$downloadCorrData <- downloadHandler(
+    #       filename = function() {
+    #         paste(Sys.Date(), input$geneCor, input$datasetCor, input$histologyCorrTable, 
+    #               "corrData.csv", sep="_")
+    #       },
+    #       content = function(file) {
+    #         write.csv(corrData(),file)
+    #       }
+    #     )
+    #     
   })

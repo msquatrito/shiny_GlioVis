@@ -53,6 +53,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                           checkboxInput(inputId = "tTest", label = "Pairwise t tests", value = FALSE),
                           hr()
                         ),
+
                         conditionalPanel(
                           condition = "input.tab1 == 2",
                           selectInput(inputId = "histologySurv", label = h4("Histology:"), choices = ""),
@@ -120,9 +121,16 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                        choices = c("None" = "none", "Histology" = "Histology", "Subtype" = "Subtype")),
                           hr()
                         ),
+                        conditionalPanel(
+                          condition = "input.tab1 == 5",
+                          br(),
+                          uiOutput(outputId = "rppaCutoff"),
+                          plotOutput(outputId = "boxRppaRNA", width = "100%", height = 50),
+                          br()
+                        ),
                         # Allow the user to set the height and width of the plot download.
                         conditionalPanel(
-                          condition = "input.tab1 != 4",
+                          condition = "input.tab1 != 4 & input.tab1 != 5",
                           selectInput(inputId = "downloadPlotFileType", label = strong("Select download file type"),
                                       choices = list("PDF"  = "pdf", "BMP"  = "bmp", "JPEG" = "jpeg", "PNG"  = "png")
                           ),
@@ -232,6 +240,14 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                        plotOutput(outputId = "pairsPlot")
                                                        #                ,tableOutput(outputId = "pairsData")
                                               )
+                                  )
+                         ),
+                         
+                         tabPanel(title = "RPPA", icon = icon("dot-circle-o"), value = 5,
+                                  p(class = "lead","Reverse phase protein array (RPPA) data for TCGA datasets"),
+                                  splitLayout(cellWidths = c("60%", "40%"),
+                                              DT::dataTableOutput(outputId = "rppaTable"),
+                                              plotOutput(outputId = "rppaPlot",height = 700)
                                   )
                          ),
                          

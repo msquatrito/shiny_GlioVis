@@ -21,6 +21,7 @@ library(kernlab)
 library(shinydashboard)
 library(DT)
 
+
 `%then%` <- shiny:::`%OR%`
 
 #######################################
@@ -61,6 +62,7 @@ gene_names <- as.character(genes[,"Gene"])
 gbm.subtype.list <- readRDS("data/subtype_list.Rds")
 gbm.core.samples <- readRDS("data/TCGA.core.345samples.Rds")
 lgg.core.samples <- readRDS("data/lgg.core.460samples.Rds")
+gbm.rppa <- readRDS("data/RPPA.GBM.Rds")
 
 #######################################
 ############## plotList  ##############
@@ -142,7 +144,7 @@ getHR <- function (df, gene) {
   mRNA.values <- mRNA[!is.na(mRNA)]
   # Generate a vector of continuos values, excluding the first an last value
   mRNA.values <- sort(mRNA.values[mRNA.values != min(mRNA.values) & mRNA.values != max(mRNA.values)]) 
-  scan.surv <-function(i, conf.level=95) {
+  scan_surv <-function(i, conf.level=95) {
     log.rank <- survdiff(my.Surv ~ mRNA <= i, data = df, rho = 0)
     model <- summary(coxph(my.Surv ~ mRNA <= i))
     HR <- model$conf.int[1]
@@ -150,7 +152,7 @@ getHR <- function (df, gene) {
     HR.upper <- model$conf.int[4]
     data.frame(i, HR, HR.lower, HR.upper, log.rank$obs [1], log.rank$obs [2])
   }
-  HRdata <- data.frame (t(sapply(mRNA.values, scan.surv)))
+  HRdata <- data.frame (t(sapply(mRNA.values, scan_surv)))
   HRdata <- data.frame (sapply(HRdata,unlist))
   # Exclude groups with less than 10 samples. They don't display properly in the plots(CI too wide)
   HRdata <- subset(HRdata, HRdata[,5] >= 10 & HRdata[,6] >= 10) 
@@ -218,7 +220,7 @@ survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FAL
   smax <- max(surv.time, na.rm = TRUE)
   tmax <- smax-(25*smax)/100
   xmax <- (95*tmax)/100
-  mRNA.q <- quantile(mRNA, probs=c(0.25, 0.5, 0.75), na.rm = TRUE)
+  mRNA.q <- round(quantile(mRNA, probs=c(0.25, 0.5, 0.75), na.rm = TRUE),2)
   
   if(cutoff == "Use a specific mRNA value") {
     main <- paste("Histology: ", group, 
@@ -255,9 +257,7 @@ survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FAL
     star.log <- starmaker(log.rank.p)
     star.mcox <- starmaker(mantle.cox.p)
     plot(expr.surv, xlab = "Survival time (Months)", ylab = "% Surviving", yscale = 100, xlim = c(0,smax),
-         main = main,
-         col = c("red", "blue"), 
-         mark.time = FALSE)
+         main = main, col = c("red", "blue"), mark.time = FALSE)
     legend("topright", legend = c(paste(gene," High ", paste("(n=", surv$records[1]),", events=", surv$events[1],", median=",surv$median[1],")", sep = ""), 
                                   paste(gene," Low ", paste("(n=", surv$records[2]),", events=", surv$events[2],", median=",surv$median[2],")", sep = "")),
            col= c("red", "blue"), lty = 1, cex = 1)
@@ -271,9 +271,7 @@ survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FAL
     expr.surv <- survfit(my.Surv ~ strata(exprcat), data=df, conf.type="none")
     z <- data.frame(summary(expr.surv)$table) 
     plot(expr.surv, xlab="Months", ylab="% Surviving", yscale = 100, xlim = c(0,smax), 
-         main = main,
-         col= c(1:4),
-         mark.time=FALSE)
+         main = main, col= c(1:4), mark.time=FALSE)
     legend("topright", title = "Quantile", 
            legend = c(paste("1st ",paste("(n=", z$records[1]),", median=",z$median[1],")", sep = ""),
                       paste("2nd ",paste("(n=", z$records[2]),", median=",z$median[2],")", sep = ""),
@@ -293,7 +291,7 @@ getCorr <- function (data, gene, histology, corrMethod) {
   if (histology != "All") {
     data <- filter (data, Histology == histology)
   }
-  data <- data[,9:ncol(data)]
+  data <- data[ ,9:ncol(data)]
   mRNA <- data[ ,gene, drop = F]
   r <- apply(mRNA, 2, function(x) { apply(data, 2, function(y) { cor(x,y, method = corrMethod) })})
   df <- nrow(mRNA) - 2
