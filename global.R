@@ -60,7 +60,6 @@ oh <- readRDS("data/Oh.Rds")
 #######################################
 ########## other variables  ###########
 #######################################
-gene_names <- readRDS("data/gene_names.Rds")
 genes <- readRDS("data/genes.Rds")
 gene_names <- as.character(genes[,"Gene"])
 gbm.subtype.list <- readRDS("data/subtype_list.Rds")
