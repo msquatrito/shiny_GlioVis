@@ -120,6 +120,7 @@ shinyServer(
     
     #' Return the names of the available user-defined plots
     plotUserSelection <- reactive ({
+      # Exclude the pre-defeined plots and numeric variabe
       drop <- c("Sample","Histology","Grade","Recurrence","Subtype", "CIMP_status", "survival",
                 "status", "Age", "ID","Patient_ID","Sample_ID", "Matching.sample", "Therapy_Class","title") 
       data <- pDatas()[,!names(pDatas()) %in% drop]
@@ -135,8 +136,7 @@ shinyServer(
         NULL
       }
     })
-    
-    
+        
     #' Change the plot type available for a specific dataset
     observe({
       updateSelectInput(session, inputId = "plotTypeSel", choices = plotList[[input$dataset]], selected = plotSelected()) 
@@ -800,7 +800,7 @@ shinyServer(
         data <- dataTable()
       }
       DT::datatable(data, rownames = FALSE, extensions = c("FixedColumns", "TableTools"),
-                    options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, 
+                    options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE,
                                    lengthMenu = c(10, 30, 50), pageLength = 10, dom = 'T<"clear">lfrtip',
                                    tableTools = list(aButtons = c("copy","csv","xls","print"),
                                                      sSwfPath = copySWF(dest = "www"))))
@@ -938,8 +938,7 @@ shinyServer(
         })
       }
     })
-    
-    
+       
     #' Reactivity required to display download button after file upload
     output$finishedUploading <- reactive({
       if (is.null(input$upFile))
@@ -948,7 +947,7 @@ shinyServer(
     outputOptions(output, 'finishedUploading', suspendWhenHidden=FALSE)
     
     #' Reactive function to generate SVM subtype call to pass to data table and download handler
-    svm.call <- reactive ({
+    svm.call <- eventReactive (input$goSvm | input$goSub3,{
       # input$upFile will be NULL initially. After the user selects
       # and uploads a file, it will be a data frame with 'name',
       # 'size', 'type', and 'datapath' columns. The 'datapath'
@@ -993,28 +992,14 @@ shinyServer(
     output$svm <- DT::renderDataTable({ 
       if (is.null(input$upFile) || input$goSvm == 0)
         return(NULL)
-      input$goSvm
-      isolate({
         DT::datatable(svm.call(), rownames = FALSE, extensions = "TableTools",
                       options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
                                      dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
                                                                                  sSwfPath = copySWF(dest = "www"))))
-        #         svm <- svm.call()
-      })
     })
     
-    #     #' Download the subtype call
-    #     output$downloadSvm <- downloadHandler(
-    #       filename = function() {
-    #         paste0(Sys.Date(), "_", "SVM_Subtype_Call.csv")
-    #       },
-    #       content = function(file) {
-    #         write.csv(svm.call(), file)
-    #       }
-    #     )
-    
     #' Reactive function to generate k-nearest neighbour subtype call to pass to data table and download handler
-    knn.call <- reactive ({
+    knn.call <- eventReactive (input$goKnn | input$goSub3, {
       inFile <- input$upFile
       upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote)
       if (input$tumorType == "gbm") {
@@ -1039,28 +1024,14 @@ shinyServer(
     output$knn <- DT::renderDataTable({ 
       if (is.null(input$upFile) || input$goKnn == 0)
         return(NULL)
-      input$goknn
-      isolate({
         DT::datatable(knn.call(), rownames = FALSE, extensions = "TableTools",
                       options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
                                      dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
                                                                                  sSwfPath = copySWF(dest = "www"))))
-        #         knn <- knn.call()
-      })
     })
     
-    #     #' Download the knn subtype call
-    #     output$downloadKnn <- downloadHandler(
-    #       filename = function() {
-    #         paste0(Sys.Date(), "_", "KNN_Subtype_Call.csv")
-    #       },
-    #       content = function(file) {
-    #         write.csv(knn.call(), file)
-    #       }
-    #     )  
-    
     #' Reactive function to generate ssGSEA call to pass to data table and download handler
-    gsva.call <- reactive ({
+    gsva.call <- eventReactive (input$goGsva | input$goSub3, {
       validate(
         need(input$tumorType == "gbm","ssGSEA analysis currently available for GBM samples only"))
       inFile <- input$upFile
@@ -1084,28 +1055,14 @@ shinyServer(
     output$gsva <- DT::renderDataTable({ 
       if (is.null(input$upFile) || input$goGsva == 0)
         return(NULL)
-      input$goGsva
-      isolate({
         DT::datatable(gsva.call(), rownames = FALSE, extensions = "TableTools",
                       options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
                                      dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
                                                                                  sSwfPath = copySWF(dest = "www"))))
-        #         gsva <- gsva.call()
-      })
     })
-    
-    #     #' Download the subtype call
-    #     output$downloadGsva <- downloadHandler(
-    #       filename = function() {
-    #         paste0(Sys.Date(), "_", "GSVA_Subtype_call.csv")
-    #       },
-    #       content = function(file) {
-    #         write.csv(gvsa.call(), file)
-    #       }
-    #     )
-    
+
     #' Reactive function to generate the 3 subtype calls to pass to data table and download handler
-    sub3.call <- reactive ({
+    sub3.call <- eventReactive (input$goSub3, {
       validate(
         need(input$tumorType == "gbm","ssGSEA analysis currently available for GBM samples only"))
       inFile <- input$upFile
@@ -1121,25 +1078,11 @@ shinyServer(
     output$sub3 <- DT::renderDataTable({ 
       if (is.null(input$upFile) || input$goSub3 == 0)
         return(NULL)
-      input$goSub3
-      isolate({
         DT::datatable(sub3.call(), rownames = FALSE, extensions = "TableTools",
-                      options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
+                      options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full", autoWidth = TRUE,
                                      dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
                                                                                  sSwfPath = copySWF(dest = "www"))))
-        #         sub3 <- sub3.call()
-      })
     })
-    
-    #     #' Download the subtype call
-    #     output$downloadSub3 <- downloadHandler(
-    #       filename = function() {
-    #         paste0(Sys.Date(), "_", "3way_Subtype_call.csv")
-    #       },
-    #       content = function(file) {
-    #         write.csv(sub3.call(), file)
-    #       }
-    #     )
     
     #' Correlation method
     corrMethod <- reactive({
@@ -1206,6 +1149,9 @@ shinyServer(
     observeEvent(input$histologyCorrTable, {
       v$rows <- NULL
     })
+    observeEvent(input$geneCor, {
+      v$rows <- NULL
+    })
     
     #' Generate the correlation plot
     output$corrDataPlot <- renderPlot({
@@ -1225,16 +1171,5 @@ shinyServer(
         geom_point(alpha=.5) + geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1) + theme_bw()
       
     })
-    
-    #     #' Download the correlation table 
-    #     output$downloadCorrData <- downloadHandler(
-    #       filename = function() {
-    #         paste(Sys.Date(), input$geneCor, input$datasetCor, input$histologyCorrTable, 
-    #               "corrData.csv", sep="_")
-    #       },
-    #       content = function(file) {
-    #         write.csv(corrData(),file)
-    #       }
-    #     )
-    #     
+   
   })
