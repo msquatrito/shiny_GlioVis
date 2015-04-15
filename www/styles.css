@@ -5,6 +5,19 @@
   margin-left: -100px !important;
 }
 
+#wrap {
+  width: 100%; 
+  overflow: hidden;
+}
+
+.left {
+  width: 600px; 
+  float: left;
+}
+
+.right{
+  margin-left: 600px;
+}
 
 #footer {
   height:50px;
