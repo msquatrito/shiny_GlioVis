@@ -5,9 +5,22 @@ if (length(new.pkg)) {
   install.packages(new.pkg)
 }
 if (!require("GSVA")) {
-source("http://bioconductor.org/biocLite.R")
-biocLite("GSVA")
+  source("http://bioconductor.org/biocLite.R")
+  biocLite("GSVA")
 }
+
+if (!require("estimate")){
+  library(utils)
+  mdacc <- local({
+    rvers <- getRversion()
+    repos.hostname <- "bioinformatics.mdanderson.org"
+    sprintf("http://%s/OOMPA/%s",
+            repos.hostname,
+            paste(rvers$maj, rvers$min, sep="."))
+  })
+  install.packages("estimate", repos=mdacc, dependencies=TRUE)
+}
+
 if (!require("shinydashboard")) devtools::install_github("rstudio/shinydashboard")
 if (!require("DT")) devtools::install_github("rstudio/DT")
 
@@ -24,6 +37,8 @@ library(class)
 library(kernlab)
 library(shinydashboard)
 library(DT)
+library(estimate)
+
 
 
 `%then%` <- shiny:::`%OR%`
@@ -319,10 +334,10 @@ myCorggPlot <- function (df, gene1, gene2, histo = "All", subtype = "All", color
   #  empy plot to used in grid.arrange 
   empty <- ggplot() + geom_point(aes(1,1), colour="white") + 
     theme(plot.background = element_blank(), panel.grid.major = element_blank(), 
-      panel.grid.minor = element_blank(), panel.border = element_blank(), 
-      panel.background = element_blank(), axis.title.x = element_blank(),
-      axis.title.y = element_blank(), axis.text.x = element_blank(),
-      axis.text.y = element_blank(), axis.ticks = element_blank()
+          panel.grid.minor = element_blank(), panel.border = element_blank(), 
+          panel.background = element_blank(), axis.title.x = element_blank(),
+          axis.title.y = element_blank(), axis.text.x = element_blank(),
+          axis.text.y = element_blank(), axis.ticks = element_blank()
     )
   # scatterplot of x and y variables
   scatter <- ggplot(df,mapping = aes_string(x = gene1, y = gene2)) + theme(legend.position=c(1,1),legend.justification=c(1,1)) 
@@ -349,12 +364,12 @@ myCorggPlot <- function (df, gene1, gene2, histo = "All", subtype = "All", color
   }
   
   if (separateBy == "none") {
-  #arrange the plots together, with appropriate height and width for each row and column
-  grid.arrange(plot_top, empty, scatter, plot_right, ncol=2, nrow=2, widths=c(3, 1), heights=c(1.5, 3))
+    #arrange the plots together, with appropriate height and width for each row and column
+    grid.arrange(plot_top, empty, scatter, plot_right, ncol=2, nrow=2, widths=c(3, 1), heights=c(1.5, 3))
   } else {
     print(scatter) 
   }
-
+  
 }
 
 ########################################
@@ -418,7 +433,7 @@ myPairsPlot <- function(df,...) {
     points(x, y, pch = pch, col=rgb(0, 0, 0, 0.5), bg = bg, cex = cex)
     abline(stats::lm(y ~ x), col = "red", ...)
   }
-#   ggpairs(df)
+  #   ggpairs(df)
   pairs (df,upper.panel = panel.cor,
          diag.panel = panel.hist,
          lower.panel = panel.lm, pch= 20)
@@ -491,17 +506,17 @@ helpPopup <- function(title, content,
 
 helpModal <- function(modal_title, link, help_file) {
   sprintf("<div class='modal fade' id='%s' tabindex='-1' role='dialog' aria-labelledby='%s_label' aria-hidden='true'>
-            <div class='modal-dialog'>
-              <div class='modal-content'>
-                <div class='modal-header'>
-                  <button type='button' class='close' data-dismiss='modal' aria-label='Close'><span aria-hidden='true'>&times;</span></button>
-                  <h4 class='modal-title' id='%s_label'>%s</h4>
-                  </div>
-                <div class='modal-body'>%s</div>
-              </div>
-            </div>
-           </div>
-           <i title='Help' class='fa fa-question-circle' data-toggle='modal' data-target='#%s'></i>",
+          <div class='modal-dialog'>
+          <div class='modal-content'>
+          <div class='modal-header'>
+          <button type='button' class='close' data-dismiss='modal' aria-label='Close'><span aria-hidden='true'>&times;</span></button>
+          <h4 class='modal-title' id='%s_label'>%s</h4>
+          </div>
+          <div class='modal-body'>%s</div>
+          </div>
+          </div>
+          </div>
+          <i title='Help' class='fa fa-question-circle' data-toggle='modal' data-target='#%s'></i>",
           link, link, link, modal_title, help_file, link) %>%
     enc2utf8 %>% HTML
 }
@@ -556,7 +571,7 @@ ggally_cor <- function(data, mapping, corAlignPercent = 0.6, ...){
   final_text <- ""
   if(length(colorCol) < 1)
     colorCol <- "ggally_NO_EXIST"
-
+  
   if(colorCol != "ggally_NO_EXIST" && colorCol %in% colnames(data)) {
     
     txt <- str_c("ddply(data, .(", colorCol, "), summarize, ggally_cor = cor(", xCol,", ", yCol,"))[,c('", colorCol, "', 'ggally_cor')]")
@@ -577,7 +592,7 @@ ggally_cor <- function(data, mapping, corAlignPercent = 0.6, ...){
         }
       }
     }
-
+    
     cord <- cord[order(ord[ord >= 0]), ]
     
     cord$label <- str_c(cord[[colorCol]], ": ", cord$ggally_cor)
@@ -590,7 +605,7 @@ ggally_cor <- function(data, mapping, corAlignPercent = 0.6, ...){
     ymax <- max(yVal)
     yrange <- c(ymin-.01*(ymax-ymin),ymax+.01*(ymax-ymin))
     
-
+    
     p <- ggally_text(
       label   = str_c("Cor : ", signif(cor(xVal,yVal),3)),
       mapping = mapping,
@@ -674,4 +689,168 @@ maj <- function(InVec) {
   if (!is.factor(InVec)) InVec <- factor(InVec)
   A <- tabulate(InVec)
   levels(InVec)[which.max(A)]
+}
+
+##################################
+########## Estimate score ########
+##################################
+myEstimateScore <- function (ds, platform = c("affymetrix", "agilent","illumina")) {
+  #   stopifnot(is.character(ds) && length(ds) == 1 && nzchar(ds))
+  platform <- match.arg(platform)
+  data(SI_geneset)
+  row.names <- row.names(ds)
+  names <- names(ds)
+  dataset <- list(ds = ds, row.names = row.names, names = names)
+  m <- data.matrix(dataset$ds)
+  gene.names <- dataset$row.names
+  sample.names <- dataset$names
+  Ns <- length(m[1, ])
+  Ng <- length(m[, 1])
+  for (j in 1:Ns) {
+    m[, j] <- rank(m[, j], ties.method = "average")
+  }
+  m <- 10000 * m/Ng
+  gs <- as.matrix(SI_geneset[, -1], dimnames = NULL)
+  N.gs <- 2
+  gs.names <- row.names(SI_geneset)
+  score.matrix <- matrix(0, nrow = N.gs, ncol = Ns)
+  for (gs.i in 1:N.gs) {
+    gene.set <- gs[gs.i, ]
+    gene.overlap <- intersect(gene.set, gene.names)
+    print(paste(gs.i, "gene set:", gs.names[gs.i], " overlap=", 
+                length(gene.overlap)))
+    if (length(gene.overlap) == 0) {
+      score.matrix[gs.i, ] <- rep(NA, Ns)
+      next
+    }
+    else {
+      ES.vector <- vector(length = Ns)
+      for (S.index in 1:Ns) {
+        gene.list <- order(m[, S.index], decreasing = TRUE)
+        gene.set2 <- match(gene.overlap, gene.names)
+        correl.vector <- m[gene.list, S.index]
+        TAG <- sign(match(gene.list, gene.set2, nomatch = 0))
+        no.TAG <- 1 - TAG
+        N <- length(gene.list)
+        Nh <- length(gene.set2)
+        Nm <- N - Nh
+        correl.vector <- abs(correl.vector)^0.25
+        sum.correl <- sum(correl.vector[TAG == 1])
+        P0 <- no.TAG/Nm
+        F0 <- cumsum(P0)
+        Pn <- TAG * correl.vector/sum.correl
+        Fn <- cumsum(Pn)
+        RES <- Fn - F0
+        max.ES <- max(RES)
+        min.ES <- min(RES)
+        if (max.ES > -min.ES) {
+          arg.ES <- which.max(RES)
+        }
+        else {
+          arg.ES <- which.min(RES)
+        }
+        ES <- sum(RES)
+        EnrichmentScore <- list(ES = ES, arg.ES = arg.ES, 
+                                RES = RES, indicator = TAG)
+        ES.vector[S.index] <- EnrichmentScore$ES
+      }
+      score.matrix[gs.i, ] <- ES.vector
+    }
+  }
+  score.data <- data.frame(score.matrix)
+  names(score.data) <- sample.names
+  row.names(score.data) <- gs.names
+  estimate.score <- apply(score.data, 2, sum)
+  if (platform != "affymetrix") {
+    score.data <- rbind(score.data, estimate.score)
+    rownames(score.data) <- c("StromalScore", "ImmuneScore", 
+                              "ESTIMATEScore")
+  }
+  else {
+    convert_row_estimate_score_to_tumor_purity <- function(x) {
+      stopifnot(is.numeric(x))
+      cos(0.6049872018 + 0.0001467884 * x)
+    }
+    est.new <- NULL
+    for (i in 1:length(estimate.score)) {
+      est_i <- convert_row_estimate_score_to_tumor_purity(estimate.score[i])
+      est.new <- rbind(est.new, est_i)
+      if (est_i >= 0) {
+        next
+      }
+      else {
+        message(paste(sample.names[i], ": out of bounds", 
+                      sep = ""))
+      }
+    }
+    colnames(est.new) <- c("TumorPurity")
+    estimate.t1 <- cbind(estimate.score, est.new)
+    x.bad.tumor.purities <- estimate.t1[, "TumorPurity"] < 
+      0
+    estimate.t1[x.bad.tumor.purities, "TumorPurity"] <- NA
+    score.data <- rbind(score.data, t(estimate.t1))
+    rownames(score.data) <- c("StromalScore", "ImmuneScore", 
+                              "ESTIMATEScore", "TumorPurity")
+  }
+  score.data <- data.frame(t(score.data))
+}
+
+##################################
+########## Plot purity score #####
+##################################
+plotPurity <- function (estimate.df, sample, platform = c("affymetrix","agilent", "illumina")) {
+  platform <- match.arg(platform)
+  if (platform != "affymetrix") {
+    stop("not implemented")
+  }
+  convert_row_estimate_score_to_tumor_purity <- function(x) {
+    stopifnot(is.numeric(x))
+    cos(0.6049872018 + 0.0001467884 * x)
+  }
+  data(PurityDataAffy)
+  Affy.model <- PurityDataAffy
+  pred.p <- Affy.model[, 5:7]
+  est <- estimate.df[sample, "ESTIMATEScore"]
+  purity <- estimate.df[sample, "TumorPurity"]
+  max.af <- max(Affy.model$ESTIMATEScore)
+  min.af <- min(Affy.model$ESTIMATEScore)
+    geMin <- est >= min.af
+    leMax <- est <= max.af
+    withinMinMax <- geMin && leMax
+    xlim <- if (!withinMinMax) {
+      adjustment <- 500
+      if (geMin) {
+        from <- min.af
+        to <- est + adjustment
+      }
+      else {
+        from <- est - adjustment
+        to <- max.af
+      }
+      c(from, to)
+    }
+    else {
+      NULL
+    }
+    plot(Affy.model$tumor.purity ~ Affy.model$ESTIMATEScore, 
+         Affy.model, main = sample, type = "n", xlab = "ESTIMATE score", 
+         xlim = xlim, ylab = "Tumor purity", ylim = c(0, 1))
+    par(new = TRUE)
+    points(Affy.model$ESTIMATEScore, Affy.model$tumor.purity, 
+           cex = 0.75, col = "lightgrey")
+    if (withinMinMax) {
+      matlines(Affy.model$ESTIMATEScore, pred.p, lty = c(1, 
+                                                         2, 2), col = "darkgrey")
+    }
+    else {
+      matlines(Affy.model$ESTIMATEScore, pred.p, lty = c(1, 
+                                                         2, 2), col = "darkgrey")
+      par(new = TRUE)
+      curve(convert_row_estimate_score_to_tumor_purity, 
+            from, to, n = 10000, col = "grey", ylim = c(0, 
+                                                        1), xlab = "", ylab = "")
+    }
+    points(est, purity, pch = 19, cex = 1.25)
+    abline(h = purity, col = "black", lty = 2)
+    abline(v = est, col = "black", lty = 2)
 }

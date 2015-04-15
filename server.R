@@ -1,24 +1,3 @@
-# datasets
-# gbm.tcga <- readRDS("data/TCGA.GBM.Rds")
-# lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
-# rembrandt <- readRDS("data/Rembrandt.Rds")
-# freije <- readRDS("data/Freije.Rds")
-# gravendeel <- readRDS("data/Gravendeel.Rds")
-# murat <- readRDS("data/Murat.Rds")
-# phillips <- readRDS("data/Phillips.Rds")
-# reifenberger <- readRDS("data/Reifenberger.Rds")
-# bao <- readRDS("data/Bao.Rds")
-# gill <- readRDS("data/Gill.Rds")
-# gorovets <- readRDS("data/Gorovets.Rds")
-# nutt <- readRDS("data/Nutt.Rds")
-# ducray <- readRDS("data/Ducray.Rds")
-# grzmil <- readRDS("data/Grzmil.Rds")
-# donson <- readRDS("data/Donson.Rds")
-# li <- readRDS("data/Li.Rds")
-# vital <- readRDS("data/Vital.Rds")
-# joo <- readRDS("data/Joo.Rds")
-# oh <- readRDS("data/Oh.Rds")
-
 # server.R for Gliovis
 shinyServer(
   function(input, output, session) {
@@ -339,114 +318,6 @@ shinyServer(
       }
     )
     
-    #' RPPA data analysis
-    rppaRNA <- reactive({
-      validate(
-        need(input$dataset %in% c("TCGA GBM","TCGA Lgg"), "")%then%
-          need(input$gene != "", "")%then%
-          need(input$gene %in% names(exprs()),"")
-      )
-      samples <- intersect(row.names(rppas()),exprs()[,"Sample"])
-      mRNA <- round(exprs()[samples,input$gene],2)
-    })
-    
-    #' Create a rug plot with the mRNA expression value for the manual cutoff
-    output$boxRppaRNA <- renderPlot({    
-      validate(need(input$rppaCut, ""))      
-      mRNA <- rppaRNA()
-      q <- quantile(mRNA)
-      xrange <-range(mRNA)
-      par(mar = c(0,0,0,0)) 
-      plot(0, 0, type = "n", xlim = c(xrange[1] + 0.25, xrange[2]) , ylim = c(-0.1,  + 0.1), ylab ="", xlab = "", axes = FALSE)
-      points(x = mRNA, y = rep(0, length(mRNA)), pch="|")
-      # Add a red line to show which  is the current cutoff.
-      points(x = input$rppaCut, y = 0, pch = "|", col="red", cex = 2)
-      points(x = q[2:4], y = rep(0,3), pch = "|", col="blue", cex = 2)
-#       abline(v= q[2:4], col="blue")
-    }, bg = "transparent")
-    
-    output$rppaCutoff <- renderUI({
-      sliderInput(inputId = "rppaCut",label = "mRNA cutoff", min = min(rppaRNA()), max = max(rppaRNA()), 
-                  value = median(rppaRNA()), step = 0.05, round = -2)
-    })
-
-    
-    output$rppaTable <- DT::renderDataTable({
-      validate(
-        need(input$dataset %in% c("TCGA GBM","TCGA Lgg"), "RPPA data available only for TCGA datasets")%then%
-          need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
-          need(input$gene %in% names(exprs()),"Gene not available for this dataset")%then%
-          need(input$rppaCut != "", "")
-      )
-      rppa <- rppas()
-      samples <- intersect(row.names(rppa),exprs()[,"Sample"])
-      mRNA <- round(exprs()[samples,input$gene],2)
-      strat <- ifelse(mRNA >= input$rppaCut, c("high"),c("low"))
-      strat <- factor(strat,levels = c("low", "high"))
-      d <- NULL
-      results <- for (i in names(rppa)) {
-        prot <- rppa[, i]
-        t <- t.test(prot~strat)
-        est <- t$estimate
-        p <-  t$p.value
-        x <- c(est,p)
-        names(x) <- c("low","high","p.value")
-        d= rbind(d,t(data.frame(x)))
-      }
-      row.names(d) <- names(rppa)
-      d <- data.frame(Protein = row.names(d), round(d,5))
-      # d$adj.p.value <- p.adjust(d$p, method = "bonferroni")
-      d <- d[order(d$p.value),]
-      datatable(d, rownames = FALSE, options = list(lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full"),
-                callback = "function(table) {
-                                                table.on('click.dt', 'tr', function() {
-                                                table.$('tr.selected').removeClass('selected');
-                                                $(this).toggleClass('selected');            
-                                                Shiny.onInputChange('rppa.rows',
-                                                table.rows('.selected').data()[0][0]);
-                                                    });
-                                                }"
-      )
-    })
-    
-    #' Generate a reactive value for the input$rows that set to NULL when the dataset change
-    rp <- reactiveValues(rppa.rows = NULL)
-    observeEvent(input$rppa.rows, {
-      rp$rppa.rows <- input$rppa.rows
-    })
-    observeEvent(datasetInput(), {
-      rp$rppa.rows <- NULL
-    })
-    observeEvent(input$histology, {
-      rp$rppa.rows <- NULL
-    })
-    
-    observeEvent(input$gene, {
-      rp$rppa.rows <- NULL
-    })
-    
-    #' Generate the RPPA box plot
-    output$rppaPlot <- renderPlot({
-      rp$rppa.rows
-      validate(
-        need(input$dataset %in% c("TCGA GBM","TCGA Lgg"), "")%then%
-          need(input$gene != "","")%then%
-          need(rp$rppa.rows!= "","Click on a row to see the corresponding box plot.")
-      )
-      mRNA <- rppaRNA()
-      strat <- ifelse(mRNA >= input$rppaCut, c("high"),c("low"))
-      strat <- factor(strat,levels = c("low", "high"))
-      data <- data.frame(mRNA, strat, rppa = rppas()[,rp$rppa.rows])
-      p1 <- ggplot(data, aes(x=strat, y = rppa)) + geom_boxplot(outlier.size = 0) + 
-        geom_jitter(aes(colour = strat), position = position_jitter(width = .2), size = 2, alpha = 0.5) + 
-        xlab(paste(input$gene, "mRNA")) + ylab(paste(rp$rppa.rows,"RPPA score")) + 
-        guides(colour=FALSE) + theme_bw()
-      p2 <- ggplot(data, aes(x=mRNA, y = rppa)) + geom_point(aes(colour = strat), alpha=.5) +
-         geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1) + theme_bw() +
-        xlab(paste(input$gene, "mRNA (log2)")) + ylab(paste(rp$rppa.rows,"RPPA score")) + theme(legend.position = "none")
-      grid.arrange(p1, p2, ncol=1)
-    },height = 700)
-    
     # Need a wrapper around the hrClick input so we can manage whether or 
     # not the click occured on the current Gene. If it occured on a previous
     # gene, we'll want to mark that click as 'stale' so we don't try to use it
@@ -634,8 +505,7 @@ shinyServer(
           try(survivalPlot (exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, numeric = input$mInput,
                             subtype = input$subtypeSurv, gcimp = gcimpSurv(), primary = primarySurv()), silent = TRUE)}
     }, height = function(){if(!allSubSurv()) {400} else {600}}, width = function(){if(!allSubSurv()) {500} else {800}})
-    
-    
+        
     #' Download the survPlot
     output$downloadsurvPlot <- downloadHandler(
       filename = function() {
@@ -775,6 +645,114 @@ shinyServer(
         dev.off()
       }
     )
+     
+    #' RPPA data analysis
+    rppaRNA <- reactive({
+      validate(
+        need(input$dataset %in% c("TCGA GBM","TCGA Lgg"), "")%then%
+          need(input$gene != "", "")%then%
+          need(input$gene %in% names(exprs()),"")
+      )
+      samples <- intersect(row.names(rppas()),exprs()[,"Sample"])
+      mRNA <- round(exprs()[samples,input$gene],2)
+    })
+    
+    #' Create a rug plot with the mRNA expression value for the manual cutoff
+    output$boxRppaRNA <- renderPlot({    
+      validate(need(input$rppaCut, ""))      
+      mRNA <- rppaRNA()
+      q <- quantile(mRNA)
+      xrange <-range(mRNA)
+      par(mar = c(0,0,0,0)) 
+      plot(0, 0, type = "n", xlim = c(xrange[1] + 0.25, xrange[2]) , ylim = c(-0.1,  + 0.1), ylab ="", xlab = "", axes = FALSE)
+      points(x = mRNA, y = rep(0, length(mRNA)), pch="|")
+      # Add a red line to show which  is the current cutoff.
+      points(x = input$rppaCut, y = 0, pch = "|", col="red", cex = 2)
+      points(x = q[2:4], y = rep(0,3), pch = "|", col="blue", cex = 2)
+      #       abline(v= q[2:4], col="blue")
+    }, bg = "transparent")
+    
+    output$rppaCutoff <- renderUI({
+      sliderInput(inputId = "rppaCut",label = "mRNA cutoff", min = min(rppaRNA()), max = max(rppaRNA()), 
+                  value = median(rppaRNA()), step = 0.05, round = -2)
+    })
+       
+    output$rppaTable <- DT::renderDataTable({
+      validate(
+        need(input$dataset %in% c("TCGA GBM","TCGA Lgg"), "RPPA data available only for TCGA datasets")%then%
+          need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
+          need(input$gene %in% names(exprs()),"Gene not available for this dataset")%then%
+          need(input$rppaCut != "", "")%then%
+          need(input$rppaCut > min(rppaRNA()) & input$rppaCut < max(rppaRNA()), "")
+      )
+      rppa <- rppas()
+      samples <- intersect(row.names(rppa),exprs()[,"Sample"])
+      mRNA <- round(exprs()[samples,input$gene],2)
+      strat <- ifelse(mRNA >= input$rppaCut, c("high"),c("low"))
+      strat <- factor(strat,levels = c("low", "high"))
+      d <- NULL
+      results <- for (i in names(rppa)) {
+        prot <- rppa[, i]
+        t <- t.test(prot~strat)
+        est <- t$estimate
+        p <-  t$p.value
+        x <- c(est,p)
+        names(x) <- c("Avg_low","Avg_high","p.value")
+        d= rbind(d,t(data.frame(x)))
+      }
+      row.names(d) <- names(rppa)
+      d <- data.frame(Protein = row.names(d), round(d,5))
+      # d$adj.p.value <- p.adjust(d$p, method = "bonferroni")
+      d <- d[order(d$p.value),]
+      datatable(d, rownames = FALSE, options = list(lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full"),
+                callback = "function(table) {
+                table.on('click.dt', 'tr', function() {
+                table.$('tr.selected').removeClass('selected');
+                $(this).toggleClass('selected');            
+                Shiny.onInputChange('rppa.rows',
+                table.rows('.selected').data()[0][0]);
+                });
+    }"
+      )
+      })
+    
+    #' Generate a reactive value for the input$rows that set to NULL when the dataset change
+    rp <- reactiveValues(rppa.rows = NULL)
+    observeEvent(input$rppa.rows, {
+      rp$rppa.rows <- input$rppa.rows
+    })
+    observeEvent(datasetInput(), {
+      rp$rppa.rows <- NULL
+    })
+    observeEvent(input$histology, {
+      rp$rppa.rows <- NULL
+    })
+    
+    observeEvent(input$gene, {
+      rp$rppa.rows <- NULL
+    })
+    
+    #' Generate the RPPA box plot
+    output$rppaPlot <- renderPlot({
+      rp$rppa.rows
+      validate(
+        need(input$dataset %in% c("TCGA GBM","TCGA Lgg"), "")%then%
+          need(input$gene != "","")%then%
+          need(rp$rppa.rows!= "","Click on a row to see the corresponding plots.")
+      )
+      mRNA <- rppaRNA()
+      strat <- ifelse(mRNA >= input$rppaCut, c("high"),c("low"))
+      strat <- factor(strat,levels = c("low", "high"))
+      data <- data.frame(mRNA, strat, rppa = rppas()[,rp$rppa.rows])
+      p1 <- ggplot(data, aes(x=strat, y = rppa)) + geom_boxplot(outlier.size = 0) + 
+        geom_jitter(aes(colour = strat), position = position_jitter(width = .2), size = 2, alpha = 0.5) + 
+        xlab(paste(input$gene, "mRNA")) + ylab(paste(rp$rppa.rows,"RPPA score")) + 
+        guides(colour=FALSE) + theme_bw()
+      p2 <- ggplot(data, aes(x=mRNA, y = rppa)) + geom_point(aes(colour = strat), alpha=.5) +
+        geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1) + theme_bw() +
+        xlab(paste(input$gene, "mRNA (log2)")) + ylab(paste(rp$rppa.rows,"RPPA score")) + theme(legend.position = "none")
+      grid.arrange(p1, p2, ncol=1)
+    },height = 700)
     
     #' Reactive function for an HTML table view of the data
     dataTable <- reactive({
@@ -978,6 +956,7 @@ shinyServer(
       learn.1 <- learn.1[!is.na(learn.1[,1]),]
       df.learn <- learn.1- rowMeans(learn.1)
       Training <- train$Subtype
+      set.seed(1234)
       svm <- ksvm(t(df.train), Training, cross=10, kernel="vanilladot", family="multinomial", prob.model=TRUE, scale=FALSE)  
       svm.subtype.call <- as.matrix(predict(svm, t(df.learn)))
       if (input$tumorType == "gbm") {
@@ -1015,6 +994,7 @@ shinyServer(
       learn.exp <-as.matrix(upData [,-1])
       # Common genes of the two datasets
       genes <- intersect(colnames(train.exp), colnames(learn.exp))
+      set.seed(1234)
       pred <- knn(train = train.exp[,genes], test = learn.exp[,genes], cl =  train$Subtype, k = 4, prob=TRUE)
       kn <- data.frame(Sample = rownames(upData), knn.subtype.call = pred, prob = attr(pred,"prob"))
       kn
@@ -1043,6 +1023,7 @@ shinyServer(
       }
       rownames(upData) <- upData$Sample
       exprs <- data.frame(t(upData[,-1]))
+      set.seed(1234)
       gsva_results <- gsva(expr=as.matrix(exprs), gset.idx.list = gene_list, method="ssgsea", rnaseq=FALSE,
                            min.sz=0, max.sz=10000, verbose=FALSE)
       subtype_scores <- round(t(gsva_results),3)
@@ -1168,8 +1149,52 @@ shinyServer(
       }
       aes_scatter <- aes_string(x = input$geneCor, y = v$rows)
       ggplot(df,mapping = aes_scatter) + theme(legend.position=c(1,1),legend.justification=c(1,1)) +
-        geom_point(alpha=.5) + geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1) + theme_bw()
-      
+        geom_point(alpha=.5) + geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1) + theme_bw() 
     })
    
+    #' Reactivity required to display download button after file upload
+    output$finishedEstUploading <- reactive({
+      if (is.null(input$upEstFile))
+      { 0 } else { 1 }
+    })
+    outputOptions(output, 'finishedEstUploading', suspendWhenHidden=FALSE)
+    
+    #' Reactive function to generate Estimate call to pass to data table 
+    est.call <- eventReactive (input$goEst,{
+      inFile <- input$upEstFile
+      upData <- read.csv(inFile$datapath, header=input$headerEst, sep=input$sepEst, quote=input$quoteEst)
+      row.names(upData) <- upData[,"Sample"]
+      ds <- data.frame(t(upData[,-1]))
+      est <- myEstimateScore(ds, platform = input$platformEst)
+      est <- cbind(Sample = upData$Sample, round(est,2))
+    })
+    
+    #' Rerndering the subtype call as a data table
+    output$estScore <- DT::renderDataTable({ 
+      if (is.null(input$upEstFile) || input$goEst == 0)
+        return(NULL)
+      DT::datatable(est.call(), rownames = FALSE, extensions = "TableTools", 
+                    options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full", autoWidth = TRUE,
+                                   dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
+                                                                               sSwfPath = copySWF(dest = "www"))),
+                    callback = "function(table) {
+                                    table.on('click.dt', 'tr', function() {
+                                          table.$('tr.selected').removeClass('selected');
+                                          $(this).toggleClass('selected');            
+                                          Shiny.onInputChange('rowsEst',table.rows('.selected').data()[0][0]);
+                                    });
+                                }"
+                    )
+    })
+
+    #' Generate the Purity plot
+    output$purityPlot <- renderPlot({
+      validate(
+        need(est.call(),"")%then%
+          need(input$rowsEst != "","Click on a row to see the corresponding purity plot.") %then%
+            need(input$platformEst != "Affimetrix", "Sorry, the plots for Agilent and RNAseq have not yet been impemented")
+      )
+      plotPurity(est.call(), input$rowsEst, platform = input$platformEst)
+    })
+    
   })
