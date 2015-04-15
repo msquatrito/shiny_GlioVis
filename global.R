@@ -2,7 +2,7 @@ pkg <- c("shiny", "survival", "weights", "googleVis", "dplyr", "htmlwidgets",
          "ggplot2","gridExtra", "class", "kernlab","devtools","GGally","markdown")
 new.pkg <- pkg[!(pkg %in% installed.packages())]
 if (length(new.pkg)) {
-  install.packages(new.pkg)
+  install.packages(new.pkg, dependencies=TRUE)
 }
 if (!require("GSVA")) {
   source("http://bioconductor.org/biocLite.R")
@@ -38,6 +38,7 @@ library(kernlab)
 library(shinydashboard)
 library(DT)
 library(estimate)
+library(caret)
 
 
 
@@ -800,9 +801,6 @@ myEstimateScore <- function (ds, platform = c("affymetrix", "agilent","illumina"
 ##################################
 plotPurity <- function (estimate.df, sample, platform = c("affymetrix","agilent", "illumina")) {
   platform <- match.arg(platform)
-  if (platform != "affymetrix") {
-    stop("not implemented")
-  }
   convert_row_estimate_score_to_tumor_purity <- function(x) {
     stopifnot(is.numeric(x))
     cos(0.6049872018 + 0.0001467884 * x)

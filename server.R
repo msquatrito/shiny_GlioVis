@@ -917,6 +917,94 @@ shinyServer(
       }
     })
        
+    
+    #' Correlation method
+    corrMethod <- reactive({
+      switch(input$corrMethod,
+             "Spearman" = "spearman",
+             "Pearson" = "pearson")
+    })
+    
+    #' Generate the correlation table ##  corFast works locally but not on shinyapps.io
+    corr <- reactive ({
+      corr <- getCorr(datasetInputCor()[["expr"]], input$geneCor, input$histologyCorrTable, corrMethod())
+      corr  <- merge(genes, corr, by="Gene")
+      #       corr <- corr [-1,]
+      corr <- arrange(corr, desc(abs(r)))
+    })
+    
+    #' Generate a reactive element of the the correlation data 
+    corrData <- reactive({  
+      corr.table <- suppressWarnings(corr())  # suppressWarnings  is used to prevent the warning messages in the LGG dataset  
+      corr.table <- filter(corr.table, adj.p.value <= as.numeric(input$sign))
+      if (input$cor == "Positive"){
+        corr.table <- filter(corr.table, r > 0)
+        corr.table <- arrange(corr.table, desc(r))
+      }
+      if (input$cor == "Negative"){
+        corr.table <- filter(corr.table, r < 0)
+        corr.table <- arrange(corr.table,r)
+      } 
+      if (input$cor == "All"){
+        corr.table <- filter(corr.table, r <= input$range[1] | r >= input$range[2])
+      }
+      corr.table
+    })
+    
+    #' Generate an HTML table view of the correlation table 
+    output$corrData <- DT::renderDataTable({
+      validate(
+        need(input$geneCor != "", "Please, enter a gene name in the panel on the left")%then%
+          # Not all genes are available for all the dataset
+          need(input$geneCor %in% names(datasetInputCor()[["expr"]]),"Gene not available for this dataset")
+      )   
+      DT::datatable(corrData(), rownames = FALSE, extensions = "TableTools",
+                    options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
+                                   dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
+                                                                               sSwfPath = copySWF(dest = "www"))),
+                    callback = "function(table) {
+                    table.on('click.dt', 'tr', function() {
+                    table.$('tr.selected').removeClass('selected');
+                    $(this).toggleClass('selected');            
+                    Shiny.onInputChange('rows',
+                    table.rows('.selected').data()[0][0]);
+                    });
+    }")
+    })
+    
+    #' Generate a reactive value for the input$rows that set to NULL when the dataset change
+    v <- reactiveValues(rows = NULL)
+    observeEvent(input$rows, {
+      v$rows <- input$rows
+    })
+    observeEvent(datasetInputCor(), {
+      v$rows <- NULL
+    })
+    observeEvent(input$histologyCorrTable, {
+      v$rows <- NULL
+    })
+    observeEvent(input$geneCor, {
+      v$rows <- NULL
+    })
+    
+    #' Generate the correlation plot
+    output$corrDataPlot <- renderPlot({
+      v$rows
+      validate(
+        need(input$geneCor != "","")%then%
+          need(v$rows!= "","Click on a row to see the corresponding correlation plot.")
+      )
+      df <- datasetInputCor()[["expr"]]
+      if (input$histologyCorrTable != "All") {
+        df <- filter (df, Histology == input$histologyCorrTable)
+      } else {
+        df <- df
+      }
+      aes_scatter <- aes_string(x = input$geneCor, y = v$rows)
+      ggplot(df,mapping = aes_scatter) + theme(legend.position=c(1,1),legend.justification=c(1,1)) +
+        geom_point(alpha=.5) + geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1) + theme_bw() 
+    })
+    
     #' Reactivity required to display download button after file upload
     output$finishedUploading <- reactive({
       if (is.null(input$upFile))
@@ -925,6 +1013,7 @@ shinyServer(
     outputOptions(output, 'finishedUploading', suspendWhenHidden=FALSE)
     
     #' Reactive function to generate SVM subtype call to pass to data table and download handler
+    #' IMPORTANT #http://stackoverflow.com/questions/15503027/why-are-probabilities-and-response-in-ksvm-in-r-not-consistent
     svm.call <- eventReactive (input$goSvm | input$goSub3,{
       # input$upFile will be NULL initially. After the user selects
       # and uploads a file, it will be a data frame with 'name',
@@ -995,7 +1084,7 @@ shinyServer(
       # Common genes of the two datasets
       genes <- intersect(colnames(train.exp), colnames(learn.exp))
       set.seed(1234)
-      pred <- knn(train = train.exp[,genes], test = learn.exp[,genes], cl =  train$Subtype, k = 4, prob=TRUE)
+      pred <- knn3Train(train = train.exp[,genes], test = learn.exp[,genes], cl =  train$Subtype, k = 15, prob=TRUE)
       kn <- data.frame(Sample = rownames(upData), knn.subtype.call = pred, prob = attr(pred,"prob"))
       kn
     })
@@ -1011,7 +1100,7 @@ shinyServer(
     })
     
     #' Reactive function to generate ssGSEA call to pass to data table and download handler
-    gsva.call <- eventReactive (input$goGsva | input$goSub3, {
+    gsva.call <- eventReactive(input$goGsva | input$goSub3, {
       validate(
         need(input$tumorType == "gbm","ssGSEA analysis currently available for GBM samples only"))
       inFile <- input$upFile
@@ -1019,7 +1108,7 @@ shinyServer(
       if (input$tumorType == "gbm") {
         gene_list <- gbm.subtype.list
       } else if (input$tumorType == "lgg") {
-        return(NULL)
+        return(NULL) # 
       }
       rownames(upData) <- upData$Sample
       exprs <- data.frame(t(upData[,-1]))
@@ -1027,7 +1116,7 @@ shinyServer(
       gsva_results <- gsva(expr=as.matrix(exprs), gset.idx.list = gene_list, method="ssgsea", rnaseq=FALSE,
                            min.sz=0, max.sz=10000, verbose=FALSE)
       subtype_scores <- round(t(gsva_results),3)
-      subtype_final <- data.frame(Sample = rownames(upData), gsea.subtype.call = names(gbm.subtype.list)[apply(subtype_scores,1,which.max)], 
+      subtype_final <- data.frame(Sample = rownames(upData), gsea.subtype.call = names(gene_list)[apply(subtype_scores,1,which.max)], 
                                   subtype_scores) 
       subtype_final
     })
@@ -1045,7 +1134,7 @@ shinyServer(
     #' Reactive function to generate the 3 subtype calls to pass to data table and download handler
     sub3.call <- eventReactive (input$goSub3, {
       validate(
-        need(input$tumorType == "gbm","ssGSEA analysis currently available for GBM samples only"))
+        need(input$tumorType == "gbm","'3-way' analysis currently available for GBM samples only"))
       inFile <- input$upFile
       upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote)
       sub3 <- data_frame(Sample = upData$Sample, svm.call = svm.call()[,"svm.subtype.call"], 
@@ -1064,94 +1153,7 @@ shinyServer(
                                      dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
                                                                                  sSwfPath = copySWF(dest = "www"))))
     })
-    
-    #' Correlation method
-    corrMethod <- reactive({
-      switch(input$corrMethod,
-             "Spearman" = "spearman",
-             "Pearson" = "pearson")
-    })
-    
-    #' Generate the correlation table ##  corFast works locally but not on shinyapps.io
-    corr <- reactive ({
-      corr <- getCorr(datasetInputCor()[["expr"]], input$geneCor, input$histologyCorrTable, corrMethod())
-      corr  <- merge(genes, corr, by="Gene")
-      #       corr <- corr [-1,]
-      corr <- arrange(corr, desc(abs(r)))
-    })
-    
-    #' Generate a reactive element of the the correlation data 
-    corrData <- reactive({  
-      corr.table <- suppressWarnings(corr())  # suppressWarnings  is used to prevent the warning messages in the LGG dataset  
-      corr.table <- filter(corr.table, adj.p.value <= as.numeric(input$sign))
-      if (input$cor == "Positive"){
-        corr.table <- filter(corr.table, r > 0)
-        corr.table <- arrange(corr.table, desc(r))
-      }
-      if (input$cor == "Negative"){
-        corr.table <- filter(corr.table, r < 0)
-        corr.table <- arrange(corr.table,r)
-      } 
-      if (input$cor == "All"){
-        corr.table <- filter(corr.table, r <= input$range[1] | r >= input$range[2])
-      }
-      corr.table
-    })
-    
-    #' Generate an HTML table view of the correlation table 
-    output$corrData <- DT::renderDataTable({
-      validate(
-        need(input$geneCor != "", "Please, enter a gene name in the panel on the left")%then%
-          # Not all genes are available for all the dataset
-          need(input$geneCor %in% names(datasetInputCor()[["expr"]]),"Gene not available for this dataset")
-      )   
-      DT::datatable(corrData(), rownames = FALSE, extensions = "TableTools",
-                    options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
-                                   dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
-                                                                               sSwfPath = copySWF(dest = "www"))),
-                    callback = "function(table) {
-                                    table.on('click.dt', 'tr', function() {
-                                          table.$('tr.selected').removeClass('selected');
-                                          $(this).toggleClass('selected');            
-                                      Shiny.onInputChange('rows',
-                                                          table.rows('.selected').data()[0][0]);
-                                    });
-                  }")
-    })
-    
-    #' Generate a reactive value for the input$rows that set to NULL when the dataset change
-    v <- reactiveValues(rows = NULL)
-    observeEvent(input$rows, {
-      v$rows <- input$rows
-    })
-    observeEvent(datasetInputCor(), {
-      v$rows <- NULL
-    })
-    observeEvent(input$histologyCorrTable, {
-      v$rows <- NULL
-    })
-    observeEvent(input$geneCor, {
-      v$rows <- NULL
-    })
-    
-    #' Generate the correlation plot
-    output$corrDataPlot <- renderPlot({
-      v$rows
-      validate(
-        need(input$geneCor != "","")%then%
-          need(v$rows!= "","Click on a row to see the corresponding correlation plot.")
-      )
-      df <- datasetInputCor()[["expr"]]
-      if (input$histologyCorrTable != "All") {
-        df <- filter (df, Histology == input$histologyCorrTable)
-      } else {
-        df <- df
-      }
-      aes_scatter <- aes_string(x = input$geneCor, y = v$rows)
-      ggplot(df,mapping = aes_scatter) + theme(legend.position=c(1,1),legend.justification=c(1,1)) +
-        geom_point(alpha=.5) + geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1) + theme_bw() 
-    })
-   
+        
     #' Reactivity required to display download button after file upload
     output$finishedEstUploading <- reactive({
       if (is.null(input$upEstFile))
@@ -1191,8 +1193,8 @@ shinyServer(
     output$purityPlot <- renderPlot({
       validate(
         need(est.call(),"")%then%
-          need(input$rowsEst != "","Click on a row to see the corresponding purity plot.") %then%
-            need(input$platformEst != "Affimetrix", "Sorry, the plots for Agilent and RNAseq have not yet been impemented")
+          need(input$platformEst == "affymetrix", "Sorry, the purity plot for Agilent and RNAseq have not yet been impemented") %then%
+            need(input$rowsEst != "","Click on a row to see the corresponding purity plot.")       
       )
       plotPurity(est.call(), input$rowsEst, platform = input$platformEst)
     })
