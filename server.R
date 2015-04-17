@@ -1021,7 +1021,7 @@ shinyServer(
       # column will contain the local filenames where the data can
       # be found.
       inFile <- input$upFile
-      upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote)
+      upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote,stringsAsFactors=FALSE)
       if (input$tumorType == "gbm") {
         train <- gbm.tcga[["expr"]]
         train <- train[train$Sample %in% gbm.core.samples,]
@@ -1069,7 +1069,7 @@ shinyServer(
     #' Reactive function to generate k-nearest neighbour subtype call to pass to data table and download handler
     knn.call <- eventReactive (input$goKnn | input$goSub3, {
       inFile <- input$upFile
-      upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote)
+      upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote, stringsAsFactors=FALSE)
       if (input$tumorType == "gbm") {
         train <- gbm.tcga[["expr"]]
         train <- train[train$Sample %in% gbm.core.samples,]
@@ -1085,7 +1085,8 @@ shinyServer(
       genes <- intersect(colnames(train.exp), colnames(learn.exp))
       set.seed(1234)
       pred <- knn3Train(train = train.exp[,genes], test = learn.exp[,genes], cl =  train$Subtype, k = 15, prob=TRUE)
-      kn <- data.frame(Sample = rownames(upData), knn.subtype.call = pred, prob = attr(pred,"prob"))
+      kn <- data.frame(Sample = rownames(upData), knn.subtype.call = pred, prob = round(attr(pred,"prob"),2))
+      names(kn)[3:6] <- c("Classical","Mesenchymal","Neural","Proneural")
       kn
     })
     
@@ -1104,7 +1105,7 @@ shinyServer(
       validate(
         need(input$tumorType == "gbm","ssGSEA analysis currently available for GBM samples only"))
       inFile <- input$upFile
-      upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote)
+      upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote,stringsAsFactors=FALSE)
       if (input$tumorType == "gbm") {
         gene_list <- gbm.subtype.list
       } else if (input$tumorType == "lgg") {
@@ -1117,7 +1118,8 @@ shinyServer(
                            min.sz=0, max.sz=10000, verbose=FALSE)
       subtype_scores <- round(t(gsva_results),3)
       subtype_final <- data.frame(Sample = rownames(upData), gsea.subtype.call = names(gene_list)[apply(subtype_scores,1,which.max)], 
-                                  subtype_scores) 
+                                  subtype_scores)
+      subtype_final <- subtype_final[,c("Sample", "gsea.subtype.call", "Classical","Mesenchymal","Neural","Proneural")]
       subtype_final
     })
     
@@ -1136,7 +1138,7 @@ shinyServer(
       validate(
         need(input$tumorType == "gbm","'3-way' analysis currently available for GBM samples only"))
       inFile <- input$upFile
-      upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote)
+      upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote,stringsAsFactors=FALSE)
       sub3 <- data_frame(Sample = upData$Sample, svm.call = svm.call()[,"svm.subtype.call"], 
                          knn.call = knn.call()[,"knn.subtype.call"], gsea.call = gsva.call()[,"gsea.subtype.call"],
                          equal.call = ifelse(svm.call==knn.call & knn.call==gsea.call, "TRUE", "FALSE"))
@@ -1164,7 +1166,7 @@ shinyServer(
     #' Reactive function to generate Estimate call to pass to data table 
     est.call <- eventReactive (input$goEst,{
       inFile <- input$upEstFile
-      upData <- read.csv(inFile$datapath, header=input$headerEst, sep=input$sepEst, quote=input$quoteEst)
+      upData <- read.csv(inFile$datapath, header=input$headerEst, sep=input$sepEst, quote=input$quoteEst, stringsAsFactors=FALSE)
       row.names(upData) <- upData[,"Sample"]
       ds <- data.frame(t(upData[,-1]))
       est <- myEstimateScore(ds, platform = input$platformEst)

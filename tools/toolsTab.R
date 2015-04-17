@@ -161,7 +161,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                    br(),
                                    conditionalPanel(
                                      condition = "output.finishedEstUploading",
-                                     actionButton(inputId = "goEst", label = "Submit", class= "btn-success"),
+                                     actionButton(inputId = "goEst", label = "Submit ESTIMATE", class= "btn-success"),
                                      br()
                                    )
                       ),
@@ -179,12 +179,12 @@ tabPanel(title = "Tools", icon = icon("gear"),
                         ),
                         column(width = 5,
                                plotOutput(outputId = "purityPlot"),
-                               conditionalPanel (condition = "output.purityPlot",
-                                                 helpText("In the above plot, the black dot and the gray dash-lines show ESTIMATE tumor purity 
-                                                          and 95% prediction interval, respectively. The grey dots represent the background 
-                                                          distribution based on 995 samples from TCGA Affymetrix data set.")
-                               )
+                               bsPopover(id = "purityPlot", title = "Tumor purity plot", 
+                                         content =paste0("<p>The black dot and the gray dash-lines show ESTIMATE tumor purity", 
+                                                         "and 95% prediction interval, respectively. The grey dots represent the", 
+                                                         "background distribution based on 995 samples from TCGA Affymetrix data set.</p>"))
                         )
+                        
                       )
                     )
            )
