@@ -39,7 +39,7 @@ library(shinydashboard)
 library(DT)
 library(estimate)
 library(caret)
-library(shinyBS)
+# library(shinyBS)
 
 
 
