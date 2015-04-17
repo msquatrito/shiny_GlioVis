@@ -1,5 +1,5 @@
 pkg <- c("shiny", "survival", "weights", "googleVis", "dplyr", "htmlwidgets",
-         "ggplot2","gridExtra", "class", "kernlab","devtools","GGally","markdown")
+         "ggplot2","gridExtra", "class", "kernlab","devtools","GGally","markdown","shinyBS")
 new.pkg <- pkg[!(pkg %in% installed.packages())]
 if (length(new.pkg)) {
   install.packages(new.pkg, dependencies=TRUE)
@@ -39,6 +39,7 @@ library(shinydashboard)
 library(DT)
 library(estimate)
 library(caret)
+library(shinyBS)
 
 
 
@@ -276,12 +277,12 @@ survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FAL
     star.mcox <- starmaker(mantle.cox.p)
     plot(expr.surv, xlab = "Survival time (Months)", ylab = "% Surviving", yscale = 100, xlim = c(0,smax),
          main = main, col = c("red", "blue"), mark.time = FALSE)
-    legend("topright", legend = c(paste(gene," High ", paste("(n=", surv$records[1]),", events=", surv$events[1],", median=",surv$median[1],")", sep = ""), 
-                                  paste(gene," Low ", paste("(n=", surv$records[2]),", events=", surv$events[2],", median=",surv$median[2],")", sep = "")),
+    legend("topright", legend = c(sprintf("%s High, (n=%s, events=%s, median=%s)", gene, surv$records[1], surv$events[1], surv$median[1]), 
+                                  sprintf("%s Low, (n=%s, events=%s, median=%s)", gene, surv$records[2], surv$events[2], surv$median[2])),
            col= c("red", "blue"), lty = 1, cex = 1)
-    text (xmax, 0.725, paste("HR = ",HR, " (", HR.lower, "-", HR.upper,")", sep=""), cex = 1)
-    text (xmax, 0.65, paste (star.log, "Log-rank p value=", log.rank.p), cex = 1)
-    text (xmax, 0.575, paste (star.mcox, "Wilcoxon p value=", mantle.cox.p), cex = 1)
+    text (xmax, 0.725, sprintf("HR = %s, (%s - %s)",HR, HR.lower, HR.upper), cex = 1)
+    text (xmax, 0.65, sprintf("%s Log-rank p value= %s", star.log, log.rank.p), cex = 1)
+    text (xmax, 0.575, sprintf("%s Wilcoxon p value= %s",star.mcox, mantle.cox.p), cex = 1)
   }
   
   if (cutoff == "quartiles"){
@@ -291,10 +292,10 @@ survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FAL
     plot(expr.surv, xlab="Months", ylab="% Surviving", yscale = 100, xlim = c(0,smax), 
          main = main, col= c(1:4), mark.time=FALSE)
     legend("topright", title = "Quantile", 
-           legend = c(paste("1st ",paste("(n=", z$records[1]),", median=",z$median[1],")", sep = ""),
-                      paste("2nd ",paste("(n=", z$records[2]),", median=",z$median[2],")", sep = ""),
-                      paste("3rd ",paste("(n=", z$records[3]),", median=",z$median[3],")", sep = ""),
-                      paste("4th ",paste("(n=", z$records[4]),", median=",z$median[4],")", sep = "")), 
+           legend = c(sprintf("1st (n=%s, median=%s)", z$records[1], z$median[1]),
+                      sprintf("2nd (n=%s, median=%s)", z$records[2], z$median[2]),
+                      sprintf("3rd (n=%s, median=%s)", z$records[3], z$median[3]),
+                      sprintf("4th (n=%s, median=%s)", z$records[4], z$median[4])),
            col= c(1:4), lty=1, cex=1)
   }
   
