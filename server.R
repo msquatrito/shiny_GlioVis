@@ -172,6 +172,16 @@ shinyServer(
       updateSelectInput(session, inputId = "histologyCorrTable", choices = c("All", histoCor()), selected = "All")
     })
     
+    #' Reactive expressions for the summary plots to work in the right way
+    primaryBox <- reactive ({
+      if(input$tab1 == 1) {
+        primaryBox <- input$primary
+      } else {
+        primaryBox <- FALSE
+      }
+      primaryBox
+    })
+    
     #' Generate a dataframe with the data to plot 
     data <- reactive({     
       validate(
@@ -193,12 +203,15 @@ shinyServer(
         Copy_number <- factor(Copy_number, levels = c(-2:2), labels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp")) 
         data <- cbind(Copy_number,data)
       }
-      if (input$primary & any(!is.na(data$Recurrence))) {
+      if (primaryBox() & any(!is.na(data$Recurrence))) {
         data <- filter(data, Recurrence == "Primary")
       }
       data <- data[ ,colSums(is.na(data)) < nrow(data)] 
       data$group <- data[ ,plotType()]
-      data <- filter(data, !is.na(group))
+      if (input$tab1 == 1) {
+        data <- filter(data, !is.na(group)) # Remove NA for plotting
+      }
+      data 
     })
     
     #' Generate radiobuttons for the various categories in the pData
@@ -420,9 +433,10 @@ shinyServer(
     
     #' Render a plot to show the the Hazard ratio for the gene's expression values
     output$hazardPlot <- renderPlot({        
-      validate(need(histoSurvSelected() == "GBM", "Interactive HR plot currently available only for GBM samples"))
+      validate(need(!input$dataset %in% c("TCGA Lgg","Gorovets"), "Interactive HR plot currently available only for GBM samples") %then%
+                 need(histoSurvSelected() == "GBM","Please select GBM samples in the 'Histology' dropdown menu") %then%
+                   need(!input$dataset %in% c("Grzmil","Vital"), "Sorry, too few samples to properly render the HR plot"))
       survNeed()
-      validate(need(!input$dataset %in% c("Grzmil","Vital"), "Sorry, too few samples to properly render the HR plot"))
       input$tabSurv
       # Plot the hazardplot 
       hazardPlot(HR(), input$quantile)
@@ -441,7 +455,7 @@ shinyServer(
     
     #' Create a Kaplan Meier plot on the HR cutoff
     output$kmPlot <- renderPlot({
-      validate(need(histoSurvSelected() == "GBM", "Interactive HR plot currently available only for GBM samples"))
+      validate(need(histoSurvSelected() == "GBM", ""))
       survNeed()
       cutoff <- getCutoff()
       surv <- survivalFml()
@@ -476,12 +490,14 @@ shinyServer(
     output$boxmRNA <- renderPlot({    
       validate(need(input$mInput, ""))      
       mRNA <- round(mRNAsurv(),2)
+      q <- quantile(mRNA)
       xrange <-range(mRNA)
       par(mar = c(0,0,0,0)) 
       plot(0, 0, type = "n", xlim = c(xrange[1] + 0.25, xrange[2]) , ylim = c(-0.1,  + 0.1), ylab ="", xlab = "", axes = FALSE)
       points(x = mRNA, y = rep(0, length(mRNA)), pch="|")
       # Add a red line to show which  is the current cutoff.
-      points(x = input$mInput, y = 0, pch = "|", col="red", cex = 1.5)
+      points(x = input$mInput, y = 0, pch = "|", col="red", cex = 2.5)
+      points(x = q[2:4], y = rep(0,3), pch = "|", col="blue", cex = 2)
     }, bg = "transparent")
     
     #' Generate the slider for the manual cutoff
@@ -962,12 +978,14 @@ shinyServer(
                                    dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
                                                                                sSwfPath = copySWF(dest = "www"))),
                     callback = JS("function(table) {
-                    table.on('click.dt', 'tr', function() {
-                    table.$('tr.selected').removeClass('selected');
-                    $(this).toggleClass('selected');            
-                    Shiny.onInputChange('rows',
-                    table.rows('.selected').data()[0][0]);
-                    }); }")
+                      table.on('click.dt', 'tr', function() {
+                        table.$('tr.selected').removeClass('selected');
+                        $(this).toggleClass('selected');
+                        Shiny.onInputChange('rows', table.rows('.selected').data()[0][0]);
+                      }
+                      );
+                    }"
+                    )
                     )
     })
     

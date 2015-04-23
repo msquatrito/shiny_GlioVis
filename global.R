@@ -1,28 +1,28 @@
-pkg <- c("shiny", "survival", "weights", "googleVis", "dplyr", "htmlwidgets",
-         "ggplot2","gridExtra", "class", "kernlab","devtools","GGally","markdown","shinyBS")
-new.pkg <- pkg[!(pkg %in% installed.packages())]
-if (length(new.pkg)) {
-  install.packages(new.pkg, dependencies=TRUE)
-}
-if (!require("GSVA")) {
-  source("http://bioconductor.org/biocLite.R")
-  biocLite("GSVA")
-}
-
-if (!require("estimate")){
-  library(utils)
-  mdacc <- local({
-    rvers <- getRversion()
-    repos.hostname <- "bioinformatics.mdanderson.org"
-    sprintf("http://%s/OOMPA/%s",
-            repos.hostname,
-            paste(rvers$maj, rvers$min, sep="."))
-  })
-  install.packages("estimate", repos=mdacc, dependencies=TRUE)
-}
-
-if (!require("shinydashboard")) devtools::install_github("rstudio/shinydashboard")
-if (!require("DT")) devtools::install_github("rstudio/DT")
+# pkg <- c("shiny", "survival", "weights", "googleVis", "dplyr", "htmlwidgets",
+#          "ggplot2","gridExtra", "class", "kernlab","devtools","GGally","markdown","shinyBS")
+# new.pkg <- pkg[!(pkg %in% installed.packages())]
+# if (length(new.pkg)) {
+#   install.packages(new.pkg, dependencies=TRUE)
+# }
+# if (!require("GSVA")) {
+#   source("http://bioconductor.org/biocLite.R")
+#   biocLite("GSVA")
+# }
+# 
+# # if (!require("estimate")){
+# #   library(utils)
+# #   mdacc <- local({
+# #     rvers <- getRversion()
+# #     repos.hostname <- "bioinformatics.mdanderson.org"
+# #     sprintf("http://%s/OOMPA/%s",
+# #             repos.hostname,
+# #             paste(rvers$maj, rvers$min, sep="."))
+# #   })
+# #   install.packages("estimate", repos=mdacc, dependencies=TRUE)
+# # }
+# 
+# if (!require("shinydashboard")) devtools::install_github("rstudio/shinydashboard")
+# if (!require("DT")) devtools::install_github("rstudio/DT")
 
 library(shiny)
 library(survival)
@@ -33,12 +33,12 @@ library(googleVis)
 library(dplyr)
 library(GSVA)
 library(GGally)
-library(class)
+# library(class)
 library(kernlab)
 library(shinydashboard)
-library(DT)
-library(estimate)
+# library(estimate)
 library(caret)
+library(DT)
 # library(shinyBS)
 
 
@@ -388,19 +388,22 @@ myCorrTest <- function (df, gene1, gene2, histo = "All", subtype = "All", colorB
   if (separateBy == "Histology") {
     cor <- substitute(df %>%
                         group_by(Histology)%>%
-                        summarise(r = cor.test(x, y, use = "complete.obs")$estimate,
+                        summarise(n = n(),
+                                  r = cor.test(x, y, use = "complete.obs")$estimate,
                                   p.value = cor.test(x, y, use = "complete.obs")$p.value), 
                       list(x = as.name(gene1), y = as.name(gene2)))
     cor <- data.frame(eval(cor))
   } else if (separateBy == "Subtype") {
     cor <- substitute(df %>%
                         group_by(Subtype)%>%
-                        summarise(r = cor.test(x, y, use = "complete.obs")$estimate,
+                        summarise(n = n(),
+                                  r = cor.test(x, y, use = "complete.obs")$estimate,
                                   p.value = cor.test(x, y, use = "complete.obs")$p.value), 
                       list(x = as.name(gene1), y = as.name(gene2)))
     cor <- data.frame(eval(cor))
   } else if (separateBy == "none"){
     cor <- cor.test(df[ ,gene1], df[ ,gene2], use = "complete.obs")
+#     cor <- data.frame(n = cor$parameter[[1]]+2, r = cor$estimate, p.value = cor$p.value)
   }
   cor
 }

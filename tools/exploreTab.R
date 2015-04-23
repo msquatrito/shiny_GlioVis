@@ -32,7 +32,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                         conditionalPanel(
                           condition = "input.tab1 == 1",
                           checkboxInput(inputId = "primary", label = "Primary samples only", value = FALSE),
-                          helpModal(modal_title ="Help me pleaseeeeee", link = "help", 
+                          helpModal(modal_title ="Box plots", link = "help", 
                                     help_file = includeMarkdown("tools/help.Rmd")),
 #                           helpPopup(title = "Help me pleaseeeeee", content = includeMarkdown("tools/help.Rmd"), 
 #                                     placement = "bottom", trigger = "click"),
@@ -84,7 +84,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                               br(),
                               uiOutput("numericCutoff"),
                               plotOutput(outputId = "boxmRNA", width = "100%", height = 50),
-                              helpText("mRNA expression (log2)")
+                              helpText("mRNA expression (log2). Blue lines represent 25%, 50% and 75% quartiles. Red line represents the current selection.")
                             ),
                             hr()
                           )
@@ -126,7 +126,8 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                           br(),
                           uiOutput(outputId = "rppaCutoff"),
                           plotOutput(outputId = "boxRppaRNA", width = "100%", height = 50),
-                          br()
+                          conditionalPanel(condition = "output.boxRppaRNA",
+                          helpText("mRNA expression (log2). Blue lines represent 25%, 50% and 75% quartiles. Red line represents the current selection."))
                         ),
                         # Allow the user to set the height and width of the plot download.
                         conditionalPanel(
@@ -208,14 +209,16 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                               tabPanel(title = "HR plot", value = "hr",
                                                        column(width = 9,
                                                               wellPanel(
-                                                                helpText(HTML("<b>IMPORTANT: </b> Currently active only for GBM samples.")),
-                                                                helpText(HTML("<b>Note: </b> This is an interactive plot, click on a specific mRNA expression value 
-                                                                              to update the survival plot. The blue line represents the current selection.")),
-                                                                br(),
-                                                                checkboxInput(inputId = "quantile", label = "Show quantiles", value = TRUE),
+                                                                helpText(HTML('<font color="red"><b>IMPORTANT: </b> Currently active only for GBM samples.</font>')),
                                                                 div(class = "busy",  
                                                                     p("Calculating, please wait"),
                                                                     img(src="Rotating_brain.gif") 
+                                                                ),
+                                                                conditionalPanel(condition = "output.hazardPlot",
+                                                                                 helpText(HTML("<b>Note: </b> This is an interactive plot, click on a specific mRNA expression value 
+                                                                              to update the survival plot. The blue line represents the current selection.")),
+                                                                                 br(),
+                                                                                 checkboxInput(inputId = "quantile", label = "Show quantiles", value = TRUE)
                                                                 ),
                                                                 plotOutput(outputId = "hazardPlot", clickId = "hrClick", width = 500 , height = 400)
                                                               ),

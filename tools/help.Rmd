@@ -4,7 +4,7 @@ output: html_document
 ---
 
 1. Select a dataset
-2. Enter gene name
-3. Choose one of the available plot for the selected dataset
+2. Enter a gene name
+3. Choose one of the available plots for the selected dataset
 
 See the home tab for more details.
