@@ -1,5 +1,5 @@
 # pkg <- c("shiny", "survival", "weights", "googleVis", "dplyr", "ggplot2","gridExtra", 
-#         "htmlwidgets","kernlab","devtools","GGally","markdown")
+#         "htmlwidgets","kernlab","devtools","GGally","markdown","caret")
 # new.pkg <- pkg[!(pkg %in% installed.packages())]
 # if (length(new.pkg)) {
 #   install.packages(new.pkg, dependencies=TRUE)

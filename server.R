@@ -730,13 +730,13 @@ shinyServer(
       # d$adj.p.value <- p.adjust(d$p, method = "bonferroni")
       d <- d[order(d$p.value),]
       datatable(d, rownames = FALSE, options = list(lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full"),
-                callback = JS("function(table) {
+                callback = JS("
                 table.on('click.dt', 'tr', function() {
                 table.$('tr.selected').removeClass('selected');
                 $(this).toggleClass('selected');            
                 Shiny.onInputChange('rppa.rows',
                 table.rows('.selected').data()[0][0]);
-                });}")
+                })")
       )
       })
     
@@ -986,14 +986,12 @@ shinyServer(
                     options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
                                    dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
                                                                                sSwfPath = copySWF(dest = "www"))),
-                    callback = JS("function(table) {
+                    callback = JS("
                       table.on('click.dt', 'tr', function() {
                         table.$('tr.selected').removeClass('selected');
                         $(this).toggleClass('selected');
                         Shiny.onInputChange('rows', table.rows('.selected').data()[0][0]);
-                      }
-                      );
-                    }"
+                      })"
                     )
                     )
     })
@@ -1207,13 +1205,11 @@ shinyServer(
                     options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full", autoWidth = TRUE,
                                    dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
                                                                                sSwfPath = copySWF(dest = "www"))),
-                    callback = JS("function(table) {
-                                    table.on('click.dt', 'tr', function() {
+                    callback = JS("table.on('click.dt', 'tr', function() {
                                           table.$('tr.selected').removeClass('selected');
                                           $(this).toggleClass('selected');            
                                           Shiny.onInputChange('rowsEst',table.rows('.selected').data()[0][0]);
-                                    });
-                                }")
+                                    })")
                     )
     })
 
