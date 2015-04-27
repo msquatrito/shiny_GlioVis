@@ -199,7 +199,11 @@ shinyServer(
       data <- cbind(mRNA, exprs()[,2:6])
       data <- cbind(data, pDatas()[,!names(pDatas()) %in% names(data)])
       if (input$dataset == "TCGA GBM" | input$dataset == "TCGA Lgg") {
-        Copy_number <- cnas()[ ,input$gene]
+        if(input$gene %in% names(cnas())){
+          Copy_number <- cnas()[ ,input$gene]}
+        else {
+          Copy_number <- rep(NA, length(cnas()))
+        }
         Copy_number <- factor(Copy_number, levels = c(-2:2), labels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp")) 
         data <- cbind(Copy_number,data)
       }
@@ -232,6 +236,11 @@ shinyServer(
     
     #' Create the selected plot
     output$plot <- renderPlot({
+      if(plotType() ==" Copy_number"){
+        validate(
+          need(input$gene %in% names(cnas()),"Sorry, copy numbers are not available for this gene")
+        )
+      }
       # To avoid an error when switching datasets in case the colStrip is not available.
       if(input$colStrip){
         colnames <- names(data())[!names(data()) %in% c("group","mRNA","Sample","status","survival")]
@@ -693,7 +702,7 @@ shinyServer(
                   value = median(rppaRNA()), step = 0.05, round = -2)
     })
        
-    output$rppaTable <- DT::renderDataTable({
+    output$rppaTable <- renderDataTable({
       validate(
         need(input$dataset %in% c("TCGA GBM","TCGA Lgg"), "RPPA data available only for TCGA datasets")%then%
           need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
@@ -785,7 +794,7 @@ shinyServer(
     })
     
     #' Generate an HTML table view of the data
-    output$table <- DT::renderDataTable({
+    output$table <- renderDataTable({
       if (input$gene == "") {
         data <- pDatas()
         data <- data[,colSums(is.na(data)) < nrow(data)]
@@ -967,7 +976,7 @@ shinyServer(
     })
     
     #' Generate an HTML table view of the correlation table 
-    output$corrData <- DT::renderDataTable({
+    output$corrData <- renderDataTable({
       validate(
         need(input$geneCor != "", "Please, enter a gene name in the panel on the left")%then%
           # Not all genes are available for all the dataset
@@ -1074,7 +1083,7 @@ shinyServer(
     })
     
     #' Rerndering the subtype call as a data table
-    output$svm <- DT::renderDataTable({ 
+    output$svm <- renderDataTable({ 
       if (is.null(input$upFile) || input$goSvm == 0)
         return(NULL)
         DT::datatable(svm.call(), rownames = FALSE, extensions = "TableTools",
@@ -1108,7 +1117,7 @@ shinyServer(
     })
     
     #' Rerndering the knn subtype call as a data table
-    output$knn <- DT::renderDataTable({ 
+    output$knn <- renderDataTable({ 
       if (is.null(input$upFile) || input$goKnn == 0)
         return(NULL)
         DT::datatable(knn.call(), rownames = FALSE, extensions = "TableTools",
@@ -1141,7 +1150,7 @@ shinyServer(
     })
     
     #' Rerndering the subtype call as a data table
-    output$gsva <- DT::renderDataTable({ 
+    output$gsva <- renderDataTable({ 
       if (is.null(input$upFile) || input$goGsva == 0)
         return(NULL)
         DT::datatable(gsva.call(), rownames = FALSE, extensions = "TableTools",
@@ -1164,7 +1173,7 @@ shinyServer(
     })
     
     #' Rerndering the subtype call as a data table
-    output$sub3 <- DT::renderDataTable({ 
+    output$sub3 <- renderDataTable({ 
       if (is.null(input$upFile) || input$goSub3 == 0)
         return(NULL)
         DT::datatable(sub3.call(), rownames = FALSE, extensions = "TableTools",
@@ -1191,7 +1200,7 @@ shinyServer(
     })
     
     #' Rerndering the subtype call as a data table
-    output$estScore <- DT::renderDataTable({ 
+    output$estScore <- renderDataTable({ 
       if (is.null(input$upEstFile) || input$goEst == 0)
         return(NULL)
       DT::datatable(est.call(), rownames = FALSE, extensions = "TableTools", 

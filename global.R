@@ -1,5 +1,5 @@
-# pkg <- c("shiny", "survival", "weights", "googleVis", "dplyr", "htmlwidgets",
-#          "ggplot2","gridExtra", "class", "kernlab","devtools","GGally","markdown","shinyBS")
+# pkg <- c("shiny", "survival", "weights", "googleVis", "dplyr", "ggplot2","gridExtra", 
+#         "htmlwidgets","kernlab","devtools","GGally","markdown")
 # new.pkg <- pkg[!(pkg %in% installed.packages())]
 # if (length(new.pkg)) {
 #   install.packages(new.pkg, dependencies=TRUE)
@@ -22,6 +22,8 @@
 # # }
 # 
 # if (!require("shinydashboard")) devtools::install_github("rstudio/shinydashboard")
+# if (!requireNamespace('htmlwidgets') || packageVersion('htmlwidgets') <= '0.3.2')
+#   devtools::install_github('ramnathv/htmlwidgets')
 # if (!require("DT")) devtools::install_github("rstudio/DT")
 
 library(shiny)
@@ -33,13 +35,11 @@ library(googleVis)
 library(dplyr)
 library(GSVA)
 library(GGally)
-# library(class)
 library(kernlab)
 library(shinydashboard)
 # library(estimate)
 library(caret)
 library(DT)
-# library(shinyBS)
 
 
 
