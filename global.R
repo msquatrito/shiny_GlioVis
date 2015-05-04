@@ -37,10 +37,10 @@ library(GSVA)
 library(GGally)
 library(kernlab)
 library(shinydashboard)
-# library(estimate)
 library(caret)
 library(DT)
-
+library(Cairo)
+options(shiny.usecairo=TRUE)
 
 
 `%then%` <- shiny:::`%OR%`
@@ -108,55 +108,18 @@ plotList <- list("TCGA GBM" = c("Histology", "Copy_number", "Subtype", "CIMP_sta
                  "Oh" = c("Recurrence", "Subtype", "CIMP_status"))
 
 
-#########################################
-##############  ggboxPlot  ##############
-#########################################
-ggboxPlot <- function(data,  scale = FALSE, xlabel, stat = FALSE, colBox = FALSE, colStrip = FALSE, colorPoints, bw = FALSE, ...) {
-  if (scale) {
-    ylab <- "Normalized mRNA expression"
-  } else {
-    ylab <- "mRNA expression (log2)"
-  }
-  if (colBox) {
-    box <- geom_boxplot(aes(fill = group), outlier.size = 0) # It works but not the right way to approach this issue
-  } else {
-    box <- geom_boxplot(outlier.size = 0)
-  }
-  if (colStrip) {
-    col <- aes_string(color = colorPoints)
-    strip <- geom_jitter(position = position_jitter(width = .2), col, size = 2, alpha = 0.75)
-  } else {
-    strip <- geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5)
-  }
-  p <- ggplot(data, aes(x=group, y = mRNA)) + ylab(ylab) + xlab(paste0("\n",xlabel)) +
-    theme(axis.title.y=element_text(vjust=1)) 
-  p <- p + box + strip 
-  if (bw) {
-    p <- p + theme_bw () 
-  }
-  if (stat) {
-    tukey <- data.frame(TukeyHSD(aov(mRNA ~ group, data = data))[[1]])
-    t <- tukey %>%
-      mutate(Significance = as.factor(starmaker(p.adj, p.levels = c(.001, .01, .05, 1), symbols=c("***", "**", "*", "ns"))),
-             comparison = row.names(.)) %>%
-      ggplot(aes(reorder(comparison, diff), diff, ymin = lwr, ymax= upr, colour = Significance)) +
-      geom_point() + geom_errorbar(width = 0.25) + ylab("Differences in mean levels") + xlab("") + 
-      geom_hline(xintercept = 0, colour="darkgray", linetype = "longdash") + coord_flip()
-    if (bw) {
-      t <- t + theme_bw ()
-    }
-    grid.arrange(p, t, ncol=2, widths = c(3,2))
-  } else {
-    print(p) 
-  }
+################################################
+##############  Remove NA column  ##############
+################################################
+rmNA <- function (df) {
+  df <- df[,colSums(is.na(df)) < nrow(df)]
 }
-
 
 ######################################
 ############## Get HR  ###############
 ######################################
-getHR <- function (df, gene) {
-  mRNA <- df[ ,gene]
+getHR <- function (df) {
+  mRNA <- df[ ,"mRNA"]
   surv.status <- df[ ,"status"]
   surv.time <- df[ ,"survival"]
   my.Surv <- Surv(surv.time, surv.status == 1)
@@ -214,25 +177,12 @@ hazardPlot <- function (HRdata, quantile) {
 ###################
 ## Survival plot ##
 ###################
-survivalPlot <- function (df, gene, group, cutoff, numeric, subtype, gcimp = FALSE, primary = FALSE) {
-  if (group != "All") {
-    df <- filter(df, Histology == group) 
-  }
-  # For GBM, select only primary tumors
-  if (primary & any(!is.na(df$Recurrence))) {
-    df <- filter(df, Recurrence == "Primary")
-  }
+survivalPlot <- function (df, gene, group, subtype, cutoff, numeric) {
   # Select a specific subtype
   if (group == "GBM" & subtype != "All") {
     df <- filter(df, Subtype == subtype)
   }
-  # Remove G-CIMP, when selected
-  if (gcimp& any(!is.na(df$CIMP_status))){
-    df <- filter(df, CIMP_status != "G-CIMP")
-  } 
-  # Select the samples that have survival data
-  df <- filter(df, !is.na(df$status))
-  mRNA <- df[ ,gene]
+  mRNA <- df[ ,"mRNA"]
   surv.status <- df[ ,"status"]
   surv.time <- df[ ,"survival"]
   my.Surv <- Surv(time = surv.time, event = surv.status== 1)
@@ -473,7 +423,6 @@ kmPlot <- function (cutoff,surv){
   text (smax-10, 0.65, paste (star.log, "Log-rank p value=", log.rank.p), cex = 1)
   text (smax-10, 0.575, paste (star.mcox, "Wilcoxon p value=", mantle.cox.p), cex = 1)
 }
-
 
 
 ############################################################################

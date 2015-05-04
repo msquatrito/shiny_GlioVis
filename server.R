@@ -115,6 +115,14 @@ shinyServer(
         NULL
       }
     })
+    
+    plotType <- reactive({
+      if (input$plotType == "Pre-defined"){
+        plotSelected()
+      } else if (input$plotType == "User-defined") {
+        plotUserSelected()
+      }
+    })
         
     #' Change the plot type available for a specific dataset
     observe({
@@ -172,16 +180,6 @@ shinyServer(
       updateSelectInput(session, inputId = "histologyCorrTable", choices = c("All", histoCor()), selected = "All")
     })
     
-    #' Reactive expressions for the summary plots to work in the right way
-    primaryBox <- reactive ({
-      if(input$tab1 == 1) {
-        primaryBox <- input$primary
-      } else {
-        primaryBox <- FALSE
-      }
-      primaryBox
-    })
-    
     #' Generate a dataframe with the data to plot 
     data <- reactive({     
       validate(
@@ -196,99 +194,132 @@ shinyServer(
       if (input$scale) {
         mRNA <- scale(mRNA)
       }
-      data <- cbind(mRNA, exprs()[,2:6])
-      data <- cbind(data, pDatas()[,!names(pDatas()) %in% names(data)])
+      data <- cbind(mRNA, exprs()[,2:6]) # To combine with pData
+      data <- cbind(data, pDatas()[,!names(pDatas()) %in% names(data)]) # To combine with more pData for the report
       if (input$dataset == "TCGA GBM" | input$dataset == "TCGA Lgg") {
         if(input$gene %in% names(cnas())){
           Copy_number <- cnas()[ ,input$gene]}
         else {
-          Copy_number <- rep(NA, length(cnas()))
+          Copy_number <- rep(NA, length(cnas())) # Some genes don't have copy numbers data
         }
         Copy_number <- factor(Copy_number, levels = c(-2:2), labels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp")) 
         data <- cbind(Copy_number,data)
       }
-      if (primaryBox() & any(!is.na(data$Recurrence))) {
-        data <- filter(data, Recurrence == "Primary")
-      }
-      data <- data[ ,colSums(is.na(data)) < nrow(data)] 
-      data$group <- data[ ,plotType()]
-      if (input$tab1 == 1) {
-        data <- filter(data, !is.na(group)) # Remove NA for plotting
-      }
       data 
     })
+       
+    #' Data for the box plot
+    plotData <- reactive({
+      validate(
+        need(!all(is.na(data()[ ,plotType()])),"Sorry,no gene data available for this group")
+      )
+      data <- data()
+      if (input$primary & any(!is.na(data$Recurrence))) {
+        data <- filter(data, Recurrence == "Primary")
+      }
+      data <- subset(data, !is.na(data[ ,plotType()]))
+    })
     
+    #' Reactive function to generate the box plots
+    boxplot <- reactive ({
+      data <- plotData()
+      if (input$scale) {
+        ylab <- "Normalized mRNA expression"
+      } else {
+        ylab <- "mRNA expression (log2)"
+      }
+      if (input$colBox) {
+        box <- geom_boxplot(aes_string(fill = plotType()), outlier.size = 0) # It works but not the right way to approach this issue
+      } else {
+        box <- geom_boxplot(outlier.size = 0)
+      }
+      if (input$colStrip) {
+        col <- aes_string(color = input$colorP)
+        strip <- geom_jitter(position = position_jitter(width = .2), col, size = 2, alpha = 0.75)
+      } else {
+        strip <- geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5)
+      }
+      p <- ggplot(data, mapping=aes_string(x=plotType(), y = "mRNA")) + ylab(ylab) + xlab(paste0("\n",plotType())) +
+        theme(axis.title.y=element_text(vjust=1))
+      p <- p + box + strip
+      if (input$bw) {
+        p <- p + theme_bw () 
+      }
+      if (input$tukeyPlot) {
+        mRNA <- data[,"mRNA"]
+        group <- data[ ,plotType()]
+        tukey <- data.frame(TukeyHSD(aov(mRNA ~ group))[[1]])
+        t <- tukey %>%
+          mutate(Significance = as.factor(starmaker(p.adj, p.levels = c(.001, .01, .05, 1), symbols=c("***", "**", "*", "ns"))),
+                 comparison = row.names(.)) %>%
+          ggplot(aes(reorder(comparison, diff), diff, ymin = lwr, ymax= upr, colour = Significance)) +
+          geom_point() + geom_errorbar(width = 0.25) + ylab("Differences in mean levels") + xlab("") + 
+          geom_hline(xintercept = 0, colour="darkgray", linetype = "longdash") + coord_flip()
+        if (input$bw) {
+          t <- t + theme_bw ()
+        }
+        grid.arrange(p, t, ncol=2, widths = c(3,2))
+      } else {
+        p
+      }
+    })
+  
     #' Generate radiobuttons for the various categories in the pData
     output$colorPoints <- renderUI({
-      validate(need(input$gene != "",""))
-      colnames <- names(data())[!names(data()) %in% c("group","mRNA","Sample","status","survival")]
+      validate(
+        need(input$gene != "","")
+      )
+      data <- rmNA(plotData())
+      colnames <- names(data)[!names(data) %in% c("mRNA","Sample","status","survival")]
       # Create the radiobuttons for the different pData categories
       radioButtons("colorP", "Color by:", choices  = colnames, selected = plotType())
     })
     
-    plotType <- reactive({
-      if (input$plotType == "Pre-defined"){
-        plotSelected()
-      } else if (input$plotType == "User-defined") {
-        plotUserSelected()
-      }
-    })
-    
     #' Create the selected plot
     output$plot <- renderPlot({
-      if(plotType() ==" Copy_number"){
-        validate(
-          need(input$gene %in% names(cnas()),"Sorry, copy numbers are not available for this gene")
-        )
-      }
       # To avoid an error when switching datasets in case the colStrip is not available.
       if(input$colStrip){
-        colnames <- names(data())[!names(data()) %in% c("group","mRNA","Sample","status","survival")]
+        data <- rmNA(plotData())
+        colnames <- names(data)[!names(data) %in% c("mRNA","Sample","status","survival")]
         validate(need(input$colorP %in% colnames,""))
       }
-      ggboxPlot(data = data (), xlabel = plotType(), scale = input$scale, stat = input$tukeyPlot, colBox = input$colBox, 
-                colStrip = input$colStrip, colorPoints = input$colorP, bw = input$bw) 
+      print(boxplot())
     })
     
     #' Summary statistic
     output$summary <- renderTable({    
-      stat <- data.frame(data() %>%
+      data <- plotData()
+      data$group <- data[ ,plotType()]
+      stat <- data.frame(data %>%
                            group_by(group) %>%
-                           summarise(Sample_count = paste0(n()," (", round(n()*100/dim(data())[1],2), "%)" ), # prop.table
+                           summarise(Sample_count = paste0(n()," (", round(n()*100/dim(data)[1],2), "%)" ), # prop.table
                                      median = median (mRNA, na.rm=T), mad = mad(mRNA, na.rm=T),mean = mean(mRNA, na.rm=T), sd = sd(mRNA, na.rm=T)))
       row.names(stat) <- stat$group
-      tot <- data() %>%
+      tot <- data %>%
         summarise(Sample_count = n(),median = median (mRNA, na.rm=T), 
                   mad = mad(mRNA, na.rm=T),mean = mean(mRNA, na.rm=T), sd = sd(mRNA, na.rm=T))
       stat <- stat[,-1]
       stat <- rbind(stat,TOTAL = tot)
       stat 
     }, align='rrrrrr')
-    
-    
-    #     output$summaryPie <- renderGvis({
-    #       data <- data()
-    #       plotData <- data.frame(table(data[, plotType()]))
-    #       pie <-gvisPieChart(labelvar = "Var1", numvar = "Freq", data = plotData, 
-    #                          options = list(width=300, height=300, pieSliceText='label', chartArea.left = 1)) # title = my_i,
-    #       return(pie)
-    #     })
-    
+
     #' Tukey post-hoc test
     output$tukeyTest <- renderTable({    
-      tukey <- data.frame(TukeyHSD(aov(mRNA ~ group, data = data()))[[1]])
+      data <- plotData()
+      mRNA <- data[,"mRNA"]
+      group <- data[ ,plotType()]
+      tukey <- data.frame(TukeyHSD(aov(mRNA ~ group))[[1]])
       tukey$Significance <- as.factor(starmaker(tukey$p.adj, p.levels = c(.001, .01, .05, 1), symbols=c("***", "**", "*", "ns")))
       tukey <- tukey[order(tukey$diff), ]
       tukey
     })
     
-    
     #' Pairwise t test
     output$pairwiseTtest <- renderTable({     
-      data <- data()
-      x <- data$mRNA # mRNA
-      y <- data$group # group
-      pttest <- pairwise.t.test(x, y, na.rm= TRUE, p.adj = "bonferroni", paired = FALSE)[[3]]
+      data <- plotData()
+      mRNA <- data[,"mRNA"]
+      group <- data[ ,plotType()]
+      pttest <- pairwise.t.test(mRNA, group, na.rm= TRUE, p.adj = "bonferroni", paired = FALSE)[[3]]
       pttest
     })
     
@@ -334,8 +365,7 @@ shinyServer(
         # Gets the name of the function to use from the downloadFileType reactive element.
         plotFunction <- match.fun(downloadPlotFileType())
         plotFunction(file, width = downloadPlotWidth(), height = downloadPlotHeight())
-        ggboxPlot(data = data (), xlabel = plotType(), scale = input$scale, stat = input$tukeyPlot, colBox = input$colBox, 
-                  colStrip = input$colStrip, colorPoints = input$colorP, bw = input$bw)   
+        print(boxplot())  
         dev.off(which=dev.cur())
       }
     )
@@ -381,28 +411,35 @@ shinyServer(
       allSubSurv
     })
     
-    #' Extract the GBM samples for the interactive HR plot.
+    #' Extract the survival data.
     survData <- reactive({    
-      df <- exprs()
-      df <- filter(df, !is.na(status))
-      # subset to primary GBM, in case both primary and recurrent samples are available
-      if (primarySurv() & any(!is.na(df$Recurrence))) {
-        df <- filter (df, Histology == "GBM" & Recurrence == "Primary")
+      df <- data()
+      df <- filter(df, !is.na(df$status))
+      if (input$histologySurv != "All"){
+        df <- filter(df, Histology == input$histologySurv)
       }
-      df <- filter (df, Histology == "GBM")
-      if (input$subtypeSurv != "All") {
+      if (input$histologySurv == "GBM" & input$subtypeSurv != "All") {
         df <- filter (df, Subtype == input$subtypeSurv)
       }
       # exclude G-CIMP is selected
       if (gcimpSurv()){
         df <- filter (df, CIMP_status != "G-CIMP")
       }
+      # select primary sample
+      if (primarySurv() & any(!is.na(df$Recurrence))) {
+        df <- filter (df, Recurrence == "Primary")
+      }
       df
+    })  
+
+    #' Subset to GBM samples for the interactive HR plot.
+    survGBM <- reactive({
+      df <- filter (survData(), Histology == "GBM")
     })
     
     #' Extract the GBM expression values for the interactive HR plot.
     geneExp <- reactive({
-      geneExp <- survData()[ ,input$gene]
+      geneExp <- survGBM()[ ,"mRNA"]
       currentClick$stale <<- TRUE
       geneExp
     })
@@ -420,7 +457,7 @@ shinyServer(
     
     #' Extract the Hazard ratios for the input gene.
     HR <- reactive ({
-      HR <- getHR(survData(), input$gene)
+      HR <- getHR(survGBM())
     })
     
     #' Requirements for all the survival plots
@@ -457,8 +494,8 @@ shinyServer(
     survivalFml <- reactive({
       # Create the groups based on which samples are above/below the cutoff
       expressionGrp <- as.integer(geneExp() < getCutoff())
-      # Create the survival object
-      surv <- with(survData(), Surv(survival, status == 1))
+      # Create the survival object 
+      surv <- with(survGBM(), Surv(survival, status == 1))
       return(surv ~ expressionGrp)
     })
     
@@ -475,21 +512,7 @@ shinyServer(
     mRNAsurv <- reactive({
       survNeed()
       validate(need(input$histologySurv %in% c("All", histo()),""))      
-      df <- exprs()
-      df <- filter(df, !is.na(df$status))
-      if (input$histologySurv != "All"){
-        df <- filter(exprs(), Histology == input$histologySurv)
-      }
-      if (input$histologySurv == "GBM" & input$subtypeSurv != "All") {
-        df <- filter (df, Subtype == input$subtypeSurv)
-      }
-      if (gcimpSurv()){
-        df <- filter (df, CIMP_status != "G-CIMP")
-      }
-      if (primarySurv() & any(!is.na(df$Recurrence))) {
-        df <- filter (df, Recurrence == "Primary")
-      }
-      mRNA <- df[ ,input$gene]
+      mRNA <- survData()[ ,"mRNA"]
       mRNA.values <- round(mRNA[!is.na(mRNA)],2)
       # Generate a vector of continuos values, excluding the first an last value
       mRNA.values <- sort(mRNA.values[mRNA.values != min(mRNA.values) & mRNA.values != max(mRNA.values)]) 
@@ -524,11 +547,13 @@ shinyServer(
         try({
           par(mfrow=c(2,2), mar=c(3,3,3,1), mgp=c(2.2,.95,0))
           for (i in c("Classical","Mesenchymal","Neural","Proneural")) {
-            survivalPlot (exprs(), input$gene, group = "GBM", cutoff = input$cutoff, numeric = input$mInput,
-                          subtype = i, gcimp = gcimpSurv(), primary = primarySurv())}
+            survivalPlot (survData(), input$gene, group = "GBM", subtype = i,
+                          cutoff = input$cutoff, numeric = input$mInput)
+          }
         }, silent = TRUE)} else {
-          try(survivalPlot (exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, numeric = input$mInput,
-                            subtype = input$subtypeSurv, gcimp = gcimpSurv(), primary = primarySurv()), silent = TRUE)}
+          try(survivalPlot (survData(), input$gene, group = input$histologySurv, subtype = input$subtypeSurv,
+                            cutoff = input$cutoff, numeric = input$mInput), silent = TRUE)
+        }
     }, height = function(){if(!allSubSurv()) {400} else {600}}, width = function(){if(!allSubSurv()) {500} else {800}})
         
     #' Download the survPlot
@@ -542,11 +567,13 @@ shinyServer(
         if(allSubSurv()) {
           par(mfrow=c(2,2), mar=c(3,3,3,1), mgp=c(2.2,.95,0))
           for (i in c("Classical","Mesenchymal","Neural","Proneural")) {
-            survivalPlot (exprs(), input$gene, group = "GBM", cutoff = input$cutoff, numeric = input$mInput,
-                          subtype = i, gcimp = gcimpSurv(), primary = primarySurv())}
+            survivalPlot (survData(), input$gene, group = "GBM", subtype = i,
+                          cutoff = input$cutoff, numeric = input$mInput)
+          }
         } else {
-          survivalPlot (exprs(), input$gene, group = input$histologySurv, cutoff = input$cutoff, numeric = input$mInput,
-                        subtype = input$subtypeSurv, gcimp = gcimpSurv(), primary = primarySurv())}
+          survivalPlot (survData(), input$gene, group = input$histologySurv, subtype = input$subtypeSurv,
+                        cutoff = input$cutoff, numeric = input$mInput)
+        }
         dev.off()
       }
     ) 
@@ -778,6 +805,55 @@ shinyServer(
       grid.arrange(p1, p2, ncol=1)
     },height = 700)
     
+    #' Generate reports
+    output$reportPlots <- renderUI({
+      validate(
+        need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
+          need(input$gene %in% names(exprs()),"Gene not available for this dataset")
+      )
+      groups <- c(plotList[[input$dataset]], plotUserSelection())
+      plot_output_list <- lapply(groups, function(i) {
+        plot_report <- paste("plotReport", i, sep = "")
+        box(height = 300, title = paste0(i), width = NULL, solidHeader = TRUE, status = "primary",
+            plotOutput(plot_report, height = 245)
+        )
+      })
+      do.call(tagList, plot_output_list)
+    })  
+    
+    observe({
+      data <- data()
+      groups <- c(plotList[[input$dataset]], plotUserSelection())
+      for (i in groups) {
+        local({
+          my_i <- i
+          plot_report <- paste("plotReport", my_i, sep = "")
+          output[[plot_report]] <- renderPlot({
+            data <- filter(data,!is.na(data[,my_i]))
+            p <- ggplot(data, mapping=aes_string(x=my_i, y = "mRNA")) + geom_boxplot(outlier.size = 0) +  
+              geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5) + 
+              ylab("mRNA expression (log2)") + theme(axis.title.x = element_blank()) + theme(axis.title.y=element_text(vjust=1)) 
+            stat <- substitute(data %>%
+                                 group_by(x) %>%
+                                 summarise(Sample_count = paste0(n()," (", round(n()*100/dim(data())[1],2), "%)" ), # prop.table
+                                           median = round(median (mRNA, na.rm=T),2), mad = round(mad(mRNA, na.rm=T),2),
+                                           mean = round(mean(mRNA, na.rm=T),2), sd = round(sd(mRNA, na.rm=T),2)),
+                               list(x = as.name(my_i)))
+            stat <- data.frame(eval(stat))
+            row.names(stat) <- stat[,my_i]
+            tot <- eval(substitute(data %>%
+                                     summarise(Sample_count = n(), median = round(median (mRNA, na.rm=T),2), mad = round(mad(mRNA, na.rm=T),2),
+                                               mean = round(mean(mRNA, na.rm=T),2), sd = round(sd(mRNA, na.rm=T),2)),
+                                   list(x = as.name(my_i))))
+            stat <- stat[,-1]
+            stat <- rbind(stat,TOTAL = tot)
+            t <- tableGrob(stat, gp = gpar(fontsize=14),row.just = "right", core.just = "right")
+            grid.arrange(p, t, ncol = 2, just = c("center", "top")) # `just` it's not working
+          })
+        })
+      }
+    })
+    
     #' Reactive function for an HTML table view of the data
     dataTable <- reactive({
       mRNA <- exprs()[ , input$gene, drop = FALSE]
@@ -789,15 +865,15 @@ shinyServer(
         names(CN_status) <- paste0(input$gene,"_CN_status") 
         data <- cbind(data, CN_status)
       }
-      data <- data[,colSums(is.na(data)) < nrow(data)] 
+      data <- rmNA(data)
       data
     })
     
     #' Generate an HTML table view of the data
     output$table <- renderDataTable({
+      # If a gene is not specified show the pData only
       if (input$gene == "") {
-        data <- pDatas()
-        data <- data[,colSums(is.na(data)) < nrow(data)]
+        data <- rmNA(pDatas())
       } else {
         data <- dataTable()
       }
@@ -807,26 +883,6 @@ shinyServer(
                                    tableTools = list(aButtons = c("copy","csv","xls","print"),
                                                      sSwfPath = copySWF(dest = "www"))))
     })
-    
-    #     #' Generate an HTML table view of the data
-    #     output$table <- renderDataTable({
-    #       if (input$gene == "") {
-    #         data <- pDatas()
-    #       } else {
-    #         data <- dataTable()
-    #       }
-    #       data
-    #     }, options = list(orderClasses = TRUE, lengthMenu = c(10, 30, 50), pageLength = 10))
-    
-    #' Download the data
-    output$downloadData <- downloadHandler(
-      filename = function() {
-        paste0(Sys.Date(), "_", input$gene, "_", input$dataset, ".csv")
-      },
-      content = function(file) {
-        write.csv(dataTable(), file)
-      }
-    )
     
     #' Generate a graphic summary of the dataset, using ggvis
     output$piePlots <- renderUI({
@@ -876,7 +932,7 @@ shinyServer(
     
     observe({   
       df <- exprs()[ ,c("Histology", "Grade", "Recurrence", "Subtype", "CIMP_status","survival", "status")]
-      df <- df[,colSums(is.na(df)) < nrow(df)] 
+      df <- rmNA(df) 
       groups <- names(df)[!names(df) %in% c("Sample","status","survival")]
       for (i in groups) {                                                    
         local({
@@ -894,54 +950,6 @@ shinyServer(
       }
     })
     
-    #' Generate reports
-    output$reportPlots <- renderUI({
-      data <- data()
-      groups <- c(plotList[[input$dataset]], plotUserSelection())
-      plot_output_list <- lapply(groups, function(i) {
-        plot_report <- paste("plotReport", i, sep = "")
-        box(height = 300, title = paste0(i), width = NULL, solidHeader = TRUE, status = "primary",
-            plotOutput(plot_report, height = 245)
-        )
-      })
-      do.call(tagList, plot_output_list)
-    })  
-    
-    observe({
-      data <- data()
-      groups <- c(plotList[[input$dataset]], plotUserSelection())
-      for (i in groups) {
-        local({
-          my_i <- i
-          plot_report <- paste("plotReport", my_i, sep = "")
-          output[[plot_report]] <- renderPlot({
-            data <- filter(data,!is.na(data[,my_i]))
-            #         validate(need(my_i %in% names(data),""))
-            p <- ggplot(data, mapping=aes_string(x=my_i, y = "mRNA")) + geom_boxplot(outlier.size = 0) +  
-              geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5) + 
-              ylab("mRNA expression (log2)") + theme(axis.title.x = element_blank()) + theme(axis.title.y=element_text(vjust=1)) 
-            stat <- substitute(data %>%
-                                 group_by(x) %>%
-                                 summarise(Sample_count = paste0(n()," (", round(n()*100/dim(data())[1],2), "%)" ), # prop.table
-                                           median = round(median (mRNA, na.rm=T),2), mad = round(mad(mRNA, na.rm=T),2),
-                                           mean = round(mean(mRNA, na.rm=T),2), sd = round(sd(mRNA, na.rm=T),2)),
-                               list(x = as.name(my_i)))
-            stat <- data.frame(eval(stat))
-            row.names(stat) <- stat[,my_i]
-            tot <- eval(substitute(data %>%
-                                     summarise(Sample_count = n(), median = round(median (mRNA, na.rm=T),2), mad = round(mad(mRNA, na.rm=T),2),
-                                               mean = round(mean(mRNA, na.rm=T),2), sd = round(sd(mRNA, na.rm=T),2)),
-                                   list(x = as.name(my_i))))
-            stat <- stat[,-1]
-            stat <- rbind(stat,TOTAL = tot)
-            t <- tableGrob(stat, gp = gpar(fontsize=14),row.just = "right", core.just = "right")
-            grid.arrange(p, t, ncol = 2, just = c("center", "top")) # `just` it's not working
-          })
-        })
-      }
-    })
-       
-    
     #' Correlation method
     corrMethod <- reactive({
       switch(input$corrMethod,
@@ -949,11 +957,10 @@ shinyServer(
              "Pearson" = "pearson")
     })
     
-    #' Generate the correlation table ##  corFast works locally but not on shinyapps.io
+    #' Generate the correlation table 
     corr <- reactive ({
       corr <- getCorr(datasetInputCor()[["expr"]], input$geneCor, input$histologyCorrTable, corrMethod())
       corr  <- merge(genes, corr, by="Gene")
-      #       corr <- corr [-1,]
       corr <- arrange(corr, desc(abs(r)))
     })
     
