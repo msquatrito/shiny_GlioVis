@@ -1148,7 +1148,7 @@ shinyServer(
       rownames(upData) <- upData$Sample
       exprs <- data.frame(t(upData[,-1]))
       set.seed(1234)
-      gsva_results <- gsva(expr=as.matrix(exprs), gset.idx.list = gene_list, method="ssgsea", rnaseq=FALSE, parallel.sz = 10,
+      gsva_results <- gsva(expr=as.matrix(exprs), gset.idx.list = gene_list, method="ssgsea", rnaseq=FALSE, parallel.sz = 0,
                            min.sz=0, max.sz=10000, verbose=TRUE)
       subtype_scores <- round(t(gsva_results),3)
       subtype_final <- data.frame(Sample = rownames(upData), gsea.subtype.call = names(gene_list)[apply(subtype_scores,1,which.max)], 
