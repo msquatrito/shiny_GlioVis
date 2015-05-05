@@ -240,10 +240,10 @@ shinyServer(
         strip <- geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5)
       }
       p <- ggplot(data, mapping=aes_string(x=plotType(), y = "mRNA")) + ylab(ylab) + xlab(paste0("\n",plotType())) +
-        theme(axis.title.y=element_text(vjust=1))
+        theme(axis.title.y=element_text(vjust=1)) + theme_gray(base_size = 14)
       p <- p + box + strip
       if (input$bw) {
-        p <- p + theme_bw () 
+        p <- p + theme_bw (base_size = 14) 
       }
       if (input$tukeyPlot) {
         mRNA <- data[,"mRNA"]
@@ -829,6 +829,9 @@ shinyServer(
           my_i <- i
           plot_report <- paste("plotReport", my_i, sep = "")
           output[[plot_report]] <- renderPlot({
+            validate(
+              need(!all(is.na(data[ ,my_i])),"Sorry,no gene data available for this group")
+            )
             data <- filter(data,!is.na(data[,my_i]))
             p <- ggplot(data, mapping=aes_string(x=my_i, y = "mRNA")) + geom_boxplot(outlier.size = 0) +  
               geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5) + 
@@ -1145,8 +1148,8 @@ shinyServer(
       rownames(upData) <- upData$Sample
       exprs <- data.frame(t(upData[,-1]))
       set.seed(1234)
-      gsva_results <- gsva(expr=as.matrix(exprs), gset.idx.list = gene_list, method="ssgsea", rnaseq=FALSE,
-                           min.sz=0, max.sz=10000, verbose=FALSE)
+      gsva_results <- gsva(expr=as.matrix(exprs), gset.idx.list = gene_list, method="ssgsea", rnaseq=FALSE, parallel.sz = 5,
+                           min.sz=0, max.sz=10000, verbose=TRUE)
       subtype_scores <- round(t(gsva_results),3)
       subtype_final <- data.frame(Sample = rownames(upData), gsea.subtype.call = names(gene_list)[apply(subtype_scores,1,which.max)], 
                                   subtype_scores)
