@@ -14,7 +14,7 @@ library(caret)
 library(DT)
 library(Cairo)
 options(shiny.usecairo=TRUE)
-
+`%then%` <- shiny:::`%OR%`
 
 #######################################
 ############## Datasets  ##############
