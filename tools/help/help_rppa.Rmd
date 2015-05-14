@@ -1,0 +1,10 @@
+---
+title: "RPPA"
+output: html_document
+---
+
+Reverse phase protein array (RPPA) is a high-throughput antibody-based technique with the procedures similar to that of Western blots.  Proteins are extracted from tumor tissue or cultured cells, denatured by SDS , printed on nitrocellulose-coated slides followed by antibody probe.
+
+*References:*  
+[MDACC](http://bioinformatics.mdanderson.org/main/TCPA:Overview)   
+[Jun Li et al. 2013](http://www.nature.com/nmeth/journal/v10/n11/full/nmeth.2650.html)  

@@ -1,0 +1,36 @@
+---
+title: "help"
+output: html_document
+---
+
+1. Select a dataset
+2. Enter a gene name
+3. Choose one of the available plots for the selected dataset
+
+For each dataset it is available a list of common "pre-defined" plots and
+a list of dataset-specific "user-defined" box plots. An overview of all the box plots for a
+given dataset can be found at "Explore/Summary/Plots".  
+The data used to generate the plot are available in the "Box Plots/Data" tab.   
+
+**What is a box plots?**   
+A box plot or  is a convenient way of graphically depicting groups of numerical data through their quartiles. The upper and lower "hinges" correspond to the first and third quartiles (the 25th and 75th percentiles). The upper whisker extends from the hinge to the highest value that is within 1.5 * IQR of the hinge, where IQR is the inter-quartile range, or distance between the first and third quartiles. The lower whisker extends from the hinge to the lowest value within 1.5 * IQR of the hinge. Data beyond the end of the whiskers are outliers (as specified by Tukey). (*References:* [Wikipedia](http://en.wikipedia.org/wiki/Box_plot), [ggplot2](http://docs.ggplot2.org/current/geom_boxplot.html))  
+
+
+**Plot options:**   
+* Remove/add a group of samples: For a specific plot the user can select which group to show. Only recomended for visualization, removing group of samples could profoundly affect the statistical analysis.   
+* Scale y axis: Centering is done by subtracting the mRNA means (omitting NAs) and dividing by the standard deviations.   
+* White background: Change the plot setting to have white backround and black axis labels.   
+* Color box: Color the boxes by sample group.   
+* Color stripchart: It allows to color the points of the stripchart, using a different plot type catagory. E.g. The user can plot the Copy numbers and can color for the Subtype.   
+* Change points appearance: It' is possible to change the size and the transparency of the points of the stripchart. Useful when generating small plots with a lot of points.  
+* Change axis labels: To set different x and y axis labels   
+* Change font size: To change x and y axis text/labels font size.      
+
+**Statistic:**   
+* Summary: Table showing the sample count, mRNA median, median absolute deviation (mad), mean and standard deviation (sd).   
+* Tukey's honest significant differences (HSD): Table showing the difference between group pairs, the 95% confidence interval and the p-value of the pairwise comparisons. A graphical representation of the result of the Tukey's HSD test can also be aded to the box plot.      
+* Pairwise t-test: Pairwise comparisons between group levels. p-values are calculated with Bonferroni correction, to adjust for multiple testing.   
+
+**How to download a plot:**   
+* Low resolution: after changing the plot size to obtain the desired appearance, right-click on the plot to copy the image.   
+* High resolution: select the file format (.pdf, .bmp, .jpeg or .jpg), the image dimensions and press the download button.   

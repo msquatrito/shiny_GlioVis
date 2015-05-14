@@ -1,0 +1,12 @@
+---
+title: "Cutoff selection"
+output: html_document
+---
+
+**Cutoff selection**
+* **Median**: split in two groups by the median   
+* **Lower quartile**: split in two groups, 25% lower expressing vs the rest   
+* **Upper quartile**: split in two groups, 25% higher expressing vs the rest   
+* **High vs low**: split in two groups, 25% lower expressing vs 25% higher expressing   
+* **Quartiles**: split in 4 groups  
+* **Use a specific mRNA value**: manually select a precise mRNA value  

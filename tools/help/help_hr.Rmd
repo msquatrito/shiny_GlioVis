@@ -1,0 +1,8 @@
+---
+title: "Hazard Ratio"
+output: html_document
+---
+
+In survival analysis, the [hazard ratio (HR)](http://en.wikipedia.org/wiki/Hazard_ratio) is the ratio of the hazard rates corresponding to the conditions described by two levels of an explanatory variable.   
+**Hazard ratio plot**  
+For each mRNA cutoff point, a Cox analysis is executed.The hazard ratio with 95% CI is shown in dependence of possible cutoff points. The distribution of the mRNA is shown as rug plot at the bottom of the figure ([*Cutoff finder*](http://molpath.charite.de/cutoff/docs/Cutoff_Finder_manual.pdf)).   
