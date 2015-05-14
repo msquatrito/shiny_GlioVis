@@ -4,10 +4,6 @@ shinyServer(
     
     options(shiny.maxRequestSize=30*1024^2)    
     
-    observe({
-      if (input$nav == "quit") stopApp()
-    })
-    
     #' Return the requested dataset
     datasetInput <- reactive({
       switch(input$dataset, 
@@ -202,7 +198,8 @@ shinyServer(
         else {
           Copy_number <- rep(NA, length(cnas())) # Some genes don't have copy numbers data
         }
-        Copy_number <- factor(Copy_number, levels = c(-2:2), labels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp")) 
+        Copy_number <- factor(Copy_number, levels = c(-2:2), labels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp"))
+        Copy_number <- droplevels(Copy_number)
         data <- cbind(Copy_number,data)
       }
       data 
@@ -214,62 +211,82 @@ shinyServer(
         need(!all(is.na(data()[ ,plotType()])),"Sorry,no gene data available for this group")
       )
       data <- data()
-      if (input$primary & any(!is.na(data$Recurrence))) {
-        data <- filter(data, Recurrence == "Primary")
+      data <- subset(data, !is.na(data[ ,plotType()]))   
+    })
+    
+    #' Filtered data for the box plot
+    filterData <- reactive({
+      if (input$removeMe) {
+      data <- plotData()
+      data <- subset(data, data[ ,plotType()] %in% input$removeGp)
+      } else {
+        data <- plotData()
       }
-      data <- subset(data, !is.na(data[ ,plotType()]))
+      data
+    })
+    
+    #' Select input for groups to add/exclude
+    output$removeGp <- renderUI({
+      groups <- levels(plotData()[ ,plotType()])
+      selectizeInput(inputId = "removeGp", label = "", choices = groups, selected = groups, multiple = TRUE, 
+                     options = list(plugins = list('remove_button')))
     })
     
     #' Reactive function to generate the box plots
     boxplot <- reactive ({
-      data <- plotData()
-      if (input$scale) {
-        ylab <- "Normalized mRNA expression"
-      } else {
-        ylab <- "mRNA expression (log2)"
+      data <- filterData()
+      xlabel <- ifelse(input$labelsTitle, paste0("\n", input$myXlab), paste0("\n",plotType()))
+      ylabel <- ifelse(input$scale, "Normalized mRNA expression\n", "mRNA expression (log2)\n")
+      ylabel <- ifelse(input$labelsTitle, paste0("\n", input$myYlab), ylabel)
+      theme <- theme(axis.text.x = element_text(size = input$axis_text_size), axis.text.y = element_text(size = input$axis_text_size),
+                     axis.title.x = element_text(size = input$axis_title_size), axis.title.y = element_text(size = input$axis_title_size),
+                     plot.margin = unit(c(0,0,0,0), "lines"))
+      if (input$bw) {
+        theme <- theme_bw () + theme
       }
+      p <- ggplot(data, mapping=aes_string(x=plotType(), y = "mRNA")) + ylab(ylabel) + xlab(xlabel) + theme
       if (input$colBox) {
-        box <- geom_boxplot(aes_string(fill = plotType()), outlier.size = 0) # It works but not the right way to approach this issue
+        p <- p + geom_boxplot(aes_string(fill = plotType()), outlier.size = 0)
       } else {
-        box <- geom_boxplot(outlier.size = 0)
+        p <- p + geom_boxplot(outlier.size = 0)
       }
       if (input$colStrip) {
         col <- aes_string(color = input$colorP)
-        strip <- geom_jitter(position = position_jitter(width = .2), col, size = 2, alpha = 0.75)
+        p <- p + geom_jitter(position = position_jitter(width = .2), col, size = input$point_size, alpha = input$alpha)
       } else {
-        strip <- geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5)
+        p <- p + geom_jitter(position = position_jitter(width = .2), size = input$point_size, alpha = input$alpha)
       }
-      p <- ggplot(data, mapping=aes_string(x=plotType(), y = "mRNA")) + ylab(ylab) + xlab(paste0("\n",plotType())) +
-        theme(axis.title.y=element_text(vjust=1)) + theme_gray(base_size = 14)
-      p <- p + box + strip
-      if (input$bw) {
-        p <- p + theme_bw (base_size = 14) 
+      if (input$xaxisLabelAngle) {
+        p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
       }
-      if (input$tukeyPlot) {
-        mRNA <- data[,"mRNA"]
-        group <- data[ ,plotType()]
-        tukey <- data.frame(TukeyHSD(aov(mRNA ~ group))[[1]])
-        t <- tukey %>%
-          mutate(Significance = as.factor(starmaker(p.adj, p.levels = c(.001, .01, .05, 1), symbols=c("***", "**", "*", "ns"))),
-                 comparison = row.names(.)) %>%
+      if (input$tukeyHSD && input$tukeyPlot) {
+        t <- tukey() %>%
+          mutate(comparison = row.names(.)) %>%
           ggplot(aes(reorder(comparison, diff), diff, ymin = lwr, ymax= upr, colour = Significance)) +
-          geom_point() + geom_errorbar(width = 0.25) + ylab("Differences in mean levels") + xlab("") + 
-          geom_hline(xintercept = 0, colour="darkgray", linetype = "longdash") + coord_flip()
-        if (input$bw) {
-          t <- t + theme_bw ()
-        }
-        grid.arrange(p, t, ncol=2, widths = c(3,2))
+          geom_point() + geom_errorbar(width = 0.25) + ylab("\nDifferences in mean levels") + xlab("") + 
+          geom_hline(xintercept = 0, colour="darkgray", linetype = "longdash") + coord_flip() + theme
+        
+       arrangeGrob(p, t, ncol=2, widths = c(3,2))
       } else {
         p
       }
     })
-  
+
+    #' Table with the data used for the plot
+    output$filterDataTable <- renderDataTable({
+      data <- filterData()[,c("Sample", plotType(), "mRNA")]
+      datatable(data, rownames = FALSE, extensions = "TableTools",
+                options = list(lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
+                               dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
+                                                                           sSwfPath = copySWF(dest = "www"))))
+    })
+    
     #' Generate radiobuttons for the various categories in the pData
     output$colorPoints <- renderUI({
       validate(
         need(input$gene != "","")
       )
-      data <- rmNA(plotData())
+      data <- rmNA(filterData())
       colnames <- names(data)[!names(data) %in% c("mRNA","Sample","status","survival")]
       # Create the radiobuttons for the different pData categories
       radioButtons("colorP", "Color by:", choices  = colnames, selected = plotType())
@@ -279,20 +296,28 @@ shinyServer(
     output$plot <- renderPlot({
       # To avoid an error when switching datasets in case the colStrip is not available.
       if(input$colStrip){
-        data <- rmNA(plotData())
+        data <- rmNA(filterData())
         colnames <- names(data)[!names(data) %in% c("mRNA","Sample","status","survival")]
         validate(need(input$colorP %in% colnames,""))
       }
       print(boxplot())
+    }, width = function()ifelse(input$tukeyPlot, input$plot_width * 1.5, input$plot_width), height = function()input$plot_height)
+    
+    #' Data for the statistic
+    observe({filterData()})
+    dataStat <- reactive({
+      mRNA <- filterData()[ ,"mRNA"]
+      group <- filterData()[ ,plotType()]
+      data <- data.frame(mRNA, group)
+      data
     })
     
     #' Summary statistic
     output$summary <- renderTable({    
-      data <- plotData()
-      data$group <- data[ ,plotType()]
+      data <- dataStat()
       stat <- data.frame(data %>%
                            group_by(group) %>%
-                           summarise(Sample_count = paste0(n()," (", round(n()*100/dim(data)[1],2), "%)" ), # prop.table
+                           summarise(Sample_count = paste0(n()," (", round(n()*100/dim(data)[1], 2), "%)" ), # prop.table
                                      median = median (mRNA, na.rm=T), mad = mad(mRNA, na.rm=T),mean = mean(mRNA, na.rm=T), sd = sd(mRNA, na.rm=T)))
       row.names(stat) <- stat$group
       tot <- data %>%
@@ -303,24 +328,23 @@ shinyServer(
       stat 
     }, align='rrrrrr')
 
-    #' Tukey post-hoc test
-    output$tukeyTest <- renderTable({    
-      data <- plotData()
-      mRNA <- data[,"mRNA"]
-      group <- data[ ,plotType()]
-      tukey <- data.frame(TukeyHSD(aov(mRNA ~ group))[[1]])
+    #' Tukey post-hoc test, to combine it with the boxplot and to render in a table
+    tukey <- reactive({
+      tukey <- data.frame(TukeyHSD(aov(mRNA ~ group, data = dataStat()))[[1]])
       tukey$Significance <- as.factor(starmaker(tukey$p.adj, p.levels = c(.001, .01, .05, 1), symbols=c("***", "**", "*", "ns")))
-      tukey <- tukey[order(tukey$diff), ]
+      tukey <- tukey[order(tukey$diff, decreasing = TRUE), ]
       tukey
+    })
+  
+    #' Render tukey
+    output$tukeyTest <- renderTable({    
+      tukey()
     })
     
     #' Pairwise t test
     output$pairwiseTtest <- renderTable({     
-      data <- plotData()
-      mRNA <- data[,"mRNA"]
-      group <- data[ ,plotType()]
-      pttest <- pairwise.t.test(mRNA, group, na.rm= TRUE, p.adj = "bonferroni", paired = FALSE)[[3]]
-      pttest
+      pttest <- pairwise.t.test(dataStat()$mRNA, dataStat()$group, na.rm= TRUE, p.adj = "bonferroni", paired = FALSE)
+      pttest$p.value
     })
     
     #' Get the selected download file type.
@@ -331,19 +355,22 @@ shinyServer(
       plotFileType    <- input$downloadPlotFileType
       plotFileTypePDF <- plotFileType == "pdf"
       plotUnit    <- ifelse(plotFileTypePDF, "inches", "pixels")
-      plotUnitDef <- ifelse(plotFileTypePDF, 7, 480)
-      
+      plotUnitDef <- ifelse(plotFileTypePDF, 7, 600)
+      plotUnitMin <- ifelse(plotFileTypePDF, 1, 100)
+      plotUnitMax <- ifelse(plotFileTypePDF, 12, 2000)
+      plotUnitStep <- ifelse(plotFileTypePDF, 0.1, 50)
+
       updateNumericInput(
         session,
         inputId = "downloadPlotHeight",
         label = sprintf("Height (%s)", plotUnit),
-        value = plotUnitDef)
+        value = plotUnitDef, min = plotUnitMin, max = plotUnitMax, step = plotUnitStep)
       
       updateNumericInput(
         session,
         inputId = "downloadPlotWidth",
         label = sprintf("Width (%s)", plotUnit),
-        value = plotUnitDef)
+        value = plotUnitDef, min = plotUnitMin, max = plotUnitMax, step = plotUnitStep)
     })
     
     #' Get the download dimensions.
@@ -526,7 +553,7 @@ shinyServer(
       xrange <-range(mRNA)
       par(mar = c(0,0,0,0)) 
       plot(0, 0, type = "n", xlim = c(xrange[1] + 0.25, xrange[2]) , ylim = c(-0.1,  + 0.1), ylab ="", xlab = "", axes = FALSE)
-      points(x = mRNA, y = rep(0, length(mRNA)), pch="|")
+      points(x = mRNA, y = rep(0, length(mRNA)), pch="|", col=rgb(0, 0, 0, 0.25))
       # Add a red line to show which  is the current cutoff.
       points(x = input$mInput, y = 0, pch = "|", col="red", cex = 2.5)
       points(x = q[2:4], y = rep(0,3), pch = "|", col="blue", cex = 2)
@@ -554,7 +581,7 @@ shinyServer(
           try(survivalPlot (survData(), input$gene, group = input$histologySurv, subtype = input$subtypeSurv,
                             cutoff = input$cutoff, numeric = input$mInput), silent = TRUE)
         }
-    }, height = function(){if(!allSubSurv()) {400} else {600}}, width = function(){if(!allSubSurv()) {500} else {800}})
+    }, height = function(){if(!allSubSurv()) {400} else {650}}, width = function(){if(!allSubSurv()) {500} else {850}})
         
     #' Download the survPlot
     output$downloadsurvPlot <- downloadHandler(
@@ -619,8 +646,9 @@ shinyServer(
       if (input$dataset == "TCGA Lgg") {
         validate(need(input$colorBy != "Subtype" & input$separateBy != "Subtype", "Subtype available for GBM samples only")) 
       }
-      myCorggPlot(exprs(), input$gene, input$gene2, input$histologyCorr, input$subtype, 
+      p <- myCorggPlot(exprs(), input$gene, input$gene2, input$histologyCorr, input$subtype, 
                   colorBy = colorByInput(), separateBy = separateByInput())
+      print(p)
     })
     
     #' Generate a summary of the correlation test
@@ -677,14 +705,6 @@ shinyServer(
       ggpairs(pairsData(),lower=list(continuous="smooth", params=list(alpha=0.5)))  
     })
     
-    #     #' Generate an HTML table view of the correlation table 
-    #     output$pairsData <- renderTable({
-    #       if (length(input$genelist) < 2)
-    #         return()
-    #       pairs.table <- rcorr(as.matrix(pairsData()))
-    #       pairs.table
-    #     })
-    
     #' Download the pairs plot
     output$downloadpairsPlot <- downloadHandler(
       filename = function() {
@@ -717,9 +737,9 @@ shinyServer(
       xrange <-range(mRNA)
       par(mar = c(0,0,0,0)) 
       plot(0, 0, type = "n", xlim = c(xrange[1] + 0.25, xrange[2]) , ylim = c(-0.1,  + 0.1), ylab ="", xlab = "", axes = FALSE)
-      points(x = mRNA, y = rep(0, length(mRNA)), pch="|")
+      points(x = mRNA, y = rep(0, length(mRNA)), pch="|", col=rgb(0, 0, 0, 0.5))
       # Add a red line to show which  is the current cutoff.
-      points(x = input$rppaCut, y = 0, pch = "|", col="red", cex = 2)
+      points(x = input$rppaCut, y = 0, pch = "|", col="red", cex = 2.5)
       points(x = q[2:4], y = rep(0,3), pch = "|", col="blue", cex = 2)
       #       abline(v= q[2:4], col="blue")
     }, bg = "transparent")
@@ -728,8 +748,10 @@ shinyServer(
       sliderInput(inputId = "rppaCut",label = "mRNA cutoff", min = min(rppaRNA()), max = max(rppaRNA()), 
                   value = median(rppaRNA()), step = 0.05, round = -2)
     })
-       
+
     output$rppaTable <- renderDataTable({
+      input$dataset
+      input$rppaCut
       validate(
         need(input$dataset %in% c("TCGA GBM","TCGA Lgg"), "RPPA data available only for TCGA datasets")%then%
           need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
@@ -754,7 +776,7 @@ shinyServer(
       }
       row.names(d) <- names(rppa)
       d <- data.frame(Protein = row.names(d), round(d,5))
-      # d$adj.p.value <- p.adjust(d$p, method = "bonferroni")
+      d$adj.p.value <- p.adjust(d$p, method = "bonferroni")
       d <- d[order(d$p.value),]
       datatable(d, rownames = FALSE, options = list(lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full"),
                 callback = JS("
@@ -880,7 +902,7 @@ shinyServer(
       } else {
         data <- dataTable()
       }
-      DT::datatable(data, rownames = FALSE, extensions = c("FixedColumns", "TableTools"),
+      datatable(data, rownames = FALSE, extensions = c("FixedColumns", "TableTools"),
                     options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE,
                                    lengthMenu = c(10, 30, 50), pageLength = 10, dom = 'T<"clear">lfrtip',
                                    tableTools = list(aButtons = c("copy","csv","xls","print"),
@@ -992,7 +1014,7 @@ shinyServer(
           # Not all genes are available for all the dataset
           need(input$geneCor %in% names(datasetInputCor()[["expr"]]),"Gene not available for this dataset")
       )   
-      DT::datatable(corrData(), rownames = FALSE, extensions = "TableTools",
+      datatable(corrData(), rownames = FALSE, extensions = "TableTools",
                     options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
                                    dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
                                                                                sSwfPath = copySWF(dest = "www"))),
@@ -1094,7 +1116,7 @@ shinyServer(
     output$svm <- renderDataTable({ 
       if (is.null(input$upFile) || input$goSvm == 0)
         return(NULL)
-        DT::datatable(svm.call(), rownames = FALSE, extensions = "TableTools",
+        datatable(svm.call(), rownames = FALSE, extensions = "TableTools",
                       options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
                                      dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
                                                                                  sSwfPath = copySWF(dest = "www"))))
@@ -1128,7 +1150,7 @@ shinyServer(
     output$knn <- renderDataTable({ 
       if (is.null(input$upFile) || input$goKnn == 0)
         return(NULL)
-        DT::datatable(knn.call(), rownames = FALSE, extensions = "TableTools",
+        datatable(knn.call(), rownames = FALSE, extensions = "TableTools",
                       options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
                                      dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
                                                                                  sSwfPath = copySWF(dest = "www"))))
@@ -1161,7 +1183,7 @@ shinyServer(
     output$gsva <- renderDataTable({ 
       if (is.null(input$upFile) || input$goGsva == 0)
         return(NULL)
-        DT::datatable(gsva.call(), rownames = FALSE, extensions = "TableTools",
+        datatable(gsva.call(), rownames = FALSE, extensions = "TableTools",
                       options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
                                      dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
                                                                                  sSwfPath = copySWF(dest = "www"))))
@@ -1184,7 +1206,7 @@ shinyServer(
     output$sub3 <- renderDataTable({ 
       if (is.null(input$upFile) || input$goSub3 == 0)
         return(NULL)
-        DT::datatable(sub3.call(), rownames = FALSE, extensions = "TableTools",
+        datatable(sub3.call(), rownames = FALSE, extensions = "TableTools",
                       options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full", autoWidth = TRUE,
                                      dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
                                                                                  sSwfPath = copySWF(dest = "www"))))
@@ -1211,7 +1233,7 @@ shinyServer(
     output$estScore <- renderDataTable({ 
       if (is.null(input$upEstFile) || input$goEst == 0)
         return(NULL)
-      DT::datatable(est.call(), rownames = FALSE, extensions = "TableTools", 
+      datatable(est.call(), rownames = FALSE, extensions = "TableTools", 
                     options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full", autoWidth = TRUE,
                                    dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
                                                                                sSwfPath = copySWF(dest = "www"))),

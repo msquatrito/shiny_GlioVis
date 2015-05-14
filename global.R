@@ -1,31 +1,3 @@
-# pkg <- c("shiny", "survival", "weights", "googleVis", "dplyr", "ggplot2","gridExtra", 
-#         "htmlwidgets","kernlab","devtools","GGally","markdown","caret")
-# new.pkg <- pkg[!(pkg %in% installed.packages())]
-# if (length(new.pkg)) {
-#   install.packages(new.pkg, dependencies=TRUE)
-# }
-# if (!require("GSVA")) {
-#   source("http://bioconductor.org/biocLite.R")
-#   biocLite("GSVA")
-# }
-# 
-# # if (!require("estimate")){
-# #   library(utils)
-# #   mdacc <- local({
-# #     rvers <- getRversion()
-# #     repos.hostname <- "bioinformatics.mdanderson.org"
-# #     sprintf("http://%s/OOMPA/%s",
-# #             repos.hostname,
-# #             paste(rvers$maj, rvers$min, sep="."))
-# #   })
-# #   install.packages("estimate", repos=mdacc, dependencies=TRUE)
-# # }
-# 
-# if (!require("shinydashboard")) devtools::install_github("rstudio/shinydashboard")
-# if (!requireNamespace('htmlwidgets') || packageVersion('htmlwidgets') <= '0.3.2')
-#   devtools::install_github('ramnathv/htmlwidgets')
-# if (!require("DT")) devtools::install_github("rstudio/DT")
-
 library(shiny)
 library(survival)
 library(weights)
@@ -43,8 +15,6 @@ library(DT)
 library(Cairo)
 options(shiny.usecairo=TRUE)
 
-
-`%then%` <- shiny:::`%OR%`
 
 #######################################
 ############## Datasets  ##############
@@ -83,7 +53,6 @@ gene_names <- as.character(genes[,"Gene"])
 gbm.subtype.list <- readRDS("data/subtype_list.Rds")
 gbm.core.samples <- readRDS("data/TCGA.core.345samples.Rds")
 lgg.core.samples <- readRDS("data/lgg.core.460samples.Rds")
-
 
 #######################################
 ############## plotList  ##############
@@ -166,7 +135,7 @@ hazardPlot <- function (HRdata, quantile) {
   lines(HRdata[, "i"], HRdata[, "HR"])
   lines(HRdata[, "i"], HRdata[, "HR.lower"], lty=3)
   lines(HRdata[, "i"], HRdata[, "HR.upper"], lty=3)
-  points(HRdata[, "i"], rep(ymin - 0.4, length(HRdata[, "i"])), pch="|")
+  points(HRdata[, "i"], rep(ymin - 0.4, length(HRdata[, "i"])), pch="|", col=rgb(0, 0, 0, 0.5))
   abline(h = 0, lty = 2, col = "red")
   if (quantile) {
     q <- quantile(HRdata$i)
@@ -295,9 +264,11 @@ myCorggPlot <- function (df, gene1, gene2, histo = "All", subtype = "All", color
   # scatterplot of x and y variables
   scatter <- ggplot(df,mapping = aes_string(x = gene1, y = gene2)) + theme(legend.position=c(1,1),legend.justification=c(1,1)) 
   # marginal density of x - plot on top
-  plot_top <- ggplot(df, mapping = aes_string(x = gene1)) + theme(legend.position = "none", axis.title.x = element_blank())
+  plot_top <- ggplot(df, mapping = aes_string(x = gene1)) + 
+    theme(legend.position = "none", axis.text.x=element_blank(), axis.ticks=element_blank(), axis.title.x = element_blank())
   # marginal density of y - plot on the right
-  plot_right <- ggplot(df, mapping = aes_string(x = gene2)) + coord_flip() + theme(legend.position = "none",axis.title.y = element_blank())
+  plot_right <- ggplot(df, mapping = aes_string(x = gene2)) + coord_flip() + 
+    theme(legend.position = "none",axis.title.y = element_blank(), axis.ticks=element_blank(),axis.text.y=element_blank())
   
   if (colorBy != "none") {
     col <- aes_string(color = colorBy)
@@ -318,11 +289,10 @@ myCorggPlot <- function (df, gene1, gene2, histo = "All", subtype = "All", color
   
   if (separateBy == "none") {
     #arrange the plots together, with appropriate height and width for each row and column
-    grid.arrange(plot_top, empty, scatter, plot_right, ncol=2, nrow=2, widths=c(3, 1), heights=c(1.5, 3))
+    arrangeGrob(plot_top, empty, scatter, plot_right, ncol=2, nrow=2, widths=c(3, 1), heights=c(1.5, 3))
   } else {
-    print(scatter) 
-  }
-  
+    scatter
+  } 
 }
 
 ########################################

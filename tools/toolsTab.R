@@ -26,7 +26,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                             img(src="Rotating_brain.gif") 
                         ),
                         splitLayout(cellWidths = c("60%", "40%"),
-                                    DT::dataTableOutput(outputId = "corrData"),
+                                    dataTableOutput(outputId = "corrData"),
                                     plotOutput(outputId = "corrDataPlot")
                         )
                       )
@@ -74,7 +74,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                       mainPanel(
                         div(style = "width: 100%; overflow: hidden;",
                             div(style = "width: 550px; float: left;",p(class = "lead","Classify tumor samples based on mRNA expression profiles")),
-                            div(style = "margin-left: 550px;", helpModal(modal_title ="SubtypeMe", link = "helpClassify", help_file = includeMarkdown("tools/help_classify.Rmd")))
+                            div(style = "margin-left: 550px;", helpModal(modal_title ="SubtypeMe", link = "helpClassify", help_file = includeMarkdown("tools/help/help_classify.Rmd")))
                         ),
                         
                         tabsetPanel(id = "tabClassify",   
@@ -90,7 +90,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                                         hr(),
                                                         p("Be patients, switching to another tab will crash GlioVis ...")
                                                     ),
-                                                    DT::dataTableOutput(outputId = "svm")
+                                                    dataTableOutput(outputId = "svm")
                                              )
                                     ),
                                     
@@ -105,7 +105,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                                         hr(),
                                                         p("Be patients, switching to another tab will crash GlioVis ...")
                                                     ),
-                                                    DT::dataTableOutput(outputId = "knn")
+                                                    dataTableOutput(outputId = "knn")
                                              )
                                     ),
                                     
@@ -120,7 +120,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                                         hr(),
                                                         p("Be patients, switching to another tab will crash GlioVis ...")
                                                     ),
-                                                    DT::dataTableOutput(outputId = "gsva")
+                                                    dataTableOutput(outputId = "gsva")
                                              )
                                     ),
                                     
@@ -134,7 +134,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                                         hr(),
                                                         p("Be patients, switching to another tab will crash GlioVis ...")
                                                     ),
-                                                    DT::dataTableOutput(outputId = "sub3")
+                                                    dataTableOutput(outputId = "sub3")
                                              )
                                     )
                         )
@@ -168,14 +168,14 @@ tabPanel(title = "Tools", icon = icon("gear"),
                       mainPanel(
                         div(class = "wrap",
                             div(class = "left", p(class = "lead","Estimate of STromal and Immune cells in MAlignant Tumor tissues")),
-                            div(class = "right", helpModal(modal_title ="Estimate", link = "helpEst", help_file = includeMarkdown("tools/help_estimate.Rmd")))
+                            div(class = "right", helpModal(modal_title ="Estimate", link = "helpEst", help_file = includeMarkdown("tools/help/help_estimate.Rmd")))
                         ),
                         div(class = "busy",  
                             p("Calculating, please wait"),
                             img(src="Rotating_brain.gif") 
                         ),
                         column(width = 7,
-                               DT::dataTableOutput(outputId = "estScore")
+                               dataTableOutput(outputId = "estScore")
                         ),
                         column(width = 5,
                                plotOutput(outputId = "purityPlot"),
