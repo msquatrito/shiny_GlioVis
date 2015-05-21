@@ -85,6 +85,16 @@ rmNA <- function (df) {
   df <- df[,colSums(is.na(df)) < nrow(df)]
 }
 
+################################################
+##############  data table  ##############
+################################################
+data_table <- function (df) {
+datatable(df, rownames = FALSE, extensions = "TableTools",
+          options = list(lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
+                         dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
+                                                                     sSwfPath = copySWF(dest = "www"))))
+}
+
 ######################################
 ############## Get HR  ###############
 ######################################
@@ -147,30 +157,11 @@ hazardPlot <- function (HRdata, quantile) {
 ###################
 ## Survival plot ##
 ###################
-survivalPlot <- function (df, gene, group, subtype, cutoff, numeric) {
-  # Select a specific subtype
-  if (group == "GBM" & subtype != "All") {
-    df <- filter(df, Subtype == subtype)
-  }
-  mRNA <- df[ ,"mRNA"]
-  surv.status <- df[ ,"status"]
-  surv.time <- df[ ,"survival"]
-  my.Surv <- Surv(time = surv.time, event = surv.status== 1)
-  smax <- max(surv.time, na.rm = TRUE)
-  tmax <- smax-(25*smax)/100
-  xmax <- (95*tmax)/100
+get_cutoff <- function(mRNA, cutoff, numeric) {
   mRNA.q <- round(quantile(mRNA, probs=c(0.25, 0.5, 0.75), na.rm = TRUE),2)
-  
-  if(cutoff == "Use a specific mRNA value") {
-    main <- paste("Histology: ", group, 
-                  "; Subtype: ", subtype,
-                  "; Cutoff: ", round(numeric, 2), sep = "") 
-  } else {
-    main <- paste("Histology: ", group, 
-                  "; Subtype: ", subtype,
-                  "; Cutoff: ", cutoff, sep = "")
+  if (cutoff == "quartiles"){
+    strat <- cut(mRNA, quantile(mRNA,na.rm = T), include.lowest = TRUE)
   }
-  
   if (cutoff != "quartiles") {
     if (cutoff == "high vs low") {
       strat <- ifelse(mRNA >= mRNA.q [3], "high", ifelse(mRNA <= mRNA.q [1], "low",NA))
@@ -183,31 +174,57 @@ survivalPlot <- function (df, gene, group, subtype, cutoff, numeric) {
       f <- function(x) ifelse(x >= cut, c("high"),c("low"))
       strat <- f(mRNA)
     }
-    expr.surv <- survfit(my.Surv ~ strat, conf.type = "none")
-    log.rank <- survdiff(my.Surv ~ strat, rho = 0)
-    mantle.cox <- survdiff(my.Surv~ strat, rho = 1)
-    surv <- data.frame(summary(expr.surv)$table)
-    model <- summary(coxph(my.Surv ~ strat))
-    HR <- round(model$conf.int[1],2)
-    HR.lower <- round(model$conf.int[3],2)
-    HR.upper <- round(model$conf.int[4],2)
-    log.rank.p <- round(1 - pchisq(log.rank$chi, df = 1), 4)
-    mantle.cox.p <- round(1 - pchisq(mantle.cox$chi, df = 1), 4)
-    star.log <- starmaker(log.rank.p)
-    star.mcox <- starmaker(mantle.cox.p)
-    plot(expr.surv, xlab = "Survival time (Months)", ylab = "% Surviving", yscale = 100, xlim = c(0,smax),
-         main = main, col = c("red", "blue"), mark.time = FALSE)
-    legend("topright", legend = c(sprintf("%s High, (n=%s, events=%s, median=%s)", gene, surv$records[1], surv$events[1], surv$median[1]), 
-                                  sprintf("%s Low, (n=%s, events=%s, median=%s)", gene, surv$records[2], surv$events[2], surv$median[2])),
-           col= c("red", "blue"), lty = 1, cex = 1)
-    text (xmax, 0.725, sprintf("HR = %s, (%s - %s)",HR, HR.lower, HR.upper), cex = 1)
-    text (xmax, 0.65, sprintf("%s Log-rank p value= %s", star.log, log.rank.p), cex = 1)
-    text (xmax, 0.575, sprintf("%s Wilcoxon p value= %s",star.mcox, mantle.cox.p), cex = 1)
+  }
+  strat
+}
+
+survivalPlot <- function (df, gene, group, subtype, cutoff, numeric) {
+  # Select a specific subtype
+  if (group == "GBM" & subtype != "All") {
+    df <- filter(df, Subtype == subtype)
+  } 
+  if(cutoff == "Use a specific mRNA value") {
+    main <- paste("Histology: ", group, 
+                  "; Subtype: ", subtype,
+                  "; Cutoff: ", round(numeric, 2), sep = "") 
+  } else {
+    main <- paste("Histology: ", group, 
+                  "; Subtype: ", subtype,
+                  "; Cutoff: ", cutoff, sep = "")
   }
   
+  mRNA <- df[ ,"mRNA"]
+  surv.status <- df[ ,"status"]
+  surv.time <- df[ ,"survival"]
+  my.Surv <- Surv(time = surv.time, event = surv.status== 1)
+  smax <- max(surv.time, na.rm = TRUE)
+  tmax <- smax-(25*smax)/100
+  xmax <- (95*tmax)/100
+
+  strat <- get_cutoff(mRNA, cutoff, numeric)
+  expr.surv <- survfit(my.Surv ~ strat, conf.type = "none")
+  log.rank <- survdiff(my.Surv ~ strat, rho = 0)
+  mantle.cox <- survdiff(my.Surv~ strat, rho = 1)
+  surv <- data.frame(summary(expr.surv)$table)
+  model <- summary(coxph(my.Surv ~ strat))
+  HR <- round(model$conf.int[1],2)
+  HR.lower <- round(model$conf.int[3],2)
+  HR.upper <- round(model$conf.int[4],2)
+  log.rank.p <- round(1 - pchisq(log.rank$chi, df = 1), 4)
+  mantle.cox.p <- round(1 - pchisq(mantle.cox$chi, df = 1), 4)
+  star.log <- starmaker(log.rank.p)
+  star.mcox <- starmaker(mantle.cox.p)
+  plot(expr.surv, xlab = "Survival time (Months)", ylab = "% Surviving", yscale = 100, xlim = c(0,smax),
+       main = main, col = c("red", "blue"), mark.time = FALSE)
+  legend("topright", legend = c(sprintf("%s High, (n=%s, events=%s, median=%s)", gene, surv$records[1], surv$events[1], surv$median[1]), 
+                                sprintf("%s Low, (n=%s, events=%s, median=%s)", gene, surv$records[2], surv$events[2], surv$median[2])),
+         col= c("red", "blue"), lty = 1, cex = 1)
+  text (xmax, 0.725, sprintf("HR = %s, (%s - %s)",HR, HR.lower, HR.upper), cex = 1)
+  text (xmax, 0.65, sprintf("%s Log-rank p value= %s", star.log, log.rank.p), cex = 1)
+  text (xmax, 0.575, sprintf("%s Wilcoxon p value= %s",star.mcox, mantle.cox.p), cex = 1)
+  
   if (cutoff == "quartiles"){
-    exprcat <- cut(mRNA, quantile(mRNA,na.rm = T), data=df)
-    expr.surv <- survfit(my.Surv ~ strata(exprcat), data=df, conf.type="none")
+    expr.surv <- survfit(my.Surv ~ strata(strat), data=df, conf.type="none")
     z <- data.frame(summary(expr.surv)$table) 
     plot(expr.surv, xlab="Months", ylab="% Surviving", yscale = 100, xlim = c(0,smax), 
          main = main, col= c(1:4), mark.time=FALSE)
@@ -217,8 +234,7 @@ survivalPlot <- function (df, gene, group, subtype, cutoff, numeric) {
                       sprintf("3rd (n=%s, median=%s)", z$records[3], z$median[3]),
                       sprintf("4th (n=%s, median=%s)", z$records[4], z$median[4])),
            col= c(1:4), lty=1, cex=1)
-  }
-  
+  } 
 }
 
 #####################
@@ -246,13 +262,7 @@ getCorr <- function (data, gene, histology, corrMethod) {
 ######################################################
 ############## 2 genes correlation plot ##############
 ######################################################
-myCorggPlot <- function (df, gene1, gene2, histo = "All", subtype = "All", colorBy = "none", separateBy = "none",...) {
-  if (histo != "All") {
-    df <- filter (df, Histology == histo)
-  } 
-  if (histo == "GBM" & subtype != "All") {
-    df <- filter (df, Subtype == subtype)
-  }
+myCorggPlot <- function (df, gene1, gene2, colorBy = "none", separateBy = "none",...) {
   #  empy plot to used in grid.arrange 
   empty <- ggplot() + geom_point(aes(1,1), colour="white") + 
     theme(plot.background = element_blank(), panel.grid.major = element_blank(), 
@@ -299,13 +309,7 @@ myCorggPlot <- function (df, gene1, gene2, histo = "All", subtype = "All", color
 ############## myCorrTest ##############
 ########################################
 # Use to generate summary data for the correlation analysis
-myCorrTest <- function (df, gene1, gene2, histo = "All", subtype = "All", colorBy = "none", separateBy = "none",...) {
-  if (histo != "All") {
-    df <- filter (df, Histology == histo)
-  } 
-  if (histo == "GBM" & subtype != "All") {
-    df <- filter (df, Subtype == subtype)
-  }
+myCorrTest <- function (df, gene1, gene2, colorBy = "none", separateBy = "none",...) {
   if (separateBy == "Histology") {
     cor <- substitute(df %>%
                         group_by(Histology)%>%
