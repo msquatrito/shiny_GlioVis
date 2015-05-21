@@ -17,7 +17,7 @@ A box plot or  is a convenient way of graphically depicting groups of numerical 
 
 
 **Plot options:**   
-* Remove/add a group of samples: For a specific plot the user can select which group to show. Only recomended for visualization, removing group of samples could profoundly affect the statistical analysis.   
+* Remove/add a group of samples: For a specific plot the user can select which group to show. Only recomended for visualization, removing group of samples could affect the correct interpretation of the data.   
 * Scale y axis: Centering is done by subtracting the mRNA means (omitting NAs) and dividing by the standard deviations.   
 * White background: Change the plot setting to have white backround and black axis labels.   
 * Color box: Color the boxes by sample group.   

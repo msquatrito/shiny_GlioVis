@@ -5,7 +5,7 @@ output: html_document
 
 1. Select a dataset.
 2. Enter a gene name.
-3. Choose one of the histological group, default setting will show all the samples. For GBM datasets it's possible to exlcude G-CIMP and recurrent samples (when available). Morevoer, it's also possible to select a specific subtype.   
+3. Choose one of the histological group, default setting will show all the samples. For GBM datasets it's possible to exlcude G-CIMP, recurrent samples (when available) and to specify a subtype of interest.   
 4. Select cutoff:       
   + **Median**: split in two groups by the median   
   + **Lower quartile**: split in two groups, 25% lower expressing vs the rest   
