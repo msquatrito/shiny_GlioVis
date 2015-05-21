@@ -79,8 +79,11 @@ tabPanel(title = "Tools", icon = icon("gear"),
                         
                         tabsetPanel(id = "tabClassify",   
                                     
-                                    tabPanel(title = "SVM", id = "SVM", 
-                                             p(class = "lead","Supported vector machine learning"),
+                                    tabPanel(title = "SVM", id = "SVM",
+                                             div(style = "width: 100%; overflow: hidden;",
+                                                 div(style = "width: 325px; float: left;", p(class = "lead","Supported vector machine learning")),
+                                                 div(style = "margin-left: 325px;", helpModal(modal_title ="Supported vector machine", link = "helpSVM", help_file = includeMarkdown("tools/help/help_svm.Rmd")))
+                                             ),
                                              p(strong("Output format:"), "Subtype calls with the probability model."),  
                                              br(),
                                              column(width = 9,
@@ -95,7 +98,10 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                     ),
                                     
                                     tabPanel(title = "K-NN", id = "K-NN",                                            
-                                             p(class = "lead","K-nearest neighbors prediction"),
+                                             div(style = "width: 100%; overflow: hidden;",
+                                                 div(style = "width: 290px; float: left;", p(class = "lead","K-nearest neighbors prediction")),
+                                                 div(style = "margin-left: 290px;", helpModal(modal_title ="K-nearest neighbors", link = "helpKNN", help_file = includeMarkdown("tools/help/help_knn.Rmd")))
+                                             ),
                                              p(strong("Output format:"), "Subtype calls with the probability score."),
                                              br(),
                                              column(width = 8,
@@ -109,8 +115,11 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                              )
                                     ),
                                     
-                                    tabPanel(title = "ssGSEA", id = "GSVA", 
-                                             p(class = "lead","Single sample Gene Set Enrichment Analysis"),
+                                    tabPanel(title = "ssGSEA", id = "GSVA",
+                                             div(style = "width: 100%; overflow: hidden;",
+                                                 div(style = "width: 415px; float: left;", p(class = "lead","Single sample Gene Set Enrichment Analysis")),
+                                                 div(style = "margin-left: 415px;", helpModal(modal_title ="Single sample Gene Set Enrichment Analysis", link = "helpGSEA", help_file = includeMarkdown("tools/help/help_gsea.Rmd")))
+                                             ),
                                              p(strong("Output format:"), "Subtype calls with the enrichment score."),
                                              br(),
                                              column(width = 9,
