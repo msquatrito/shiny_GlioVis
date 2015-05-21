@@ -275,10 +275,7 @@ shinyServer(
     #' Table with the data used for the plot
     output$filterDataTable <- renderDataTable({
       data <- filterData()[,c("Sample", plotType(), "mRNA")]
-      datatable(data, rownames = FALSE, extensions = "TableTools",
-                options = list(lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
-                               dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
-                                                                           sSwfPath = copySWF(dest = "www"))))
+      data_table(data)
     })
     
     #' Generate radiobuttons for the various categories in the pData
@@ -397,19 +394,6 @@ shinyServer(
       }
     )
     
-    # Need a wrapper around the hrClick input so we can manage whether or 
-    # not the click occured on the current Gene. If it occured on a previous
-    # gene, we'll want to mark that click as 'stale' so we don't try to use it
-    # later. https://gist.github.com/trestletech/5929598
-    currentClick <- list(click = NULL, stale = FALSE)
-    
-    handleClick <- observe({
-      if (!is.null(input$hrClick) && !is.null(input$hrClick$x)){
-        currentClick$click <<- input$hrClick
-        currentClick$stale <<- FALSE
-      }
-    }, priority=100)
-    
     #' Reactive expressions for the conditonal panels to work in the right way
     gcimpSurv <- reactive ({
       if(input$histologySurv == "GBM") {
@@ -458,82 +442,6 @@ shinyServer(
       }
       df
     })  
-
-    #' Subset to GBM samples for the interactive HR plot.
-    survGBM <- reactive({
-      df <- filter (survData(), Histology == "GBM")
-    })
-    
-    #' Extract the GBM expression values for the interactive HR plot.
-    geneExp <- reactive({
-      geneExp <- survGBM()[ ,"mRNA"]
-      currentClick$stale <<- TRUE
-      geneExp
-    })
-    
-    #' Generate the cutoff value for the interactive HR plot.
-    getCutoff <- reactive({
-      input$hrClick
-      geneExp()        
-      # See if there's been a click since the last gene change.
-      if (!is.null(currentClick$click) && !currentClick$stale){
-        return(currentClick$click$x)
-      }       
-      median(geneExp())
-    })
-    
-    #' Extract the Hazard ratios for the input gene.
-    HR <- reactive ({
-      HR <- getHR(survGBM())
-    })
-    
-    #' Requirements for all the survival plots
-    survNeed <- reactive({
-      validate(
-        need(!input$dataset %in% noSurvDataset, "Sorry, no survival data are available for this dataset")%then%
-          need(input$histologySurv != "Non-tumor","Sorry, no survival data are available for this group")%then%
-          need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
-          need(input$gene %in% names(exprs()),"Gene not available for this dataset")
-      )
-    })
-    
-    #' busy indicator when switching surv tab
-    #' http://stackoverflow.com/questions/18237987/show-that-shiny-is-busy-or-loading-when-changing-tab-panels
-    output$activeTabSurv <- reactive({
-      return(input$tabSurv)
-    })
-    outputOptions(output, 'activeTabSurv', suspendWhenHidden=FALSE)
-    
-    #' Render a plot to show the the Hazard ratio for the gene's expression values
-    output$hazardPlot <- renderPlot({        
-      validate(need(!input$dataset %in% c("TCGA Lgg","Gorovets"), "Interactive HR plot currently available only for GBM samples") %then%
-                 need(histoSurvSelected() == "GBM","Please select GBM samples in the 'Histology' dropdown menu") %then%
-                   need(!input$dataset %in% c("Grzmil","Vital"), "Sorry, too few samples to properly render the HR plot"))
-      survNeed()
-      input$tabSurv
-      # Plot the hazardplot 
-      hazardPlot(HR(), input$quantile)
-      # Add a vertical line to show where the current cutoff is.
-      abline(v = getCutoff(), col = 4)
-    }, bg = "transparent")
-    
-    #' A reactive survival formula
-    survivalFml <- reactive({
-      # Create the groups based on which samples are above/below the cutoff
-      expressionGrp <- as.integer(geneExp() < getCutoff())
-      # Create the survival object 
-      surv <- with(survGBM(), Surv(survival, status == 1))
-      return(surv ~ expressionGrp)
-    })
-    
-    #' Create a Kaplan Meier plot on the HR cutoff
-    output$kmPlot <- renderPlot({
-      validate(need(histoSurvSelected() == "GBM", ""))
-      survNeed()
-      cutoff <- getCutoff()
-      surv <- survivalFml()
-      kmPlot(cutoff, surv)
-    })
     
     #' Create a slider for the manual cutoff of the Kaplan Meier plot
     mRNAsurv <- reactive({
@@ -565,6 +473,23 @@ shinyServer(
                   value = median(mRNAsurv()), step = 0.05, round = -2)
     })
     
+    #' Requirements for all the survival plots
+    survNeed <- reactive({
+      validate(
+        need(!input$dataset %in% noSurvDataset, "Sorry, no survival data are available for this dataset")%then%
+          need(input$histologySurv != "Non-tumor","Sorry, no survival data are available for this group")%then%
+          need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
+          need(input$gene %in% names(exprs()),"Gene not available for this dataset")
+      )
+    })
+    
+    #' busy indicator when switching surv tab
+    #' http://stackoverflow.com/questions/18237987/show-that-shiny-is-busy-or-loading-when-changing-tab-panels
+    output$activeTabSurv <- reactive({
+      return(input$tabSurv)
+    })
+    outputOptions(output, 'activeTabSurv', suspendWhenHidden=FALSE)
+    
     #' Create a Kaplan Meier plot with cutoff based on quantiles or manual selection
     output$survPlot <- renderPlot({     
       survNeed ()
@@ -582,7 +507,20 @@ shinyServer(
                             cutoff = input$cutoff, numeric = input$mInput), silent = TRUE)
         }
     }, height = function(){if(!allSubSurv()) {400} else {650}}, width = function(){if(!allSubSurv()) {500} else {850}})
-        
+    
+    #' Create a table with the data used in Kaplan Meier plot
+    output$survDataTable <- renderDataTable({
+      data <- survData()[,c("Sample", "Histology", "Recurrence", "Subtype", "CIMP_status", "mRNA",  "survival", "status")]
+      names(data)[7:8] <- c("survival_month", "survival_status")
+      data <- rmNA(data)
+      strat <- get_cutoff(data$mRNA,input$cutoff,input$mInput)
+      if (input$cutoff == "quartiles"){
+        strat <- factor(strat,labels = c("1st quartile","2nd quartile","3rd quartile","4th quartile"))
+      }
+      data <- data.frame(data, cutoff_group = strat)
+      data_table(data)
+    })
+    
     #' Download the survPlot
     output$downloadsurvPlot <- downloadHandler(
       filename = function() {
@@ -604,6 +542,89 @@ shinyServer(
         dev.off()
       }
     ) 
+
+    #' Subset to GBM samples for the interactive HR plot.
+    survGBM <- reactive({
+      df <- filter (survData(), Histology == "GBM")
+    })
+    
+    #' Extract the GBM expression values for the interactive HR plot.
+    geneExp <- reactive({
+      geneExp <- survGBM()[ ,"mRNA"]
+      currentClick$stale <<- TRUE
+      geneExp
+    })
+    
+    # Need a wrapper around the hrClick input so we can manage whether or 
+    # not the click occured on the current Gene. If it occured on a previous
+    # gene, we'll want to mark that click as 'stale' so we don't try to use it
+    # later. https://gist.github.com/trestletech/5929598
+    currentClick <- list(click = NULL, stale = FALSE)
+    
+    handleClick <- observe({
+      if (!is.null(input$hrClick) && !is.null(input$hrClick$x)){
+        currentClick$click <<- input$hrClick
+        currentClick$stale <<- FALSE
+      }
+    }, priority=100)
+    
+    #' Generate the cutoff value for the interactive HR plot.
+    getCutoff <- reactive({
+      input$hrClick
+      geneExp()        
+      # See if there's been a click since the last gene change.
+      if (!is.null(currentClick$click) && !currentClick$stale){
+        return(currentClick$click$x)
+      }       
+      median(geneExp())
+    })
+    
+    #' Extract the Hazard ratios for the input gene.
+    HR <- reactive ({
+      HR <- getHR(survGBM())
+    })
+    
+    #' Render a plot to show the the Hazard ratio for the gene's expression values
+    output$hazardPlot <- renderPlot({        
+      validate(need(!input$dataset %in% c("TCGA Lgg","Gorovets"), "Interactive HR plot currently available only for GBM samples") %then%
+                 need(histoSurvSelected() == "GBM","Please select GBM samples in the 'Histology' dropdown menu") %then%
+                   need(!input$dataset %in% c("Grzmil","Vital"), "Sorry, too few samples to properly render the HR plot"))
+      survNeed()
+      input$tabSurv
+      # Plot the hazardplot 
+      hazardPlot(HR(), input$quantile)
+      # Add a vertical line to show where the current cutoff is.
+      abline(v = getCutoff(), col = 4)
+    }, bg = "transparent")
+    
+    #' Data used to generate the HR plot
+    output$hazardDataTable <- renderDataTable({
+      validate(need(!input$dataset %in% c("TCGA Lgg","Gorovets"), "Interactive HR plot currently available only for GBM samples") %then%
+                 need(histoSurvSelected() == "GBM","Please select GBM samples in the 'Histology' dropdown menu") %then%
+                 need(!input$dataset %in% c("Grzmil","Vital"), "Sorry, too few samples to properly render the HR plot"))
+      survNeed()
+      data <- round(HR(),3)
+      names(data) <- c("mRNA", "HR", "HR.lower", "HR.upper", "n.obs.1", "n.obs.2")
+      data_table(data)
+    })
+    
+    #' A reactive survival formula
+    survivalFml <- reactive({
+      # Create the groups based on which samples are above/below the cutoff
+      expressionGrp <- as.integer(geneExp() < getCutoff())
+      # Create the survival object 
+      surv <- with(survGBM(), Surv(survival, status == 1))
+      return(surv ~ expressionGrp)
+    })
+    
+    #' Create a Kaplan Meier plot on the HR cutoff
+    output$kmPlot <- renderPlot({
+      validate(need(histoSurvSelected() == "GBM", ""))
+      survNeed()
+      cutoff <- getCutoff()
+      surv <- survivalFml()
+      kmPlot(cutoff, surv)
+    })
     
     #' Download the kmPlot
     output$downloadkmPlot <- downloadHandler(
@@ -633,8 +654,8 @@ shinyServer(
              Subtype = "Subtype")
     })
     
-    #' Generate the correlation plot
-    output$corrPlot <- renderPlot({    
+    #' Data for the correlation plot
+    corr2Genes <- reactive({
       validate(
         need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
           need(input$gene %in% names(exprs()),"Gene not available for this dataset"),
@@ -643,26 +664,37 @@ shinyServer(
         # Trying to avoid an error when switching datasets in case the choosen histology is not available.
         need(input$histologyCorr %in% c("All",histo()),"")
       )
+      df <- exprs()
+      if (input$histologyCorr != "All") {
+        df <- filter(df, Histology == input$histologyCorr)
+      } 
+      if (input$histologyCorr == "GBM" & input$subtype != "All") {
+        df <- filter (df, Subtype == input$subtype)
+      }
+      data <- df[,c("Sample", "Histology", "Subtype", input$gene, input$gene2)]
+    })
+    
+    #' Generate the correlation plot
+    output$corrPlot <- renderPlot({    
       if (input$dataset == "TCGA Lgg") {
         validate(need(input$colorBy != "Subtype" & input$separateBy != "Subtype", "Subtype available for GBM samples only")) 
       }
-      p <- myCorggPlot(exprs(), input$gene, input$gene2, input$histologyCorr, input$subtype, 
-                  colorBy = colorByInput(), separateBy = separateByInput())
+      p <- myCorggPlot(corr2Genes(), input$gene, input$gene2, colorBy = colorByInput(), separateBy = separateByInput())
       print(p)
     })
     
     #' Generate a summary of the correlation test
     output$corrTest <-renderPrint({     
-      if (input$gene == "" | input$gene2 == "")
-        return()
-      validate(
-        # Trying to avoid an error when switching datasets in case the choosen histology is not available.
-        need(input$histologyCorr %in% c("All",histo()),"")
-      )
       if (input$dataset == "TCGA Lgg") {
         validate(need(input$colorBy != "Subtype" & input$separateBy != "Subtype", "Subtype available for GBM samples only")) 
       }
-      myCorrTest(exprs(), input$gene, input$gene2, input$histologyCorr, input$subtype, separateBy = separateByInput())
+      myCorrTest(corr2Genes(), input$gene, input$gene2, separateBy = separateByInput())
+    })
+    
+    #' Table with the data used for the correlation plot
+    output$corrDataTable <- renderDataTable({
+      data <- corr2Genes()
+      data_table(data)
     })
     
     #' Download the corrPlot
@@ -673,14 +705,13 @@ shinyServer(
       content = function(file) {
         plotFunction <- match.fun(downloadPlotFileType())
         plotFunction(file, width = downloadPlotWidth(), height = downloadPlotHeight())
-        myCorggPlot (exprs(), input$gene, input$gene2, input$histologyCorr, input$subtype, 
-                     colorByInput(), separateByInput())
+        myCorggPlot (corr2Genes(), input$gene, input$gene2, colorByInput(), separateByInput())
         dev.off()
       }
     )
     
     #' Multiple genes correlation
-    pairsData <- reactive({
+    corrMultipleGenes <- reactive({
       validate(
         # Need two or more genes
         need(length(input$genelist) > 1, "Please enter 2 or more genes in the panel on the left")%then%
@@ -695,14 +726,18 @@ shinyServer(
       if (input$histologyCorr == "GBM" & input$subtype != "All") {
         df <- filter(df, Subtype == input$subtype)
       }
-      df <- df[ ,input$genelist] 
+      df <- df[ ,c("Sample", "Histology", "Subtype", input$genelist)] 
     })
     
     #' Generate the pairs plot
     output$pairsPlot <- renderPlot({
-      #       myPairsPlot(pairsData())
-      #       theme_set(theme_bw())
-      ggpairs(pairsData(),lower=list(continuous="smooth", params=list(alpha=0.5)))  
+      ggpairs(corrMultipleGenes()[,input$genelist],lower=list(continuous="smooth", params=list(alpha=0.5)))  
+    })
+    
+    #' Table with the data used for the pairs plot
+    output$corrPairsDataTable <- renderDataTable({
+      data <- corrMultipleGenes()
+      data_table(data)
     })
     
     #' Download the pairs plot
@@ -713,7 +748,7 @@ shinyServer(
       content = function(file) {
         plotFunction <- match.fun(downloadPlotFileType())
         plotFunction(file, width = downloadPlotWidth(), height = downloadPlotHeight())
-        print(ggpairs(pairsData(),lower=list(continuous="smooth", params=c(alpha=0.5)))) 
+        print(ggpairs(corrMultipleGenes()[,input$genelist],lower=list(continuous="smooth", params=c(alpha=0.5)))) 
         dev.off()
       }
     )
@@ -800,7 +835,6 @@ shinyServer(
     observeEvent(input$histology, {
       rp$rppa.rows <- NULL
     })
-    
     observeEvent(input$gene, {
       rp$rppa.rows <- NULL
     })
@@ -904,7 +938,7 @@ shinyServer(
       }
       datatable(data, rownames = FALSE, extensions = c("FixedColumns", "TableTools"),
                     options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE,
-                                   lengthMenu = c(10, 30, 50), pageLength = 10, dom = 'T<"clear">lfrtip',
+                                   lengthMenu = c(10, 50, 100), pageLength = 10, dom = 'T<"clear">lfrtip',
                                    tableTools = list(aButtons = c("copy","csv","xls","print"),
                                                      sSwfPath = copySWF(dest = "www"))))
     })
@@ -912,7 +946,7 @@ shinyServer(
     #' Generate a graphic summary of the dataset, using ggvis
     output$piePlots <- renderUI({
       data <- exprs()[ ,c("Histology", "Grade", "Recurrence", "Subtype", "CIMP_status")]
-      data <- data[,colSums(is.na(data)) < nrow(data)] # Removing unavailable (all NA) groups
+      data <- rmNA(data) # Removing unavailable (all NA) groups
       plot_output_list <- lapply(names(data), function(i) {
         plotname <- paste("plot", i, sep="")
         htmlOutput(plotname)
@@ -923,7 +957,7 @@ shinyServer(
     
     observe ({                                                               
       data <- exprs()[ ,c("Histology", "Grade", "Recurrence", "Subtype", "CIMP_status")]
-      data <- data[ ,colSums(is.na(data)) < nrow(data)]
+      data <- rmNA(data)
       # Call renderChart for each one. 
       for (i in names(data)) {                                                    
         local({
@@ -946,7 +980,7 @@ shinyServer(
              "Sorry, no survival data are available for this dataset")
       )
       df <- exprs()[ ,c("Histology", "Grade", "Recurrence", "Subtype", "CIMP_status","survival", "status")]
-      df <- df[,colSums(is.na(df)) < nrow(df)] # Removing unavailable (all NA) groups
+      df <-  rmNA(df) # Removing unavailable (all NA) groups
       groups <- names(df)[!names(df) %in% c("Sample","status","survival")]
       plot_output_list <- lapply(groups, function(i) {
         plot_surv_name <- paste("plotSurv", i, sep = "")
@@ -1116,10 +1150,7 @@ shinyServer(
     output$svm <- renderDataTable({ 
       if (is.null(input$upFile) || input$goSvm == 0)
         return(NULL)
-        datatable(svm.call(), rownames = FALSE, extensions = "TableTools",
-                      options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
-                                     dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
-                                                                                 sSwfPath = copySWF(dest = "www"))))
+        data_table(svm.call())
     })
     
     #' Reactive function to generate k-nearest neighbour subtype call to pass to data table and download handler
@@ -1150,10 +1181,7 @@ shinyServer(
     output$knn <- renderDataTable({ 
       if (is.null(input$upFile) || input$goKnn == 0)
         return(NULL)
-        datatable(knn.call(), rownames = FALSE, extensions = "TableTools",
-                      options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
-                                     dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
-                                                                                 sSwfPath = copySWF(dest = "www"))))
+        data_table(knn.call())
     })
     
     #' Reactive function to generate ssGSEA call to pass to data table and download handler
@@ -1183,10 +1211,7 @@ shinyServer(
     output$gsva <- renderDataTable({ 
       if (is.null(input$upFile) || input$goGsva == 0)
         return(NULL)
-        datatable(gsva.call(), rownames = FALSE, extensions = "TableTools",
-                      options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
-                                     dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
-                                                                                 sSwfPath = copySWF(dest = "www"))))
+        data_table(gsva.call())
     })
 
     #' Reactive function to generate the 3 subtype calls to pass to data table and download handler
@@ -1206,10 +1231,7 @@ shinyServer(
     output$sub3 <- renderDataTable({ 
       if (is.null(input$upFile) || input$goSub3 == 0)
         return(NULL)
-        datatable(sub3.call(), rownames = FALSE, extensions = "TableTools",
-                      options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full", autoWidth = TRUE,
-                                     dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
-                                                                                 sSwfPath = copySWF(dest = "www"))))
+        data_table(sub3.call())
     })
         
     #' Reactivity required to display download button after file upload

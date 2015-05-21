@@ -14,7 +14,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                     selected = "TCGA GBM", selectize = TRUE),
                         conditionalPanel(
                           condition = "input.tabCorr == '2genes'",
-                          selectizeInput(inputId = "gene", label = h4("Gene"), choices = NULL, selected = NULL, 
+                          selectizeInput(inputId = "gene", label = h4("Gene"), choices = NULL,  
                                          options = list(placeholder = "Enter gene, eg: EGFR", plugins = list('restore_on_backspace'))),
                           conditionalPanel(
                             condition = "input.tab1 == 1", 
@@ -120,9 +120,10 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                           hr(),
                           conditionalPanel(
                             condition = "input.tab1 == 2 & input.tabSurv == 'km'",
-                            selectInput(inputId = "cutoff", label = h5("Select cutoff:"), 
+                            selectInput(inputId = "cutoff", label = "Cutoff:", 
                                         choices = c("Use a specific mRNA value", "median", "lower quartile", "upper quartile", "high vs low", "quartiles"),
                                         selected = "median"),
+                            helpModal(modal_title ="Kaplan-Meier", link = "helpKm", help_file = includeMarkdown("tools/help/help_km.Rmd")),
                             conditionalPanel(
                               condition = "input.cutoff == 'Use a specific mRNA value'",
                               br(),
@@ -158,10 +159,10 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                           h5("Statistic:"),
                           checkboxInput(inputId = "statCorr", label = "Pearson's correlation", value = FALSE),
                           hr(),
-                          radioButtons(inputId = "colorBy", label = h5("Color by:"), 
+                          radioButtons(inputId = "colorBy", label = "Color by:", 
                                        choices = c("None" = "none", "Histology" = "Histology", "Subtype" = "Subtype")),
                           hr(),
-                          radioButtons(inputId = "separateBy", label = h5("Separate by:"), 
+                          radioButtons(inputId = "separateBy", label = "Separate by:", 
                                        choices = c("None" = "none", "Histology" = "Histology", "Subtype" = "Subtype")),
                           hr()
                         ),
@@ -265,37 +266,49 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                   
                                   tabsetPanel(id = "tabSurv",
                                               
-                                              tabPanel(title = "Km plot",  value = "km",
-                                                       div(style = "width: 100%; overflow: hidden;",
-                                                           div(style = "width: 375px; float: left;",p(class = "lead","Kaplan-Meier estimator survival analysis")),
-                                                           div(style = "margin-left: 375px;", helpModal(modal_title ="Kaplan-Meier", link = "helpKm", help_file = includeMarkdown("tools/help/help_km.Rmd")))
-                                                       ),
-                                                       plotOutput(outputId = "survPlot", height = "100%")
+                                              tabPanel(title = "Kaplan-Meier",  value = "km",
+                                                       tabsetPanel(
+                                                         tabPanel(title = "Plot",
+                                                                  p(class = "lead","Kaplan-Meier estimator survival analysis"),
+                                                                  plotOutput(outputId = "survPlot", height = "100%")
+                                                         ),
+                                                         tabPanel(title = "Data",
+                                                                  dataTableOutput(outputId = "survDataTable", width = 800)
+                                                         )
+                                                       )
                                               ),  
                                               
-                                              tabPanel(title = "HR plot", value = "hr",
-                                                       div(style = "width: 100%; overflow: hidden;",
-                                                           div(style = "width: 120px; float: left;",p(class = "lead","Hazard ratio")),
-                                                           div(style = "margin-left: 120px;", helpModal(modal_title ="Hazard ratio", link = "helpHR", help_file = includeMarkdown("tools/help/help_hr.Rmd")))
-                                                       ),
-                                                       column(width = 9,
-                                                              wellPanel(
-                                                                helpText(HTML('<font color="red"><b>IMPORTANT: </b> Currently active only for GBM samples.</font>')),
-                                                                div(class = "busy",  
-                                                                    p("Calculating, please wait"),
-                                                                    img(src="Rotating_brain.gif") 
-                                                                ),
-                                                                conditionalPanel(condition = "output.hazardPlot",
-                                                                                 helpText(HTML("<b>Note: </b> This is an interactive plot, click on a specific mRNA expression value 
+                                              tabPanel(title = "Hazard ratio", value = "hr",
+                                                       tabsetPanel(
+                                                         tabPanel(title = "Plot",
+                                                                  div(style = "width: 100%; overflow: hidden;",
+                                                                      div(style = "width: 120px; float: left;",p(class = "lead","Hazard ratio")),
+                                                                      div(style = "margin-left: 120px;", helpModal(modal_title ="Hazard ratio", link = "helpHR", help_file = includeMarkdown("tools/help/help_hr.Rmd")))
+                                                                  ),
+                                                                  column(width = 9,
+                                                                         wellPanel(
+                                                                           helpText(HTML('<font color="red"><b>IMPORTANT: </b> Currently active only for GBM samples.</font>')),
+                                                                           div(class = "busy",  
+                                                                               p("Calculating, please wait"),
+                                                                               img(src="Rotating_brain.gif") 
+                                                                           ),
+                                                                           conditionalPanel(condition = "output.hazardPlot",
+                                                                                            helpText(HTML("<b>Note: </b> This is an interactive plot, click on a specific mRNA expression value 
                                                                               to update the survival plot. The blue line represents the current selection.")),
-                                                                                 br(),
-                                                                                 checkboxInput(inputId = "quantile", label = "Show quantiles", value = TRUE)
-                                                                ),
-                                                                plotOutput(outputId = "hazardPlot", click = "hrClick", width = 500 , height = 400)
-                                                              ),
-                                                              plotOutput(outputId = "kmPlot", width = 500 , height = 400)
+                                                                                            br(),
+                                                                                            checkboxInput(inputId = "quantile", label = "Show quantiles", value = TRUE)
+                                                                           ),
+                                                                           plotOutput(outputId = "hazardPlot", click = "hrClick", width = 500 , height = 400)
+                                                                         ),
+                                                                         plotOutput(outputId = "kmPlot", width = 500 , height = 400)
+                                                                  )
+                                                                  
+                                                         ),
+                                                         
+                                                         tabPanel(title = "Data",
+                                                                  dataTableOutput(outputId = "hazardDataTable", width = 600)
+                                                         )
                                                        )
-                                                       
                                               )
                                   )
                          ),
@@ -305,16 +318,31 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                   tabsetPanel(id = "tabCorr",
                                               
                                               tabPanel(title = "2-Genes",  value = "2genes",
-                                                       plotOutput(outputId = "corrPlot"), 
-                                                       br(),
-                                                       conditionalPanel(
-                                                         condition = "input.statCorr",
-                                                         verbatimTextOutput(outputId = "corrTest")
+                                                       tabsetPanel(
+                                                         tabPanel(title = "Plot", 
+                                                                  plotOutput(outputId = "corrPlot"), 
+                                                                  br(),
+                                                                  conditionalPanel(
+                                                                    condition = "input.statCorr",
+                                                                    verbatimTextOutput(outputId = "corrTest")
+                                                                  )
+                                                         ),
+                                                         tabPanel(title = "Data",
+                                                                  dataTableOutput(outputId = "corrDataTable", width = 600)
+                                                         )
+                                                         
                                                        )
                                               ),
                                               
                                               tabPanel(title = "Multiple-Genes", value = "geneslist",
-                                                       plotOutput(outputId = "pairsPlot")
+                                                       tabsetPanel(
+                                                         tabPanel(title = "Plot",
+                                                                  plotOutput(outputId = "pairsPlot")
+                                                         ),
+                                                         tabPanel(title = "Data",
+                                                                  dataTableOutput(outputId = "corrPairsDataTable", width = 600)
+                                                         )
+                                                       )
                                               )
                                   )
                          ),
