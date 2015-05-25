@@ -288,10 +288,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                                   column(width = 9,
                                                                          wellPanel(
                                                                            helpText(HTML('<font color="red"><b>IMPORTANT: </b> Currently active only for GBM samples.</font>')),
-                                                                           div(class = "busy",  
-                                                                               p("Calculating, please wait"),
-                                                                               img(src="Rotating_brain.gif") 
-                                                                           ),
+                                                                           busy(),
                                                                            conditionalPanel(condition = "output.hazardPlot",
                                                                                             helpText(HTML("<b>Note: </b> This is an interactive plot, click on a specific mRNA expression value 
                                                                               to update the survival plot. The blue line represents the current selection.")),
@@ -363,12 +360,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                   tabsetPanel(
                                     
                                     tabPanel(title = "Plots", icon = icon("bar-chart"),
-                                             div(class = "busy",  
-                                                 p("Rendering report, please wait"),
-                                                 img(src="Rotating_brain.gif") 
-                                             ),
-                                             uiOutput(outputId = "reportPlots")
-                                             
+                                                uiOutput(outputId = "reportPlots")
                                     ),
                                     
                                     tabPanel(title = "Data", icon = icon("table"),

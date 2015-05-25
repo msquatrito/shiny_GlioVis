@@ -21,10 +21,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                       ),
                       mainPanel(
                         p(class = "lead","Correlate expression of a gene with all the genes in the dataset"),
-                        div(class = "busy",  
-                            p("Calculating, please wait"),
-                            img(src="Rotating_brain.gif") 
-                        ),
+                        busy(),
                         splitLayout(cellWidths = c("60%", "40%"),
                                     dataTableOutput(outputId = "corrData"),
                                     plotOutput(outputId = "corrDataPlot")
@@ -87,12 +84,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                              p(strong("Output format:"), "Subtype calls with the probability model."),  
                                              br(),
                                              column(width = 9,
-                                                    div(class = "busy",  
-                                                        p("Calculating, please wait"),
-                                                        img(src="Rotating_brain.gif"),
-                                                        hr(),
-                                                        p("Be patients, switching to another tab will crash GlioVis ...")
-                                                    ),
+                                                    busy("Be patients, switching to another tab will crash GlioVis ..."),
                                                     dataTableOutput(outputId = "svm")
                                              )
                                     ),
@@ -105,12 +97,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                              p(strong("Output format:"), "Subtype calls with the probability score."),
                                              br(),
                                              column(width = 8,
-                                                    div(class = "busy",  
-                                                        p("Calculating, please wait"),
-                                                        img(src="Rotating_brain.gif"),
-                                                        hr(),
-                                                        p("Be patients, switching to another tab will crash GlioVis ...")
-                                                    ),
+                                                    busy("Be patients, switching to another tab will crash GlioVis ..."),
                                                     dataTableOutput(outputId = "knn")
                                              )
                                     ),
@@ -123,12 +110,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                              p(strong("Output format:"), "Subtype calls with the enrichment score."),
                                              br(),
                                              column(width = 9,
-                                                    div(class = "busy",  
-                                                        p("Calculating, please wait"),
-                                                        img(src="Rotating_brain.gif"),
-                                                        hr(),
-                                                        p("Be patients, switching to another tab will crash GlioVis ...")
-                                                    ),
+                                                    busy("Be patients, switching to another tab will crash GlioVis ..."),
                                                     dataTableOutput(outputId = "gsva")
                                              )
                                     ),
@@ -136,13 +118,8 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                     tabPanel(title = "3-Way", id = "3-Way", 
                                              p(class = "lead","Generate and compare subtype calls by SVM, K-NN and ssGSEA"),
                                              br(),
-                                             column(width = 9,
-                                                    div(class = "busy",  
-                                                        p("Calculating, please wait"),
-                                                        img(src="Rotating_brain.gif"),
-                                                        hr(),
-                                                        p("Be patients, switching to another tab will crash GlioVis ...")
-                                                    ),
+                                             column(width = 9, 
+                                                    busy("Be patients, switching to another tab will crash GlioVis ..."),
                                                     dataTableOutput(outputId = "sub3")
                                              )
                                     )
@@ -179,10 +156,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                             div(class = "left", p(class = "lead","Estimate of STromal and Immune cells in MAlignant Tumor tissues")),
                             div(class = "right", helpModal(modal_title ="Estimate", link = "helpEst", help_file = includeMarkdown("tools/help/help_estimate.Rmd")))
                         ),
-                        div(class = "busy",  
-                            p("Calculating, please wait"),
-                            img(src="Rotating_brain.gif") 
-                        ),
+                        busy(),
                         column(width = 7,
                                dataTableOutput(outputId = "estScore")
                         ),

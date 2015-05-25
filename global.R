@@ -87,15 +87,29 @@ rmNA <- function (df) {
   df <- df[,colSums(is.na(df)) < nrow(df)]
 }
 
-################################################
+##########################################
 ##############  data table  ##############
-################################################
+##########################################
 data_table <- function (df) {
 datatable(df, rownames = FALSE, extensions = "TableTools",
           options = list(lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
                          dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
                                                                      sSwfPath = copySWF(dest = "www"))))
 }
+
+
+####################################
+##############  busy  ##############
+####################################
+
+busy <- function (text = "") {
+  div(class = "busy",  
+      p("Calculating, please wait"),
+      img(src="Rotating_brain.gif"),
+      hr(),
+      p(text)
+  )
+}  
 
 ######################################
 ############## Get HR  ###############
