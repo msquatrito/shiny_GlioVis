@@ -25,7 +25,8 @@ shinyServer(
              "Li" = li,
              "Vital" = vital,
              "Joo" = joo,
-             "Oh" = oh)
+             "Oh" = oh,
+             "Ivy GAP" = ivy)
     })
     
     #' Switch the dataset for the correlation
@@ -49,7 +50,8 @@ shinyServer(
              "Li" = li,
              "Vital" = vital,
              "Joo" = joo,
-             "Oh" = oh)
+             "Oh" = oh,
+             "Ivy GAP" = ivy)
     })
     
     #' Expression data

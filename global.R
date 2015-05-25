@@ -21,9 +21,9 @@ options(shiny.usecairo=TRUE)
 #######################################
 datasets <- c("TCGA GBM", "TCGA Lgg","Rembrandt", "Gravendeel", "Phillips", "Murat", "Freije", 
               "Reifenberger", "Bao", "Gill", "Gorovets", "Nutt", "Ducray","Grzmil","Donson","Li","Vital",
-              "Joo","Oh")
+              "Joo","Oh","Ivy GAP")
 
-noSurvDataset <- c("Bao","Reifenberger","Gill","Li", "Oh")
+noSurvDataset <- c("Bao","Reifenberger","Gill","Li", "Oh","Ivy GAP")
 
 gbm.tcga <- readRDS("data/TCGA.GBM.Rds")
 lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
@@ -44,6 +44,7 @@ li <- readRDS("data/Li.Rds")
 vital <- readRDS("data/Vital.Rds")
 joo <- readRDS("data/Joo.Rds")
 oh <- readRDS("data/Oh.Rds")
+ivy <- readRDS("data/Ivy.Rds")
 
 #######################################
 ########## other variables  ###########
@@ -75,7 +76,8 @@ plotList <- list("TCGA GBM" = c("Histology", "Copy_number", "Subtype", "CIMP_sta
                  "Li" = c("Subtype", "CIMP_status"),
                  "Vital" = c("Histology", "Grade", "Subtype"),
                  "Joo" = c("Histology", "Subtype", "Recurrence", "CIMP_status"),
-                 "Oh" = c("Recurrence", "Subtype", "CIMP_status"))
+                 "Oh" = c("Recurrence", "Subtype", "CIMP_status"),
+                 "Ivy GAP" = c("Histology","Subtype","Recurrence", "CIMP_status"))
 
 
 ################################################

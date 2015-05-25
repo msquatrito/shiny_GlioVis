@@ -361,25 +361,25 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      </tr>
 
      <tr>
-     <td class="tg-bd"></td>
-     <td class="tg-s6z2-bd"></td>      
+     <td class="tg-bd"><a href="http://glioblastoma.alleninstitute.org" style="color: rgb(0,0,0)">Ivy GAP</a></td>
+     <td class="tg-s6z2-bd"><a href="http://glioblastoma.alleninstitute.org/static/download.html" style="color: rgb(0,0,0)">RNA-seq</a></td>      
+     <td class="tg-s6z2">0</td>
+     <td class="tg-s6z2">0</td>
+     <td class="tg-s6z2-bd">270**</td>
      <td class="tg-s6z2"></td>
-     <td class="tg-s6z2"></td>
-     <td class="tg-s6z2-bd"></td>
-     <td class="tg-s6z2"></td>
-     <td class="tg-eoji"></td>
-     <td class="tg-eoji"></td>
-     <td class="tg-eoji"></td>
-     <td class="tg-eoji"></td>
-     <td class="tg-eoji"></td>
-     <td class="tg-eoji"></td>
-     <td class="tg-eoji"></td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
      <td class="tg-eoji"></td>
      </tr>
 
     <tfoot>
     <tr>
-    <td colspan="10">* more than one sample for each patients </td>
+    <td colspan="10">* more than one sample for each patients;  ** multiple samples from different tumor features</td>
     </tr>
     </tfoot>
      </table>')
