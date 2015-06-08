@@ -9,6 +9,9 @@ ESTIMATE (Estimation of STromal and Immune cells in MAlignant Tumor tissues usin
 2. immune score (that represents the infiltration of immune cells in tumor tissue), and    
 3. estimate score (that infers tumor purity).  
 
+In the Purity plot, the black dot and the gray dash-lines show ESTIMATE tumor purity and 95% prediction interval, 
+respectively. The grey dots represent the background distribution based on 995 samples from TCGA Affymetrix data set.   
+
 *References:*  
 [Yoshihara K. et al., 2013](http://www.ncbi.nlm.nih.gov/pubmed/24113773)   
 [ESTIMATE web site](http://ibl.mdanderson.org/estimate/)   

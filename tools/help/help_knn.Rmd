@@ -7,3 +7,5 @@ In pattern recognition, the k-Nearest Neighbors algorithm (or k-NN for short) is
 
 * The **K-NN** Subtype calls, are obtained using the `knn3Train` function of the [‘caret’](http://cran.r-project.org/web/packages/caret/caret.pdf) package. As training dataset for the GBM we use the TCGA GBM samples described in [Brennan C. et al. 2013](http://www.ncbi.nlm.nih.gov/pubmed/24120142). As training dataset for the LGG we use the TCGA LGG samples described in [NEJM](https://#)  
 
+**Output format**: Subtype calls with the probability score   
+
