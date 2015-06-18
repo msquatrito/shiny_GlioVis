@@ -67,7 +67,7 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      <td class="tg-lvt2">✔</td>
      </tr>
      <tr>
-     <td class="tg-bd"><a href="http://cancergenome.nih.gov/publications/publicationguidelines" style="color: rgb(0,0,0)">TCGA LGG</a></td>
+     <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/26061751" style="color: rgb(0,0,0)">TCGA LGG</a></td>
 <td class="tg-s6z2-bd"><a href="https://tcga-data.nci.nih.gov/tcga/tcgaCancerDetails.jsp?diseaseType=LGG&diseaseName=Brain%20Lower%20Grade%20Glioma" style="color: rgb(0,0,0)">RNA-seq</td>     
 <td class="tg-s6z2">0</td>
      <td class="tg-s6z2">513</td>

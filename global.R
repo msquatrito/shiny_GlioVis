@@ -14,6 +14,7 @@ library(shinydashboard)
 library(caret)
 library(DT)
 library(Cairo)
+library(reshape2)
 options(shiny.usecairo=TRUE)
 `%then%` <- shiny:::`%OR%`
 
@@ -54,7 +55,7 @@ genes <- readRDS("data/genes.Rds")
 gene_names <- as.character(genes[,"Gene"])
 gbm.subtype.list <- readRDS("data/subtype_list.Rds")
 gbm.core.samples <- readRDS("data/TCGA.core.345samples.Rds")
-lgg.core.samples <- readRDS("data/lgg.core.460samples.Rds")
+lgg.core.samples <- readRDS("data/lgg.expSubtype.core.Rds")
 
 #######################################
 ############## plotList  ##############
@@ -262,10 +263,7 @@ survivalPlot <- function (df, gene, group, subtype, cutoff, numeric) {
 #####################
 # To use to get correlation data (r an p value) on the fly. 
 # using Hadley suggestion: https://stat.ethz.ch/pipermail/r-help/2008-November/181049.html
-getCorr <- function (data, gene, histology, corrMethod) {
-  if (histology != "All") {
-    data <- filter (data, Histology == histology)
-  }
+getCorr <- function (data, gene, corrMethod) {
   data <- data[ ,9:ncol(data)]
   mRNA <- data[ ,gene, drop = F]
   r <- apply(mRNA, 2, function(x) { apply(data, 2, function(y) { cor(x,y, method = corrMethod) })})

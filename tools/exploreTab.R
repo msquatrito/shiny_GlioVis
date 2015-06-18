@@ -207,7 +207,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                         
                         # Allow the user to set the height and width of the plot download.
                         conditionalPanel(
-                          condition = "input.tab1 != 4 & input.tab1 != 5 & input.tabCorr != 'corrAll'",
+                          condition = "input.tab1 != 4 & input.tab1 != 5 & input.tab1 != 6 & input.tabCorr != 'corrAll'",
                           wellPanel( 
                             selectInput(inputId = "downloadPlotFileType", label = strong("Select download file type"),
                                         choices = list("PDF"  = "pdf", "BMP"  = "bmp", "JPEG" = "jpeg", "PNG"  = "png")
@@ -251,8 +251,9 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
            
            
            mainPanel(
-             
+
              h3(textOutput(outputId = "caption")),
+
              
              tabsetPanel(id = "tab1",  
                          
@@ -380,8 +381,8 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                        p(class = "lead","Correlate expression of a gene with all the genes in the dataset"),
                                                        busy(),
                                                        splitLayout(cellWidths = c("60%", "40%"),
-                                                                   DT::dataTableOutput(outputId = "corrData"),
-                                                                   plotOutput(outputId = "corrDataPlot")
+                                                                   DT::dataTableOutput(outputId = "corrAllTable"),
+                                                                   plotOutput(outputId = "corrAllPlot")
                                                        )
                                               )
                                   )
@@ -398,7 +399,12 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                   )
                          ),
                          
-                         tabPanel(title = "Summary", icon =  icon("pie-chart") , value = 5,
+                         tabPanel(title = "Mutations",  icon =  icon("adjust") ,value = 5,
+                                  p("Mutations are not currently supported in Gliovis, your search will be transfered to the MSKCC cBio Portal"),
+                                  uiOutput('mut_link')
+                         ),
+                         
+                         tabPanel(title = "Summary", icon =  icon("pie-chart") , value = 6,
                                   
                                   tabsetPanel(
                                     

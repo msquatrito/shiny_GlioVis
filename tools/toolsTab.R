@@ -108,9 +108,15 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                               
                                               tabPanel(title = "3-Way", id = "3-Way", 
                                                        p(class = "lead","Generate and compare subtype calls by SVM, K-NN and ssGSEA"),
-                                                       column(width = 9, 
-                                                              busy("Be patients, switching to another tab will crash GlioVis ..."),
-                                                              DT::dataTableOutput(outputId = "sub3")
+                                                       fluidRow(
+                                                         column(width = 10, 
+                                                                conditionalPanel(
+                                                                  condition = "output.sub3",
+                                                                  plotOutput(outputId = "sub3Plot",height = "100%")
+                                                                ),
+                                                                busy("Be patients, switching to another tab will crash GlioVis ..."),
+                                                                DT::dataTableOutput(outputId = "sub3")
+                                                         )
                                                        )
                                               )
                                   )
