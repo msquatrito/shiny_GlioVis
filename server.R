@@ -194,6 +194,7 @@ shinyServer(
     #' Filtered data for the box plot
     filter_plot_Data <- reactive({
       if (input$removeMe) {
+        validate(need(input$removeGp %in% plot_Data()[ ,plot_Type()],message = FALSE)) #To silence an error thrown by the stat analysis
         data <- plot_Data()
         data <- subset(data, data[ ,plot_Type()] %in% input$removeGp)
       } else {
@@ -319,11 +320,12 @@ shinyServer(
       stat <- data.frame(data %>%
                            group_by(group) %>%
                            summarise(Sample_count = paste0(n()," (", round(n()*100/dim(data)[1], 2), "%)" ), # prop.table
-                                     median = median (mRNA, na.rm=T), mad = mad(mRNA, na.rm=T),mean = mean(mRNA, na.rm=T), sd = sd(mRNA, na.rm=T)))
+                                     median = median (mRNA, na.rm=T), mad = mad(mRNA, na.rm=T), mean = mean(mRNA, na.rm=T), 
+                                     sd = sd(mRNA, na.rm=T)))
       row.names(stat) <- stat$group
       tot <- data %>%
         summarise(Sample_count = n(),median = median (mRNA, na.rm=T), 
-                  mad = mad(mRNA, na.rm=T),mean = mean(mRNA, na.rm=T), sd = sd(mRNA, na.rm=T))
+                  mad = mad(mRNA, na.rm=T), mean = mean(mRNA, na.rm=T), sd = sd(mRNA, na.rm=T))
       stat <- stat[,-1]
       stat <- rbind(stat,TOTAL = tot)
       stat 
@@ -331,7 +333,8 @@ shinyServer(
     
     #' Tukey post-hoc test, to combine it with the boxplot and to render in a table
     tukey <- reactive({
-      tukey <- data.frame(TukeyHSD(aov(mRNA ~ group, data = dataStat()))[[1]])
+      data <-  dataStat()
+      tukey <- data.frame(TukeyHSD(aov(mRNA ~ group, data = data))[[1]])
       tukey$Significance <- as.factor(starmaker(tukey$p.adj, p.levels = c(.001, .01, .05, 1), symbols=c("***", "**", "*", "ns")))
       tukey <- tukey[order(tukey$diff, decreasing = TRUE), ]
       tukey
@@ -343,8 +346,9 @@ shinyServer(
     })
     
     #' Pairwise t test
-    output$pairwiseTtest <- renderTable({     
-      pttest <- pairwise.t.test(dataStat()$mRNA, dataStat()$group, na.rm= TRUE, p.adj = "bonferroni", paired = FALSE)
+    output$pairwiseTtest <- renderTable({
+      data <-  dataStat()
+      pttest <- pairwise.t.test(data$mRNA, data$group, na.rm= TRUE, p.adj = "bonferroni", paired = FALSE)
       pttest$p.value
     })
     
@@ -1019,7 +1023,10 @@ shinyServer(
                                    list(x = as.name(my_i))))
             stat <- stat[,-1]
             stat <- rbind(stat,TOTAL = tot)
-            t <- tableGrob(stat, gp = gpar(fontsize=14),row.just = "right", core.just = "right")
+            t <- tableGrob(stat)
+                           # , gp = gpar(fontsize=14),row.just = "right", core.just = "right")
+#             t <- tableGrob(stat, theme = ttheme_default(core = list(fg_params = list(hjust=1, x=0.9)),
+#                                                         rowhead = list(fg_params=list(hjust=1, x=0.95))))
             grid.arrange(p, t, ncol = 2, just = c("center", "top")) # `just` it's not working
           })
         })
@@ -1051,9 +1058,8 @@ shinyServer(
       }
       datatable(data, rownames = FALSE, extensions = c("FixedColumns", "TableTools"),
                 options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE,
-                               lengthMenu = c(10, 50, 100), pageLength = 10, dom = 'T<"clear">lfrtip',
-                               tableTools = list(aButtons = c("copy","csv","xls","print"),
-                                                 sSwfPath = copySWF(dest = "www"))))
+                               lengthMenu = list(c(10, 25, 50, -1), c('10','25','50','All')), dom = 'T<"clear">lfrtip',
+                               tableTools = list(sSwfPath = copySWF(dest = "www"))))
     })
     
     #' Generate a graphic summary of the dataset, using ggvis
@@ -1149,8 +1155,10 @@ shinyServer(
         train <- train[train$Sample %in% lgg.core.samples,]
         pData <- lgg.tcga[["pData"]]
         pData.core <- pData[row.names(train),]
-        Training <- pData.core$RNASeqCluster # Expression subtype (not the molecular subtype)
-        subtypes <- c("R1","R2","R3","R4")
+        Training <- pData.core$Subtype
+        subtypes <- c("IDHmut-codel","IDHmut-non-codel","IDHwt")
+        #         Training <- pData.core$RNASeqCluster # Expression subtype (not the molecular subtype)
+        #         subtypes <- c("R1","R2","R3","R4")
       }
       row.names(train) <- train[,"Sample"]
       train.exp <- data.frame(t(train[,-c(1:8)])) #select only the expression data
@@ -1202,9 +1210,11 @@ shinyServer(
         train <- train[train$Sample %in% lgg.core.samples,]
         pData <- lgg.tcga[["pData"]]
         pData.core <- pData[row.names(train),]
-        Training <- pData.core$RNASeqCluster # Expression subtype (not the molecular subtype)
+        Training <- pData.core$Subtype
+        subtypes <- c("IDHmut-codel","IDHmut-non-codel","IDHwt")
+#         Training <- pData.core$RNASeqCluster # Expression subtype (not the molecular subtype)
+#         subtypes <- c("R1","R2","R3","R4")
         k <- 3
-        subtypes <- c("R1","R2","R3","R4")
       }
       row.names(train) <- train[,"Sample"]
       train.exp <- as.matrix(train[,-c(1:8)])
@@ -1318,9 +1328,8 @@ shinyServer(
           need(input$goEst != 0,'Please press "Submit ESTIMATE"')
       )
       datatable(est.call(), rownames = FALSE, selection = 'single', extensions = "TableTools", 
-                options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full", autoWidth = TRUE,
-                               dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
-                                                                           sSwfPath = copySWF(dest = "www"))))
+                options = list(orderClasses = TRUE, lengthMenu = list(c(20, 50, 100, -1), c('20','50','100','All')), pageLength = 20, pagingType = "full", autoWidth = TRUE,
+                               dom = 'T<"clear">lfrtip', tableTools = list(sSwfPath = copySWF(dest = "www"))))
     })
     
     #' Generate the Purity plot
@@ -1440,9 +1449,10 @@ shinyServer(
       )
       datatable(deconv.call()[["scores"]], rownames = FALSE, extensions = c("FixedColumns", "TableTools"),
                 options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE,
-                               lengthMenu = c(20, 50, 100), pageLength = 20, dom = 'T<"clear">lfrtip',
-                               tableTools = list(aButtons = c("copy","csv","xls","print"),
-                                                 sSwfPath = copySWF(dest = "www"))))
+                               lengthMenu = list(c(20, 50, 100, -1), c('20','50','100','All')), 
+                               pageLength = 20, dom = 'T<"clear">lfrtip',
+                               tableTools = list(sSwfPath = copySWF(dest = "www")))
+                )
     })
     
   })
