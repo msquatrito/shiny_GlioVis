@@ -15,25 +15,30 @@ library(caret)
 library(DT)
 library(Cairo)
 library(reshape2)
+library(heatmap3)
+library(RColorBrewer)
+library(scales)
 options(shiny.usecairo=TRUE)
 `%then%` <- shiny:::`%OR%`
 
 #######################################
 ############## Datasets  ##############
 #######################################
-datasets <- c("TCGA GBM", "TCGA Lgg","Rembrandt", "Gravendeel", "Phillips", "Murat", "Freije", 
+datasets <- c("TCGA GBM", "TCGA LGG","TCGA GBMLGG", "Rembrandt", "Gravendeel", "Phillips", "Murat", "Freije", "Lee Y",
               "Reifenberger", "Bao", "Gill", "Gorovets", "Nutt", "Ducray","Grzmil","Donson","Li","Vital",
-              "Joo","Oh","Ivy GAP")
+              "Joo","Oh","Ivy GAP","POLA Network","Gleize")
 
-noSurvDataset <- c("Bao","Reifenberger","Gill","Li", "Oh","Ivy GAP")
+noSurvDataset <- c("Bao","Reifenberger","Gill","Li", "Oh","Ivy GAP","Gleize")
 
 gbm.tcga <- readRDS("data/TCGA.GBM.Rds")
 lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
+lgg_gbm.tcga <- readRDS("data/TCGA.LGG_GBM.Rds")
 rembrandt <- readRDS("data/Rembrandt.Rds")
 freije <- readRDS("data/Freije.Rds")
 gravendeel <- readRDS("data/Gravendeel.Rds")
 murat <- readRDS("data/Murat.Rds")
 phillips <- readRDS("data/Phillips.Rds")
+leey <- readRDS("data/LeeY.Rds")
 reifenberger <- readRDS("data/Reifenberger.Rds")
 bao <- readRDS("data/Bao.Rds")
 gill <- readRDS("data/Gill.Rds")
@@ -47,6 +52,8 @@ vital <- readRDS("data/Vital.Rds")
 joo <- readRDS("data/Joo.Rds")
 oh <- readRDS("data/Oh.Rds")
 ivy <- readRDS("data/Ivy.Rds")
+pola <- readRDS("data/POLA.Rds")
+gleize <- readRDS("data/Gleize.Rds")
 
 #######################################
 ########## other variables  ###########
@@ -56,17 +63,22 @@ gene_names <- as.character(genes[,"Gene"])
 gbm.subtype.list <- readRDS("data/subtype_list.Rds")
 gbm.core.samples <- readRDS("data/TCGA.core.345samples.Rds")
 lgg.core.samples <- readRDS("data/lgg.expSubtype.core.Rds")
+galon_gene_set_list <- readRDS("data/galon_gene_set_list.Rds")
+engler_gene_set_list <- readRDS("data/engler_gene_set_list.Rds")
+galon_engler <- readRDS("data/galon_engler_gene_set_list.RDS")
 
 #######################################
 ############## plotList  ##############
 #######################################
 plotList <- list("TCGA GBM" = c("Histology", "Copy_number", "Subtype", "CIMP_status", "Recurrence"),
-                 "TCGA Lgg" = c("Histology", "Grade", "Copy_number", "Subtype"),
+                 "TCGA LGG" = c("Histology", "Grade", "Copy_number", "Subtype"),
+                 "TCGA GBMLGG" = c("Histology", "Grade", "Copy_number"),
                  "Rembrandt" = c("Histology", "Grade", "Subtype", "CIMP_status"),
                  "Gravendeel" = c("Histology", "Grade", "Subtype", "CIMP_status"),
                  "Phillips" = c("Histology", "Grade", "Subtype", "Recurrence", "CIMP_status"),
                  "Murat" = c("Histology", "Subtype", "Recurrence", "CIMP_status"),
                  "Freije" = c("Histology", "Grade", "Subtype", "CIMP_status"),
+                 "Lee Y" = c("Subtype", "CIMP_status"),
                  "Reifenberger" = c("Subtype", "CIMP_status"),
                  "Bao" = c("Histology", "Subtype", "Recurrence", "CIMP_status"),
                  "Gill" = c("Histology", "Subtype", "CIMP_status"),
@@ -79,7 +91,9 @@ plotList <- list("TCGA GBM" = c("Histology", "Copy_number", "Subtype", "CIMP_sta
                  "Vital" = c("Histology", "Grade", "Subtype"),
                  "Joo" = c("Histology", "Subtype", "Recurrence", "CIMP_status"),
                  "Oh" = c("Recurrence", "Subtype", "CIMP_status"),
-                 "Ivy GAP" = c("Histology","Subtype","Recurrence", "CIMP_status"))
+                 "Ivy GAP" = c("Histology","Subtype","Recurrence", "CIMP_status"),
+                 "POLA Network"= c("Subtype"),
+                 "Gleize" = c("Histology", "Grade"))
 
 
 ################################################
