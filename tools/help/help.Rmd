@@ -21,9 +21,8 @@ A box plot or  is a convenient way of graphically depicting groups of numerical 
 * Scale y axis: Centering is done by subtracting the mRNA means (omitting NAs) and dividing by the standard deviations.   
 * White background: Change the plot setting to have white backround and black axis labels.   
 * Color box: Color the boxes by sample group.   
-* Color stripchart: It allows to color the points of the stripchart, using a different plot type catagory. E.g. The user can plot the Copy numbers and can color for the Subtype.   
-* Change points appearance: It' is possible to change the size and the transparency of the points of the stripchart. Useful when generating small plots with a lot of points.  
-* Change axis labels: To set different x and y axis labels   
+* Change points appearance: It' is possible to change the size and the transparency of the points of the stripchart. Useful when generating small plots with a lot of points. Morst importantly, user can change the color and/or the shape of the points of the stripchart, using a different plot type category. E.g. The user can plot the Copy numbers and can color for the Subtype.  
+* Change axis labels: To set different x and y axis labels.      
 * Change font size: To change x and y axis text/labels font size.      
 
 **Statistic:**   

@@ -1,0 +1,39 @@
+---
+title: "Correlation plot"
+output: html_document
+---
+
+**Corr-Two: correlate two genes**    
+
+1. Select a dataset.   
+2. Enter a gene 1.   
+3. Enter a gene 2.   
+4. Choose one of the histological group, default setting will show all the samples. For GBM datasets it's possible to specify a subtype of interest.   
+
+*Statistic:*   
+If method is "pearson", the test statistic is based on Pearson's product moment correlation coefficient.
+If method is "kendall" or "spearman", Kendall's tau or Spearman's rho statistic is used to estimate a rank-based measure of association. These tests may be used if the data do not necessarily come from a bivariate normal distribution.   
+    
+
+**Corr-Many: correlate a list of genes**    
+
+1. Select a dataset.   
+2. Enter gene list (at least two genes have to be specified).    
+3. Choose one of the histological group, default setting will show all the samples. For GBM datasets it's possible to specify a subtype of interest.       
+
+*Plot*   
+Lower diagonal: scatter plot with regression line   
+Middle diagonal: density plot   
+Upper diagonal: Pearson correlation coefficient with signfiicance: *** < 0.001, ** < 0.01, * < 0.05, "." < 0.1   
+    
+
+**Corr-All: correlate a gene with all the genes in the dataset**   
+
+1. Select a dataset.   
+2. Enter a gene.    
+3. Choose one of the histological group, default setting will show all the samples. For GBM datasets it's possible to specify a subtype of interest.       
+
+*Table*   
+The result table shows a list of genes with a r correlation coefficient in the specified range (default is from -0.3 to +0.3).   
+*Plot*   
+Select a specific gene from the result table to show the correlation plot.   

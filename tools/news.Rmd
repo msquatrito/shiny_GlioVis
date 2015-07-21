@@ -1,3 +1,11 @@
+**21-07-2015**   
+
+- User interface update.  
+- 4 new datasets included: TCGA GBMLGG, Lee Y, POLA Network, Gleize.    
+- New tool, DeconvoluteMe:Deconvolute gene expression profiles from heterogeneous tissue samples into cell-type-specific subprofiles    
+     
+     
+
 **07-05-2015**   
 
 Gliovis 0.1 is live!!
