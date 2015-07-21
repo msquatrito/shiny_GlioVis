@@ -4,8 +4,8 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
          # link to the style.css file.
          tags$link(rel = 'stylesheet', type = 'text/css', href = 'styles.css'),
          
-         sidebarLayout(
-           sidebarPanel(width = 3,
+         sidebarLayout(fluid = FALSE,
+           sidebarPanel(
                         img(src = "GlioVis_explore.jpg", class="responsive-image"),
                         br(),
                         br(),
@@ -18,6 +18,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                             selectizeInput(inputId = "gene", label = h4("Gene"), choices = NULL,  
                                            options = list(placeholder = "Enter gene, eg: EGFR", plugins = list('restore_on_backspace')))
                           ),
+                          
                           # Tab Boxplot
                           conditionalPanel(
                             condition = "input.tab1 == 1", 
@@ -39,7 +40,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                             condition = "input.tab1 == 2",
                             selectInput(inputId = "histologySurv", label = h4("Histology:"), choices = ""),
                             conditionalPanel(
-                              condition = "input.histologySurv == 'GBM'",
+                              condition = "input.histologySurv == 'GBM' & input.dataset != 'TCGA GBMLGG'",
                               checkboxInput(inputId = "gcimpSurv", label = "Exclude G-CIMP samples", value = FALSE),
                               checkboxInput(inputId = "primarySurv", label = "Exclude Recurrent samples", value = FALSE),
                               selectInput(inputId = "subtypeSurv", label = h4("Subtype:"), 
@@ -80,10 +81,11 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                             ),
                             selectInput(inputId = "histologyCorr", label = h4("Histology:"), choices = ""),
                             conditionalPanel(
-                              condition = "input.histologyCorr == 'GBM'",
+                              condition = "input.histologyCorr == 'GBM' & input.dataset != 'TCGA GBMLGG'",
                               selectInput(inputId = "subtype", label = h4("Subtype:"), 
                                           choices = c("All", "Classical", "Mesenchymal", "Neural", "Proneural"))
-                            )
+                            ),
+                            helpModal(modal_title ="Correlation", link = "helpCorr", help_file = includeMarkdown("tools/help/help_corr.Rmd"))
                           ),
                           
                           # Tab RPPA
@@ -97,6 +99,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                           )
                         ),
                         
+                        # Tab Boxplot plotting options
                         conditionalPanel(
                           condition = "input.tab1 == 1",
                           wellPanel( 
@@ -118,11 +121,6 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                             checkboxInput(inputId = "scale", label = "Scale y axis", value = FALSE),
                             checkboxInput(inputId = "bw", label = "White background", value = FALSE),
                             checkboxInput(inputId = "colBox", label = "Color box", value = FALSE),
-                            checkboxInput(inputId = "colStrip", label = "Color stripchart", value = FALSE),
-                            conditionalPanel(
-                              condition = "input.colStrip",
-                              uiOutput("colorPoints")
-                            ),
                             checkboxInput(inputId = "typePoint", label = "Change points appearance", value = FALSE),
                             conditionalPanel(
                               condition="input.typePoint",
@@ -135,7 +133,8 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                       numericInput(inputId = "alpha",label = "Transparency",
                                                    value = 0.5, min = 0, max = 1, step = 0.1)
                                   )
-                              )
+                              ),
+                              uiOutput("colorPoints")
                             ),
                             checkboxInput(inputId = "labelsTitle", label = "Change axis labels", value = FALSE),
                             conditionalPanel(
@@ -167,6 +166,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                           )
                         ),
                         
+                        # Tab correlation plotting options
                         conditionalPanel(
                           condition = "input.tab1 == 3 & input.tabCorr == 'corrTwo'",
                           wellPanel(
@@ -225,6 +225,8 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                 )
                             ),
                             br(),
+                            
+                            #Download buttons
                             conditionalPanel(
                               condition = "input.tab1 == 1",
                               downloadButton(outputId = "downloadPlot", label = "Download", class= "btn-primary")

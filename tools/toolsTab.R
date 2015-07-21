@@ -1,8 +1,8 @@
 # UI-elements for Tools tab
 tabPanel(title = "Tools", icon = icon("gear"),
          
-         sidebarLayout(
-           sidebarPanel(width = 3,
+         sidebarLayout(fluid = FALSE,
+           sidebarPanel(
                         img(src = "GlioVis_tools.jpg", class="responsive-image"),
                         br(),
                         br(),
@@ -19,8 +19,32 @@ tabPanel(title = "Tools", icon = icon("gear"),
                             radioButtons(inputId = "platformEst", label = strong("Select platform:"), 
                                          choices = c("Affimetrix" = "affymetrix", "Agilent" = "agilent", "Illumina" = "illumina"))
                           ),
-                          fileInput(inputId = "upFile", label = "Choose CSV File",
-                                    accept=c("text/csv", "text/comma-separated-values,text/plain", ".csv"))
+                          conditionalPanel(
+                            condition = "input.tabTools == 'DeconvoluteME'",
+                            radioButtons(inputId = "platformDec", label = strong("Select platform:"), 
+                                         choices = c("Microarray" = "microarray", "RNAseq" = "rnaseq"),inline = T),
+                            br(),
+                            radioButtons(inputId = "geneListDec", label = strong("Select genelist:"), 
+                                         choices = c("Engler et al." = "engler", "Bindea et al." = "galon", 
+                                                     "Engler_Bindea" = "galon_engler"),inline = T),
+                            br()
+                          ),
+                          fileInput(inputId = "upFile", label = "Choose Expression data File",
+                                    accept=c("text/csv", "text/comma-separated-values,text/plain", ".csv")
+                                    ),
+                          conditionalPanel(
+                            condition = "input.tabTools == 'DeconvoluteME'",
+                            checkboxInput(inputId = "deconvPData", label = "Include phenotypic data (eg.: Tumor/Normal)", value = FALSE)
+                          ),
+                          conditionalPanel(
+                            condition = "input.deconvPData",
+                            helpText("Upload a .csv file with samples in rows and pData in columns.",
+                                     "The first column should contain the sample ID and should be named 'Sample'"),
+                            fileInput(inputId = "pDataFile", label = "Choose pData File",
+                                      accept=c("text/csv", "text/comma-separated-values,text/plain", ".csv")
+                                      ),
+                            uiOutput(outputId = "pDataDec")
+                          )
                         ),
                         wellPanel(
                           checkboxInput(inputId = "header", label = "Header", value = TRUE)
@@ -60,6 +84,11 @@ tabPanel(title = "Tools", icon = icon("gear"),
                           condition = "input.tabTools == 'EstimateME'  & output.finishedUploading",
                           actionButton(inputId = "goEst", label = "Submit ESTIMATE", class= "btn-success"),
                           br()
+                        ),
+                        conditionalPanel(
+                          condition = "input.tabTools == 'DeconvoluteME'  & output.finishedUploading",
+                          actionButton(inputId = "goDec", label = "Submit Deconvolute", class= "btn-success"),
+                          br()
                         )
            ),
            
@@ -80,7 +109,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                                        ),
                                                        column(width = 9,
                                                               busy("Be patients, switching to another tab will crash GlioVis ..."),
-                                                              DT::dataTableOutput(outputId = "svm")
+                                                              dataTableOutput(outputId = "svm")
                                                        )
                                               ),
                                               
@@ -91,7 +120,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                                        ),
                                                        column(width = 8,
                                                               busy("Be patients, switching to another tab will crash GlioVis ..."),
-                                                              DT::dataTableOutput(outputId = "knn")
+                                                              dataTableOutput(outputId = "knn")
                                                        )
                                               ),
                                               
@@ -102,7 +131,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                                        ),
                                                        column(width = 9,
                                                               busy("Be patients, switching to another tab will crash GlioVis ..."),
-                                                              DT::dataTableOutput(outputId = "gsva")
+                                                              dataTableOutput(outputId = "gsva")
                                                        )
                                               ),
                                               
@@ -115,7 +144,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                                                   plotOutput(outputId = "sub3Plot",height = "100%")
                                                                 ),
                                                                 busy("Be patients, switching to another tab will crash GlioVis ..."),
-                                                                DT::dataTableOutput(outputId = "sub3")
+                                                                dataTableOutput(outputId = "sub3")
                                                          )
                                                        )
                                               )
@@ -129,7 +158,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                   ),
                                   busy(),
                                   splitLayout(cellWidths = c("65%", "35%"),
-                                              DT::dataTableOutput(outputId = "estScore"),
+                                              dataTableOutput(outputId = "estScore"),
                                               plotOutput(outputId = "purityPlot")
                                   )
                          ),
@@ -139,15 +168,25 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                       div(class = "width: 700px; float: left;", p(class = "lead","Deconvolute gene expression profiles from heterogeneous tissue samples into cell-type-specific subprofiles")),
                                       div(class = "margin-left: 700px;", helpModal(modal_title ="Deconvolute", link = "helpDeconv", help_file = includeMarkdown("tools/help/help_deconv.Rmd")))
                                   ),
-                                  br(),br(),br(),
-                                  img(style = "display: block; margin-left: auto; margin-right: auto", 
-                                      src = "work-in-progress-sign.png")
-#                                   ,
-#                                   busy(),
-#                                   splitLayout(cellWidths = c("60%", "40%"),
-#                                               DT::dataTableOutput(outputId = "deconvScore"),
-#                                               plotOutput(outputId = "deconvPlot")
-#                                  )
+                                  #                                   br(),br(),br(),
+                                  #                                   img(style = "display: block; margin-left: auto; margin-right: auto", 
+                                  #                                       src = "work-in-progress-sign.png")
+                                  #                                   ,
+                                  tabsetPanel(
+                                    tabPanel(title = "Heatmap", id = "deconvHeatmap",
+                                             busy(),
+                                             plotOutput(outputId = "deconvHeatmap", height = 1000)
+                                    ),
+                                    tabPanel(title = "Boxplot", id = "deconvBoxPlot",
+                                             busy(),
+                                             plotOutput(outputId = "deconvBoxPlot", height = "100%")
+                                    ),
+                                    tabPanel(title = "Scores", id = "deconvScores",
+                                             busy(),
+                                             dataTableOutput(outputId = "deconvScore")
+                                    )
+                                    
+                                  )
                          )
              )
            )
