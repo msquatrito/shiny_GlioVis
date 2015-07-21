@@ -8,12 +8,14 @@ shinyServer(
     datasetInput <- reactive({
       switch(input$dataset, 
              "TCGA GBM" = gbm.tcga,
-             "TCGA Lgg" = lgg.tcga,
+             "TCGA LGG" = lgg.tcga,
+             "TCGA GBMLGG" = lgg_gbm.tcga,
              "Rembrandt" = rembrandt,
              "Gravendeel" = gravendeel,
              "Phillips" = phillips,
              "Murat" = murat,
              "Freije" = freije,
+             "Lee Y" = leey,
              "Reifenberger" = reifenberger,
              "Bao" = bao,
              "Gill" = gill,
@@ -26,7 +28,9 @@ shinyServer(
              "Vital" = vital,
              "Joo" = joo,
              "Oh" = oh,
-             "Ivy GAP" = ivy)
+             "Ivy GAP" = ivy,
+             "POLA Network" = pola,
+             "Gleize" = gleize)
     })
     
     #' Expression data
@@ -59,6 +63,11 @@ shinyServer(
     observe({
       if(input$tab1 != 3)
         updateTabsetPanel(session, inputId = "tabCorr", selected = "corrTwo")
+    })
+    
+    observe({
+      if(input$tabTools != "DeconvoluteMe")
+        updateCheckboxInput(session, inputId = "deconvPData",value = FALSE) 
     })
     
     #' When switching datasets, if the selected plot is not available it will choose the first plot of the list
@@ -118,6 +127,7 @@ shinyServer(
       levels(datasetInput()[["pData"]][,"Histology"])
     })
     
+    
     #' When switching datasets for surv, if the selected histo is not available it will choose GBM (the last histo of the list)
     histo_Surv_Selected <- reactive ({
       if (input$histologySurv %in% c("All", histo())){
@@ -142,7 +152,7 @@ shinyServer(
       # This will change the value of input$histologyCorr, based on histological group available for that dataset
       updateSelectInput(session, inputId = "histologyCorr", choices = c("All", histo()), selected = histo_Corr_Selected())
     })
-
+    
     #' Generate a dataframe with the data to plot 
     data <- reactive({     
       validate(
@@ -159,7 +169,7 @@ shinyServer(
       }
       data <- cbind(mRNA, exprs()[,2:6]) # To combine with pData
       data <- cbind(data, pDatas()[,!names(pDatas()) %in% names(data)]) # To combine with more pData for the report
-      if (input$dataset == "TCGA GBM" | input$dataset == "TCGA Lgg") {
+      if (input$dataset %in% c("TCGA GBM", "TCGA LGG", "TCGA GBMLGG")) {
         if(input$gene %in% names(cnas())){
           Copy_number <- cnas()[ ,input$gene]}
         else {
@@ -169,7 +179,7 @@ shinyServer(
         Copy_number <- droplevels(Copy_number)
         data <- cbind(Copy_number,data)
       }
-      data 
+      data
     })
     
     #' Data for the box plot
@@ -208,24 +218,39 @@ shinyServer(
       theme <- theme(axis.text.x = element_text(size = input$axis_text_size), axis.text.y = element_text(size = input$axis_text_size),
                      axis.title.x = element_text(size = input$axis_title_size), axis.title.y = element_text(size = input$axis_title_size),
                      plot.margin = unit(c(0,0,0,0), "lines"))
+      
       if (input$bw) {
         theme <- theme_bw () + theme
       }
+      
       p <- ggplot(data, mapping=aes_string(x=plot_Type(), y = "mRNA")) + ylab(ylabel) + xlab(xlabel) + theme
-      if (input$colBox) {
+     
+       if (input$colBox) {
         p <- p + geom_boxplot(aes_string(fill = plot_Type()), outlier.size = 0)
       } else {
         p <- p + geom_boxplot(outlier.size = 0)
       }
-      if (input$colStrip) {
-        col <- aes_string(color = input$colorP)
-        p <- p + geom_jitter(position = position_jitter(width = .2), col, size = input$point_size, alpha = input$alpha)
+      
+      if (input$typePoint) {
+        col <- input$colorP
+        shape <- input$shapeP
+        if(input$colorP == "None") {
+          col <-  NULL
+        }
+        if(input$shapeP == "None") {
+          shape <-  NULL
+        }
+        map <- aes_string(colour = col, shape = shape)
       } else {
-        p <- p + geom_jitter(position = position_jitter(width = .2), size = input$point_size, alpha = input$alpha)
+        map <- NULL
       }
+        
+      p <- p + geom_jitter(position = position_jitter(width = .2), mapping = map, size = input$point_size, alpha = input$alpha)
+      
       if (input$xaxisLabelAngle) {
         p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
       }
+      
       if (input$tukeyHSD && input$tukeyPlot) {
         t <- tukey() %>%
           mutate(comparison = row.names(.)) %>%
@@ -251,19 +276,31 @@ shinyServer(
         need(input$gene != "", FALSE)
       )
       data <- rmNA(filter_plot_Data())
-      colnames <- names(data)[!names(data) %in% c("mRNA","Sample","status","survival")]
-      # Create the radiobuttons for the different pData categories
-      radioButtons("colorP", "Color by:", choices  = colnames, selected = plot_Type())
+      # colnames <- names(data)[!names(data) %in% c("mRNA","Sample","status","survival")]
+      colnames <- names(data)[!sapply(data, is.numeric)]
+      colnames <- colnames[!colnames %in% "Sample"]
+      # Create the selectInput for the different pData categories
+      div(class="row",
+          div(class="col-xs-6",
+              selectInput("colorP", "Color by:", choices = c("None",colnames), selected = plot_Type())
+          ),
+          div(class="col-xs-6",
+              selectInput("shapeP", "Shape by:", choices = c("None",colnames), selected = "None")
+          )
+      )
     })
     
     #' Create the selected plot
     output$plot <- renderPlot({
       # To avoid an error when switching datasets in case the colStrip is not available.
-      if(input$colStrip){
+        if(input$typePoint){
         data <- rmNA(filter_plot_Data())
         colnames <- names(data)[!names(data) %in% c("mRNA","Sample","status","survival")]
-        validate(need(input$colorP %in% colnames, FALSE))
-      }
+        validate(
+          need(input$colorP %in% c("None", colnames), FALSE) %then%
+            need(input$shapeP %in% c("None", colnames), FALSE)
+          )
+        }
       print(box_Plot())
     }, width = function()ifelse(input$tukeyPlot, input$plot_width * 1.5, input$plot_width), height = function()input$plot_height)
     
@@ -553,7 +590,7 @@ shinyServer(
     
     #' Render a plot to show the the Hazard ratio for the gene's expression values
     output$hazardPlot <- renderPlot({        
-      validate(need(!input$dataset %in% c("TCGA Lgg","Gorovets"), "Interactive HR plot currently available only for GBM samples") %then%
+      validate(need(!input$dataset %in% c("TCGA LGG","Gorovets","POLA Network"), "Interactive HR plot currently available only for GBM samples") %then%
                  need(histo_Surv_Selected() == "GBM","Please select GBM samples in the 'Histology' dropdown menu") %then%
                  need(!input$dataset %in% c("Grzmil","Vital"), "Sorry, too few samples to properly render the HR plot"))
       surv_Need()
@@ -566,7 +603,7 @@ shinyServer(
     
     #' Data used to generate the HR plot
     output$hazardDataTable <- renderDataTable({
-      validate(need(!input$dataset %in% c("TCGA Lgg","Gorovets"), "Interactive HR plot currently available only for GBM samples") %then%
+      validate(need(!input$dataset %in% c("TCGA LGG","Gorovets","POLA Network"), "Interactive HR plot currently available only for GBM samples") %then%
                  need(histo_Surv_Selected() == "GBM","Please select GBM samples in the 'Histology' dropdown menu") %then%
                  need(!input$dataset %in% c("Grzmil","Vital"), "Sorry, too few samples to properly render the HR plot"))
       surv_Need()
@@ -650,7 +687,7 @@ shinyServer(
     
     #' Generate the correlation plot
     output$corrPlot <- renderPlot({    
-      if (input$dataset == "TCGA Lgg") {
+      if (input$dataset == "TCGA LGG") {
         validate(need(input$colorBy != "Subtype" & input$separateBy != "Subtype", "Subtype available for GBM samples only")) 
       }
       p <- myCorggPlot(corr_Two_Genes(), input$gene, input$gene2, colorBy = color_by(), separateBy = separate_by())
@@ -798,7 +835,7 @@ shinyServer(
     #' RPPA data analysis
     rppa_RNA <- reactive({
       validate(
-        need(input$dataset %in% c("TCGA GBM","TCGA Lgg"), FALSE)%then%
+        need(input$dataset %in% c("TCGA GBM","TCGA LGG"), FALSE)%then%
           need(input$gene != "", FALSE)%then%
           need(input$gene %in% names(exprs()), FALSE)
       )
@@ -830,7 +867,7 @@ shinyServer(
     
     output$rppaTable <- renderDataTable({
       validate(
-        need(input$dataset %in% c("TCGA GBM","TCGA Lgg"), "RPPA data available only for TCGA datasets")%then%
+        need(input$dataset %in% c("TCGA GBM","TCGA LGG"), "RPPA data available only for TCGA GBM and TCGA LGG datasets")%then%
           need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
           need(input$gene %in% names(exprs()),"Gene not available for this dataset")%then%
           need(input$rppaCut != "", FALSE)%then%
@@ -880,7 +917,7 @@ shinyServer(
     output$rppaPlot <- renderPlot({
       input$rppaTable_rows_selected
       validate(
-        need(input$dataset %in% c("TCGA GBM","TCGA Lgg"), FALSE)%then%
+        need(input$dataset %in% c("TCGA GBM","TCGA LGG"), FALSE)%then%
           need(input$gene != "", FALSE)%then%
           need(rp$rppa.rows!= "","Click on a row to see the corresponding plots.")%then%
           need(rp$rppa.rows %in% names(rppas()), FALSE)
@@ -906,37 +943,37 @@ shinyServer(
     #' Link to cBioportal for mutation analysis
     output$mut_link=renderUI({
       validate(
-        need(input$dataset %in% c("TCGA GBM","TCGA Lgg"), "Mutations data available only for TCGA datasets")%then%
+        need(input$dataset %in% c("TCGA GBM","TCGA LGG"), "Mutations data available only for TCGA GBM and TCGA LGG datasets")%then%
           need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
           need(input$gene %in% names(exprs()),"Gene not available for this dataset")
       )
       gene <- input$gene
       if(input$dataset == "TCGA GBM") {
-      link <- paste0("http://www.cbioportal.org/index.do?cancer_study_list=gbm_tcga&cancer_study_id=gbm_tcga&genetic_profile_ids_PROFILE_MUTATION_EXTENDED=gbm_tcga_mutations&Z_SCORE_THRESHOLD=2.0&RPPA_SCORE_THRESHOLD=2.0&data_priority=0&case_set_id=gbm_tcga_sequenced&case_ids=&gene_set_choice=user-defined-list&gene_list=",gene,
-                        "%0D%0A&clinical_param_selection=null&tab_index=tab_visualize&Action=Submit")
-      } else if (input$dataset == "TCGA Lgg") {
-      link <- paste0("http://www.cbioportal.org/index.do?cancer_study_list=lgg_tcga&cancer_study_id=lgg_tcga&genetic_profile_ids_PROFILE_MUTATION_EXTENDED=lgg_tcga_mutations&Z_SCORE_THRESHOLD=2.0&RPPA_SCORE_THRESHOLD=2.0&data_priority=0&case_set_id=lgg_tcga_sequenced&case_ids=&gene_set_choice=user-defined-list&gene_list=",gene,
-                        "%0D%0A%0D%0A&clinical_param_selection=null&tab_index=tab_visualize&Action=Submit")
+        link <- paste0("http://www.cbioportal.org/index.do?cancer_study_list=gbm_tcga&cancer_study_id=gbm_tcga&genetic_profile_ids_PROFILE_MUTATION_EXTENDED=gbm_tcga_mutations&Z_SCORE_THRESHOLD=2.0&RPPA_SCORE_THRESHOLD=2.0&data_priority=0&case_set_id=gbm_tcga_sequenced&case_ids=&gene_set_choice=user-defined-list&gene_list=",gene,
+                       "%0D%0A&clinical_param_selection=null&tab_index=tab_visualize&Action=Submit")
+      } else if (input$dataset == "TCGA LGG") {
+        link <- paste0("http://www.cbioportal.org/index.do?cancer_study_list=lgg_tcga&cancer_study_id=lgg_tcga&genetic_profile_ids_PROFILE_MUTATION_EXTENDED=lgg_tcga_mutations&Z_SCORE_THRESHOLD=2.0&RPPA_SCORE_THRESHOLD=2.0&data_priority=0&case_set_id=lgg_tcga_sequenced&case_ids=&gene_set_choice=user-defined-list&gene_list=",gene,
+                       "%0D%0A%0D%0A&clinical_param_selection=null&tab_index=tab_visualize&Action=Submit")
       }
-
+      
       tags$iframe(src= link, style="width: 1000px; height: 600px")
-
-#       ccle <- paste0("http://www.cbioportal.org/index.do?cancer_study_list=cellline_ccle_broad&cancer_study_id=cellline_ccle_broad&genetic_profile_ids_PROFILE_MUTATION_EXTENDED=cellline_ccle_broad_mutations&genetic_profile_ids_PROFILE_COPY_NUMBER_ALTERATION=cellline_ccle_broad_CNA&genetic_profile_ids_PROFILE_MRNA_EXPRESSION=cellline_ccle_broad_mrna_median_Zscores&Z_SCORE_THRESHOLD=2.0&data_priority=0&case_set_id=cellline_ccle_broad_central_nervous_system&case_ids=&gene_set_choice=user-defined-list&gene_list=",gene,
-#                      "&clinical_param_selection=null&tab_index=tab_visualize&Action=Submit")
-#       
-#       cosmic <- paste0("http://cancer.sanger.ac.uk/cosmic/gene/analysis?ln=", gene)
-#       
-#       div(
-#         a('TCGA GBM', href = gbm_mut),
-#         br(),
-#         a('TCGA LGG', href = lgg_mut),
-#         br(),
-#         a('Cancer Cell Line Encyclopedia', href = ccle),
-#         br(),
-#         a('COSMIC', href = cosmic)
-#       )
-      })
-
+      
+      #       ccle <- paste0("http://www.cbioportal.org/index.do?cancer_study_list=cellline_ccle_broad&cancer_study_id=cellline_ccle_broad&genetic_profile_ids_PROFILE_MUTATION_EXTENDED=cellline_ccle_broad_mutations&genetic_profile_ids_PROFILE_COPY_NUMBER_ALTERATION=cellline_ccle_broad_CNA&genetic_profile_ids_PROFILE_MRNA_EXPRESSION=cellline_ccle_broad_mrna_median_Zscores&Z_SCORE_THRESHOLD=2.0&data_priority=0&case_set_id=cellline_ccle_broad_central_nervous_system&case_ids=&gene_set_choice=user-defined-list&gene_list=",gene,
+      #                      "&clinical_param_selection=null&tab_index=tab_visualize&Action=Submit")
+      #       
+      #       cosmic <- paste0("http://cancer.sanger.ac.uk/cosmic/gene/analysis?ln=", gene)
+      #       
+      #       div(
+      #         a('TCGA GBM', href = gbm_mut),
+      #         br(),
+      #         a('TCGA LGG', href = lgg_mut),
+      #         br(),
+      #         a('Cancer Cell Line Encyclopedia', href = ccle),
+      #         br(),
+      #         a('COSMIC', href = cosmic)
+      #       )
+    })
+    
     #' Generate reports
     output$reportPlots <- renderUI({
       validate(
@@ -994,7 +1031,7 @@ shinyServer(
       mRNA <- exprs()[ , input$gene, drop = FALSE]
       names(mRNA) <- paste0(input$gene,"_mRNA")
       data <- cbind(pDatas(),mRNA)
-      if (input$dataset == "TCGA GBM" | input$dataset == "TCGA Lgg") {
+      if (input$dataset %in% c("TCGA GBM", "TCGA LGG", "TCGA GBMLGG")) {
         CN_status <- cnas()[,input$gene, drop = FALSE]
         CN_status[,1] <- factor(CN_status[,1], levels = c(-2:2), labels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp")) 
         names(CN_status) <- paste0(input$gene,"_CN_status") 
@@ -1253,14 +1290,14 @@ shinyServer(
       plot <- ggplot(data, aes(Sample, Call)) + geom_tile(aes(fill = Subtype), colour = "white") + ylab("") + xlab("") +
         scale_x_discrete(expand = c(0, 0)) + theme_minimal() + scale_fill_brewer(palette = "Set1") + # scale_fill_manual(values = terrain.colors(4)) +
         theme(axis.ticks = element_blank(), axis.text.x = element_blank()) + theme(legend.position="bottom")
-#       table <- tableGrob(table(data$Call,data$Subtype), gp = gpar(fontsize=11),
-#                      row.just = "right", core.just = "right")
-#       h <- grobHeight(table)
-#       w <- grobWidth(table)
-#       title <- textGrob("Subtype call summary:", x=unit(0.5,"npc") - 0.3*w, 
-#                         y=unit(0.5,"npc") + 0.6*h, vjust=0, gp=gpar(fontsize=12))
-#       gt <- gTree(children=gList(table, title))
-#       grid.arrange(plot1, gt, ncol = 2, widths = c(6,2))
+      #       table <- tableGrob(table(data$Call,data$Subtype), gp = gpar(fontsize=11),
+      #                      row.just = "right", core.just = "right")
+      #       h <- grobHeight(table)
+      #       w <- grobWidth(table)
+      #       title <- textGrob("Subtype call summary:", x=unit(0.5,"npc") - 0.3*w, 
+      #                         y=unit(0.5,"npc") + 0.6*h, vjust=0, gp=gpar(fontsize=12))
+      #       gt <- gTree(children=gList(table, title))
+      #       grid.arrange(plot1, gt, ncol = 2, widths = c(6,2))
       plot
     }, height = 200)
     
@@ -1294,6 +1331,118 @@ shinyServer(
           need(input$estScore_rows_selected != "","Click on a row to see the corresponding purity plot.")       
       )
       plotPurity(est.call(), input$estScore_rows_selected, platform = input$platformEst)
+    })
+       
+    #' Reactive function to generate Deconvolute scores to pass to data table 
+    deconv.call <- eventReactive (input$goDec,{
+      inFile <- input$upFile
+      upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote, stringsAsFactors=FALSE)
+      row.names(upData) <- upData[,"Sample"]
+      exprs <- data.frame(t(upData[,-1]),check.names=FALSE)
+      if (input$geneListDec == "engler") {
+        gene_list <- engler_gene_set_list
+      } else if (input$geneListDec == "galon") {
+        gene_list <- galon_gene_set_list
+      } else if (input$geneListDec == "galon_engler") {
+        gene_list <- galon_engler
+      }
+      platformDec <- ifelse(input$platformDec == "rnaseq",TRUE,FALSE)
+      set.seed(1234)
+      gsva_results <- gsva(expr=as.matrix(exprs), gset.idx.list = gene_list, method="ssgsea", rnaseq = platformDec, parallel.sz = 0,
+                           min.sz=25, max.sz=10000, verbose=TRUE)
+      deconv_scores <- data.frame(Sample = rownames(upData),t(gsva_results))
+      deconv <- list(results = gsva_results, scores = deconv_scores)
+    })
+    
+    output$pDataDec <- renderUI({
+      validate(
+        need(!is.null(input$pDataFile),"Please upload the pData to be included")
+      )
+      inFile <- input$pDataFile
+      pData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote, stringsAsFactors=FALSE)
+      pData <- rmNA(pData)
+      pData_group <- names(pData)
+      pData_group <- pData_group[pData_group!="Sample"]
+      # Create the selectInput for the different pData categories
+      selectInput(inputId = "pDataDec", label = "Select pData group", choices = pData_group, selectize = TRUE)
+    })
+    
+    #' Required for the conditional panel 'deconvPData' to work correctly
+    observe({
+      if(input$tabTools != "DeconvoluteMe")
+        updateCheckboxInput(session, inputId = "deconvPData", value = FALSE) 
+    })
+    
+    #' Rerndering the Deconvolute scores as a heatmap
+    output$deconvHeatmap <- renderPlot({ 
+      validate(
+        need(!is.null(input$upFile),"Please upload the dataset to be analyzed")%then%
+          need(input$goDec != 0,'Please press "Submit Deconvolute"')
+      )
+      data <- deconv.call()[["results"]]
+      heatmap3(data,margins = c(0,11),labCol=NA,cexRow = 1.25)
+      if(input$deconvPData){
+        validate(
+          need(!is.null(input$pDataFile),"Please upload the pData to be included")
+        )
+        inFile <- input$pDataFile
+        pData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote)
+        pData$Sample <- as.character(pData$Sample)
+        validate(
+          need(all.equal(pData$Sample,names(data)),"ERROR: Samples don't match")
+        )
+        pData <- rmNA(pData)
+        n <- nlevels(pData[,input$pDataDec])
+        colors <- data.frame(levels(pData[,input$pDataDec]), color = brewer_pal(palette = "Dark2")(n))
+        names(colors)[1] <- paste0(input$pDataDec)
+        dataColor <- merge(pData, colors, all=T)
+        dataColor <- dataColor[order(dataColor$Sample),]
+        col <- as.character(dataColor$color)
+        heatmap3(data,margins = c(0,11),labCol=NA,cexRow = 1.25,ColSideColors = col,ColSideLabs = paste0(input$pDataDec))
+        legend(0.925, 1, legend = colors[,input$pDataDec], fill = as.character(colors[,"color"]),
+               border = FALSE, bty = "n", y.intersp = 1, cex = 0.8, title = paste0(input$pDataDec))
+      }
+    })
+    
+    #' Rerndering the Deconvolute scores as boxplot
+    output$deconvBoxPlot <- renderPlot({ 
+      validate(
+        need(!is.null(input$upFile),"Please upload the dataset to be analyzed")%then%
+          need(input$goDec != 0,'Please press "Submit Deconvolute"')
+      )
+      data <- deconv.call()[["results"]]
+      melted <- melt(data)
+      p <- ggplot(melted,aes(x=Var1,y=value,fill=Var1)) + geom_boxplot() + xlab("") + ylab("score") + 
+        theme(axis.text.x = element_text(angle = 90, hjust = 1),legend.title = element_blank())
+      if(input$deconvPData){
+        validate(
+          need(!is.null(input$pDataFile),"Please upload the pData to be included")
+        )
+        inFile <- input$pDataFile
+        pData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote, stringsAsFactors=FALSE)
+        pData$Sample <- as.character(pData$Sample)
+        validate(
+          need(all.equal(pData$Sample,names(data)),"ERROR: Samples don't match")
+        )
+        melted <- melt(merge(t(data),pData[,c("Sample",input$pDataDec)],
+                             by.x="row.names",by.y="Sample"))
+        p <- ggplot(melted,aes_string(x=input$pDataDec,y="value",fill=input$pDataDec)) + geom_boxplot() + xlab("") + ylab("score") +
+          facet_wrap(~variable)
+      }
+      p
+    },height = 800)
+    
+    #' Rerndering the Deconvolute scores as a data table
+    output$deconvScore <- renderDataTable({ 
+      validate(
+        need(!is.null(input$upFile),"Please upload the dataset to be analyzed")%then%
+          need(input$goDec != 0,'Please press "Submit Deconvolute"')
+      )
+      datatable(deconv.call()[["scores"]], rownames = FALSE, extensions = c("FixedColumns", "TableTools"),
+                options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE,
+                               lengthMenu = c(20, 50, 100), pageLength = 20, dom = 'T<"clear">lfrtip',
+                               tableTools = list(aButtons = c("copy","csv","xls","print"),
+                                                 sSwfPath = copySWF(dest = "www"))))
     })
     
   })
