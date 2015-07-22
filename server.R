@@ -802,12 +802,11 @@ shinyServer(
           # Not all genes are available for all the dataset
           need(input$gene %in% names(corr_data()),"Gene not available for this dataset")
       )   
-      datatable(corr_filter_data(), rownames = FALSE, selection = 'single', extensions = "TableTools", 
-                options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pageLength = 20, pagingType = "full",
-                               dom = 'T<"clear">lfrtip', tableTools = list(aButtons = c("copy","csv","xls","print"), 
-                                                                           sSwfPath = copySWF(dest = "www")))
-      )
-    })
+      corr_filter_data()
+    }, rownames = FALSE, selection = 'single', extensions = "TableTools", 
+    options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pagingType = "full",
+                   dom = 'T<"clear">lfrtip', tableTools = list(sSwfPath = copySWF(dest = "www")))
+    )
     
     #' Generate a reactive value for the input$rows that set to NULL when the dataset change
     v <- reactiveValues(rows = NULL)
@@ -895,9 +894,8 @@ shinyServer(
       d <- data.frame(Protein = row.names(d), round(d,5))
       d$adj.p.value <- p.adjust(d$p, method = "bonferroni")
       d <- d[order(d$p.value),]
-      datatable(d, rownames = FALSE, selection = 'single', options = list(lengthMenu = c(20, 50, 100), 
-                                                                          pageLength = 20, pagingType = "full"))
-    })
+      d
+    }, rownames = FALSE, selection = 'single', options = list(lengthMenu = c(20, 50, 100), pagingType = "full"))
     
     #' Generate a reactive value for the input$rows that set to NULL when the dataset change
     rp <- reactiveValues(rppa.rows = NULL)
@@ -1225,7 +1223,7 @@ shinyServer(
       set.seed(1234)
       pred <- knn3Train(train = train.exp[,genes], test = learn.exp[,genes], cl =  Training, k = k, prob=TRUE)
       kn <- data.frame(Sample = rownames(upData), knn.subtype.call = pred, prob = round(attr(pred,"prob"),2))
-      names(kn)[3:6] <- subtypes
+      names(kn)[3:5] <- subtypes
       kn
     })
     
