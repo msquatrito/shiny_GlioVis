@@ -21,7 +21,7 @@ install_gliovis <- function() {
   # install needed packages from CRAN
   pkg <- c("shiny", "survival", "weights", "googleVis", "dplyr", "ggplot2","shinydashboard", 
            "htmlwidgets","kernlab","devtools","GGally","markdown","caret","Cairo","broom",
-           "Cairo","reshape2","heatmap3","RColorBrewer","scales","htmlwidgets","DT")
+           "Cairo","reshape2","heatmap3","RColorBrewer","scales","htmlwidgets")
   
   new.pkg <- pkg[!(pkg %in% installed.packages())]
   
@@ -31,15 +31,17 @@ install_gliovis <- function() {
   
   update.packages(pkg[!(pkg %in% new.pkg)])
   
-  if (!require("GSVA")) {
+  # if (!require("GSVA")) {
     source("http://bioconductor.org/biocLite.R")
     biocLite("GSVA")
-  }
+  # }
   
   if (packageVersion('gridExtra') > '0.9.1') {
     packageurl <- "http://cran.r-project.org/src/contrib/Archive/gridExtra/gridExtra_0.9.1.tar.gz"
     install.packages(packageurl, repos=NULL, type="source")
   }
+  
+  devtools::install_github("rstudio/DT")
   
   # if (!require("estimate")){
   #   library(utils)
