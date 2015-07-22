@@ -792,6 +792,7 @@ shinyServer(
       if (input$cor == "All"){
         corr.table <- filter(corr.table, r <= input$range[1] | r >= input$range[2])
       }
+      row.names(corr.table) <- corr.table$Gene
       corr.table
     })
     
@@ -803,8 +804,9 @@ shinyServer(
           need(input$gene %in% names(corr_data()),"Gene not available for this dataset")
       )   
       corr_filter_data()
-    }, rownames = FALSE, selection = 'single', extensions = "TableTools", 
-    options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pagingType = "full",
+    }, selection = 'single', extensions = "TableTools", 
+    options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pagingType = "full", 
+                   columnDefs = list(list(visible = FALSE, targets = 0)),
                    dom = 'T<"clear">lfrtip', tableTools = list(sSwfPath = copySWF(dest = "www")))
     )
     
@@ -822,7 +824,7 @@ shinyServer(
     observeEvent(input$gene, {
       v$rows <- NULL
     })
-    
+
     #' Generate the correlation plot
     output$corrAllPlot <- renderPlot({
       v$rows
@@ -830,8 +832,9 @@ shinyServer(
         need(input$gene != "", FALSE)%then%
           need(v$rows!= "","Click on a row to see the corresponding correlation plot.")
       )
-      aes_scatter <- aes_string(x = input$gene, y = v$rows)
-      ggplot(corr_data(),mapping = aes_scatter) + theme(legend.position=c(1,1),legend.justification=c(1,1)) +
+      y <- as.character(corr_filter_data()[v$rows,"Gene"]) # v$rows return only the row index, need to get the gene name
+      aes_scatter <- aes_string(x = input$gene, y = y)
+      ggplot(corr_data(), mapping = aes_scatter) + theme(legend.position=c(1,1),legend.justification=c(1,1)) +
         geom_point(alpha=.5) + geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1) + theme_linedraw() 
     })
     
@@ -868,7 +871,8 @@ shinyServer(
                   value = median(rppa_RNA()), step = 0.05, round = -2)
     })
     
-    output$rppaTable <- renderDataTable({
+    
+    rrppa_data_table <- reactive ({
       validate(
         need(input$dataset %in% c("TCGA GBM","TCGA LGG"), "RPPA data available only for TCGA GBM and TCGA LGG datasets")%then%
           need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
@@ -895,7 +899,15 @@ shinyServer(
       d$adj.p.value <- p.adjust(d$p, method = "bonferroni")
       d <- d[order(d$p.value),]
       d
-    }, rownames = FALSE, selection = 'single', options = list(lengthMenu = c(20, 50, 100), pagingType = "full"))
+    })
+    
+    output$rppaTable <- renderDataTable({
+      rrppa_data_table()
+    }, selection = 'single', extensions = "TableTools", 
+    options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pagingType = "full", 
+                   columnDefs = list(list(visible = FALSE, targets = 0)),
+                   dom = 'T<"clear">lfrtip', tableTools = list(sSwfPath = copySWF(dest = "www")))
+    )
     
     #' Generate a reactive value for the input$rows that set to NULL when the dataset change
     rp <- reactiveValues(rppa.rows = NULL)
@@ -917,30 +929,30 @@ shinyServer(
     
     #' Generate the RPPA box plot
     output$rppaPlot <- renderPlot({
-      input$rppaTable_rows_selected
+      protein <- as.character(rrppa_data_table()[rp$rppa.rows,"Protein"])
       validate(
         need(input$dataset %in% c("TCGA GBM","TCGA LGG"), FALSE)%then%
           need(input$gene != "", FALSE)%then%
-          need(rp$rppa.rows!= "","Click on a row to see the corresponding plots.")%then%
-          need(rp$rppa.rows %in% names(rppas()), FALSE)
+          need(protein!= "","Click on a row to see the corresponding plots.")%then%
+          need(protein %in% names(rppas()), FALSE)
       )
       mRNA <- rppa_RNA()
       strat <- ifelse(mRNA >= input$rppaCut, c("high"),c("low"))
       strat <- factor(strat,levels = c("low", "high"))
-      data <- data.frame(mRNA, strat, rppa = rppas()[,rp$rppa.rows])
+      data <- data.frame(mRNA, strat, rppa = rppas()[,protein])
       r <- round(cor.test(data$mRNA,data$rppa, use = "complete.obs")$estimate,3)
       p.value <- round(cor.test(data$mRNA,data$rppa, use = "complete.obs")$p.value,4)
       p1 <- ggplot(data, aes(x=strat, y = rppa)) + geom_boxplot(outlier.size = 0) + 
         geom_jitter(aes(colour = strat), position = position_jitter(width = .2), size = 2, alpha = 0.5) + 
-        xlab(paste(input$gene, "mRNA")) + ylab(paste(rp$rppa.rows,"RPPA score")) + 
+        xlab(paste(input$gene, "mRNA")) + ylab(paste(protein,"RPPA score")) + 
         guides(colour=FALSE) + theme_linedraw()
       p2 <- ggplot(data, aes(x=mRNA, y = rppa)) + geom_point(aes(colour = strat), alpha=.5) +
         geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1) + theme_linedraw() +
         xlab(sprintf("%s mRNA (log2) \n\n r = %s; p value = %s", input$gene, r, p.value)) + 
-        ylab(paste(rp$rppa.rows,"RPPA score")) + theme(legend.position = "none")
+        ylab(paste(protein,"RPPA score")) + theme(legend.position = "none")
       grid.arrange(p1, p2, ncol=1)
     },height = 600)
-    
+
     
     #' Link to cBioportal for mutation analysis
     output$mut_link=renderUI({
@@ -959,21 +971,7 @@ shinyServer(
       }
       
       tags$iframe(src= link, style="width: 1000px; height: 600px")
-      
-      #       ccle <- paste0("http://www.cbioportal.org/index.do?cancer_study_list=cellline_ccle_broad&cancer_study_id=cellline_ccle_broad&genetic_profile_ids_PROFILE_MUTATION_EXTENDED=cellline_ccle_broad_mutations&genetic_profile_ids_PROFILE_COPY_NUMBER_ALTERATION=cellline_ccle_broad_CNA&genetic_profile_ids_PROFILE_MRNA_EXPRESSION=cellline_ccle_broad_mrna_median_Zscores&Z_SCORE_THRESHOLD=2.0&data_priority=0&case_set_id=cellline_ccle_broad_central_nervous_system&case_ids=&gene_set_choice=user-defined-list&gene_list=",gene,
-      #                      "&clinical_param_selection=null&tab_index=tab_visualize&Action=Submit")
-      #       
-      #       cosmic <- paste0("http://cancer.sanger.ac.uk/cosmic/gene/analysis?ln=", gene)
-      #       
-      #       div(
-      #         a('TCGA GBM', href = gbm_mut),
-      #         br(),
-      #         a('TCGA LGG', href = lgg_mut),
-      #         br(),
-      #         a('Cancer Cell Line Encyclopedia', href = ccle),
-      #         br(),
-      #         a('COSMIC', href = cosmic)
-      #       )
+
     })
     
     #' Generate reports
@@ -1325,10 +1323,14 @@ shinyServer(
         need(!is.null(input$upFile),"Please upload the dataset to be analyzed")%then%
           need(input$goEst != 0,'Please press "Submit ESTIMATE"')
       )
-      datatable(est.call(), rownames = FALSE, selection = 'single', extensions = "TableTools", 
-                options = list(orderClasses = TRUE, lengthMenu = list(c(20, 50, 100, -1), c('20','50','100','All')), pageLength = 20, pagingType = "full", autoWidth = TRUE,
-                               dom = 'T<"clear">lfrtip', tableTools = list(sSwfPath = copySWF(dest = "www"))))
-    })
+      est.call()
+    }, selection = 'single', extensions = "TableTools", 
+    options = list(orderClasses = TRUE, lengthMenu = list(c(20, 50, 100, -1), c('20','50','100','All')), pagingType = "full", 
+                   columnDefs = list(list(visible = FALSE, targets = 0)), autoWidth = TRUE,
+                   dom = 'T<"clear">lfrtip', tableTools = list(sSwfPath = copySWF(dest = "www")))
+    )
+
+
     
     #' Generate the Purity plot
     output$purityPlot <- renderPlot({
@@ -1337,7 +1339,7 @@ shinyServer(
           need(input$platformEst == "affymetrix", "Sorry, the purity plot for Agilent and RNAseq have not yet been impemented") %then%
           need(input$estScore_rows_selected != "","Click on a row to see the corresponding purity plot.")       
       )
-      plotPurity(est.call(), input$estScore_rows_selected, platform = input$platformEst)
+      plotPurity(est.call(), est.call()[input$estScore_rows_selected,"Sample"], platform = input$platformEst)
     })
        
     #' Reactive function to generate Deconvolute scores to pass to data table 
