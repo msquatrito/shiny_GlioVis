@@ -1221,7 +1221,11 @@ shinyServer(
       set.seed(1234)
       pred <- knn3Train(train = train.exp[,genes], test = learn.exp[,genes], cl =  Training, k = k, prob=TRUE)
       kn <- data.frame(Sample = rownames(upData), knn.subtype.call = pred, prob = round(attr(pred,"prob"),2))
-      names(kn)[3:5] <- subtypes
+      if (input$tumorType == "gbm") {
+        names(kn)[3:6] <- subtypes
+      } else if (input$tumorType == "lgg") {
+        names(kn)[3:5] <- subtypes
+      }
       kn
     })
     
