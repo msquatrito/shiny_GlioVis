@@ -62,7 +62,8 @@ genes <- readRDS("data/genes.Rds")
 gene_names <- as.character(genes[,"Gene"])
 gbm.subtype.list <- readRDS("data/subtype_list.Rds")
 gbm.core.samples <- readRDS("data/TCGA.core.345samples.Rds")
-lgg.core.samples <- readRDS("data/lgg.expSubtype.core.Rds")
+lgg.core.samples <- readRDS("data/lgg.core.229samples.Rds")
+# lgg.core.samples <- readRDS("data/lgg.expSubtype.core.Rds")
 galon_gene_set_list <- readRDS("data/galon_gene_set_list.Rds")
 engler_gene_set_list <- readRDS("data/engler_gene_set_list.Rds")
 galon_engler <- readRDS("data/galon_engler_gene_set_list.RDS")
@@ -92,7 +93,7 @@ plotList <- list("TCGA GBM" = c("Histology", "Copy_number", "Subtype", "CIMP_sta
                  "Joo" = c("Histology", "Subtype", "Recurrence", "CIMP_status"),
                  "Oh" = c("Recurrence", "Subtype", "CIMP_status"),
                  "Ivy GAP" = c("Histology","Subtype","Recurrence", "CIMP_status"),
-                 "POLA Network"= c("Subtype"),
+                 "POLA Network"= c("Subtype","Grade"),
                  "Gleize" = c("Histology", "Grade"))
 
 
@@ -108,12 +109,11 @@ rmNA <- function (df) {
 ##########################################
 data_table <- function (df) {
 datatable(df, rownames = FALSE, extensions = "TableTools",
-          options = list(lengthMenu = c(20, 50, 100), 
+          options = list(lengthMenu = list(c(20, 50, 100, -1), c('20','50','100','All')), 
                          pageLength = 20, 
                          pagingType = "full",
                          dom = 'T<"clear">lfrtip', 
-                         tableTools = list(aButtons = c("copy","csv","xls","print"),
-                                           sSwfPath = copySWF(dest = "www"))))
+                         tableTools = list(sSwfPath = copySWF(dest = "www"))))
 }
 
 
@@ -288,6 +288,7 @@ getCorr <- function (data, gene, corrMethod) {
   padj <- p.adjust(p, method = "bonferroni")
   corr <- data.frame(row.names(r), round(r,3), round(p,10),round(padj,10))
   names(corr) <- c("Gene","r","p.value", "adj.p.value")
+  row.names(corr) <- corr$Gene
   corr
 }
 
