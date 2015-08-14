@@ -955,6 +955,7 @@ shinyServer(
 
     
     #' Link to cBioportal for mutation analysis
+    # Need addon on firefox for iframe to work correctly https://addons.mozilla.org/en-US/firefox/addon/ignore-x-frame-options/
     output$mut_link=renderUI({
       validate(
         need(input$dataset %in% c("TCGA GBM","TCGA LGG"), "Mutations data available only for TCGA GBM and TCGA LGG datasets")%then%
