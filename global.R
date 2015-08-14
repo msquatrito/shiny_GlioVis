@@ -24,9 +24,9 @@ options(shiny.usecairo=TRUE)
 #######################################
 ############## Datasets  ##############
 #######################################
-datasets <- c("TCGA GBM", "TCGA LGG","TCGA GBMLGG", "Rembrandt", "Gravendeel", "Phillips", "Murat", "Freije", "Lee Y",
-              "Reifenberger", "Bao", "Gill", "Gorovets", "Nutt", "Ducray","Grzmil","Donson","Li","Vital",
-              "Joo","Oh","Ivy GAP","POLA Network","Gleize")
+datasets <- c("TCGA GBM", "TCGA LGG","TCGA GBMLGG", "Rembrandt", "Gravendeel", "Bao", "Ivy GAP", "Lee Y", "Oh","Phillips", 
+              "Gill", "Freije", "Murat", "Gorovets", "POLA Network", "Reifenberger", "Joo", "Ducray", "Nutt", "Vital",
+               "Grzmil", "Gleize", "Donson", "Li")
 
 noSurvDataset <- c("Bao","Reifenberger","Gill","Li", "Oh","Ivy GAP","Gleize")
 
@@ -93,7 +93,7 @@ plotList <- list("TCGA GBM" = c("Histology", "Copy_number", "Subtype", "CIMP_sta
                  "Joo" = c("Histology", "Subtype", "Recurrence", "CIMP_status"),
                  "Oh" = c("Recurrence", "Subtype", "CIMP_status"),
                  "Ivy GAP" = c("Histology","Subtype","Recurrence", "CIMP_status"),
-                 "POLA Network"= c("Subtype","Grade"),
+                 "POLA Network"= c("Subtype"),
                  "Gleize" = c("Histology", "Grade"))
 
 
