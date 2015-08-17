@@ -805,7 +805,7 @@ shinyServer(
       )   
       corr_filter_data()
     }, selection = 'single', extensions = "TableTools", 
-    options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pagingType = "full", 
+    options = list(orderClasses = TRUE, lengthMenu = list(c(20, 50, 100, -1), c('20','50','100','All')), pagingType = "full", 
                    columnDefs = list(list(visible = FALSE, targets = 0)),
                    dom = 'T<"clear">lfrtip', tableTools = list(sSwfPath = copySWF(dest = "www")))
     )
@@ -815,15 +815,15 @@ shinyServer(
     observeEvent(input$corrAllTable_rows_selected, {
       v$rows <- input$corrAllTable_rows_selected
     })
-    observeEvent(datasetInput(), {
+    observeEvent(c(datasetInput(),input$histologyCorr,input$gene,input$cor), {
       v$rows <- NULL
     })
-    observeEvent(input$histologyCorr, {
-      v$rows <- NULL
-    })
-    observeEvent(input$gene, {
-      v$rows <- NULL
-    })
+#     observeEvent(input$histologyCorr, {
+#       v$rows <- NULL
+#     })
+#     observeEvent(input$gene, {
+#       v$rows <- NULL
+#     })
 
     #' Generate the correlation plot
     output$corrAllPlot <- renderPlot({
@@ -904,7 +904,7 @@ shinyServer(
     output$rppaTable <- renderDataTable({
       rrppa_data_table()
     }, selection = 'single', extensions = "TableTools", 
-    options = list(orderClasses = TRUE, lengthMenu = c(20, 50, 100), pagingType = "full", 
+    options = list(orderClasses = TRUE, lengthMenu = list(c(20, 50, 100, -1), c('20','50','100','All')), pagingType = "full", 
                    columnDefs = list(list(visible = FALSE, targets = 0)),
                    dom = 'T<"clear">lfrtip', tableTools = list(sSwfPath = copySWF(dest = "www")))
     )
@@ -914,18 +914,18 @@ shinyServer(
     observeEvent(input$rppaTable_rows_selected, {
       rp$rppa.rows <- input$rppaTable_rows_selected
     })
-    observeEvent(datasetInput(), {
+    observeEvent(c(datasetInput(),input$histology,input$gene,input$rppaCut), {
       rp$rppa.rows <- NULL
     })
-    observeEvent(input$histology, {
-      rp$rppa.rows <- NULL
-    })
-    observeEvent(input$gene, {
-      rp$rppa.rows <- NULL
-    })
-    observeEvent(input$rppaCut, {
-      rp$rppa.rows <- NULL
-    })
+#     observeEvent(input$histology, {
+#       rp$rppa.rows <- NULL
+#     })
+#     observeEvent(input$gene, {
+#       rp$rppa.rows <- NULL
+#     })
+#     observeEvent(input$rppaCut, {
+#       rp$rppa.rows <- NULL
+#     })
     
     #' Generate the RPPA box plot
     output$rppaPlot <- renderPlot({
@@ -1000,7 +1000,7 @@ shinyServer(
           plot_report <- paste("plotReport", my_i, sep = "")
           output[[plot_report]] <- renderPlot({
             validate(
-              need(!all(is.na(data[ ,my_i])),"Sorry,no gene data available for this group")
+                need(!all(is.na(data[ ,my_i])),"Sorry,no gene data available for this group")
             )
             data <- filter(data,!is.na(data[,my_i]))
             p <- ggplot(data, mapping=aes_string(x=my_i, y = "mRNA")) + geom_boxplot(outlier.size = 0) +  
@@ -1008,7 +1008,7 @@ shinyServer(
               ylab("mRNA expression (log2)") + theme(axis.title.x = element_blank()) + theme(axis.title.y=element_text(vjust=1)) 
             stat <- substitute(data %>%
                                  group_by(x) %>%
-                                 summarise(Sample_count = paste0(n()," (", round(n()*100/dim(data())[1],2), "%)" ), # prop.table
+                                 summarise(Sample_count = paste0(n()," (", round(n()*100/dim(data)[1],2), "%)" ), # prop.table
                                            median = round(median (mRNA, na.rm=T),2), mad = round(mad(mRNA, na.rm=T),2),
                                            mean = round(mean(mRNA, na.rm=T),2), sd = round(sd(mRNA, na.rm=T),2)),
                                list(x = as.name(my_i)))
@@ -1335,8 +1335,6 @@ shinyServer(
                    dom = 'T<"clear">lfrtip', tableTools = list(sSwfPath = copySWF(dest = "www")))
     )
 
-
-    
     #' Generate the Purity plot
     output$purityPlot <- renderPlot({
       validate(
