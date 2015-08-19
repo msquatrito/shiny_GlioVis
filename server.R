@@ -1,4 +1,20 @@
-# server.R for Gliovis
+#' server.R for Gliovis
+
+# This file is part of GlioVis
+# Copyright (C) Massimo Squatrito
+#
+# GlioVis is free software; you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 3 of the License, or (at your option) any later
+# version.
+# 
+# GlioVis is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, see <http://www.gnu.org/licenses/>.
+
 shinyServer(
   function(input, output, session) {
     
@@ -664,7 +680,6 @@ shinyServer(
              Subtype = "Subtype")
     })
     
-    
     corr_data <- reactive({
       df <- exprs()
       if (input$histologyCorr != "All") {
@@ -810,7 +825,7 @@ shinyServer(
                    dom = 'T<"clear">lfrtip', tableTools = list(sSwfPath = copySWF(dest = "www")))
     )
     
-    #' Generate a reactive value for the input$rows that set to NULL when the dataset change
+    #' Generate a reactive value for the input$rows to set to NULL when the dataset change
     v <- reactiveValues(rows = NULL)
     observeEvent(input$corrAllTable_rows_selected, {
       v$rows <- input$corrAllTable_rows_selected
@@ -818,12 +833,6 @@ shinyServer(
     observeEvent(c(datasetInput(),input$histologyCorr,input$gene,input$cor), {
       v$rows <- NULL
     })
-#     observeEvent(input$histologyCorr, {
-#       v$rows <- NULL
-#     })
-#     observeEvent(input$gene, {
-#       v$rows <- NULL
-#     })
 
     #' Generate the correlation plot
     output$corrAllPlot <- renderPlot({
@@ -917,15 +926,6 @@ shinyServer(
     observeEvent(c(datasetInput(),input$histology,input$gene,input$rppaCut), {
       rp$rppa.rows <- NULL
     })
-#     observeEvent(input$histology, {
-#       rp$rppa.rows <- NULL
-#     })
-#     observeEvent(input$gene, {
-#       rp$rppa.rows <- NULL
-#     })
-#     observeEvent(input$rppaCut, {
-#       rp$rppa.rows <- NULL
-#     })
     
     #' Generate the RPPA box plot
     output$rppaPlot <- renderPlot({

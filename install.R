@@ -1,6 +1,23 @@
+#' install.R for Gliovis
+
+# This file is part of GlioVis
+# Copyright (C) Massimo Squatrito
+#
+# GlioVis is free software; you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 3 of the License, or (at your option) any later
+# version.
+# 
+# GlioVis is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, see <http://www.gnu.org/licenses/>.
+
 #######################################################
 # gliovis Installation Instructions: 
-# https://github.com/stan-dev/shinystan/blob/develop/install_shinystan.R
+# see https://github.com/stan-dev/shinystan/blob/develop/install_shinystan.R
 
 # 1) Restart R
 # 2) Run install_gliovis(), included below, to install
@@ -37,6 +54,8 @@ install_gliovis <- function() {
   # }
   
   if (packageVersion('gridExtra') > '0.9.1') {
+    continue <- select.list(choices = c("Yes", "No"), 
+                            title = "GlioVis requires a previous version of gridExtra. Do you want to continue?", graphics = FALSE)
     packageurl <- "http://cran.r-project.org/src/contrib/Archive/gridExtra/gridExtra_0.9.1.tar.gz"
     install.packages(packageurl, repos=NULL, type="source")
   }
