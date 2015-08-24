@@ -164,14 +164,10 @@ tabPanel(title = "Tools", icon = icon("gear"),
                          ),
                          
                          tabPanel(title ="DeconvoluteME",
-                                  div(style = "width: 100%; overflow: hidden;",
-                                      div(class = "width: 700px; float: left;", p(class = "lead","Deconvolute gene expression profiles from heterogeneous tissue samples into cell-type-specific subprofiles")),
-                                      div(class = "margin-left: 700px;", helpModal(modal_title ="Deconvolute", link = "helpDeconv", help_file = includeMarkdown("tools/help/help_deconv.Rmd")))
-                                  ),
-                                  #                                   br(),br(),br(),
-                                  #                                   img(style = "display: block; margin-left: auto; margin-right: auto", 
-                                  #                                       src = "work-in-progress-sign.png")
-                                  #                                   ,
+                                  # I've use a slight different HTML style for this Title, I was not able to use the strategy used for the other titles
+                                  div(style = "display: inline-block;", p(class = "lead","Deconvolute gene expression profiles into cell-type-specific subprofiles ")),
+                                  div(style = "display: inline-block;", helpModal(modal_title ="Deconvolute", link = "helpDeconv", help_file = includeMarkdown("tools/help/help_deconv.Rmd"))),
+                                  
                                   tabsetPanel(
                                     tabPanel(title = "Heatmap", id = "deconvHeatmap",
                                              busy(),

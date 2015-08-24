@@ -53,7 +53,7 @@ tabPanel(title = "Home", icon = icon("home"),
              tags$blockquote(class="pull-right",
                              tags$p("No great discovery was ever made without a bold guess."), 
                              tags$small("Isaac Newton")),
-             br(),br(),br(),br(),
+             p(""),
              # includeHTML("tools/share.html"),
              includeHTML("tools/disqus.html")
          )
