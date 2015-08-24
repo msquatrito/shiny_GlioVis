@@ -1,14 +1,23 @@
 # UI-elements for Home tab
 tabPanel(title = "Home", icon = icon("home"),
+         
          tagList(
            tags$head(
              includeScript("tools/google-analytics.js"),
              tags$script(type="text/javascript", src = "busy.js"),
-             tags$link(rel="shortcut icon", href="./GlioVis_logo_bar.bmp")
+             tags$script(type="text/javascript", "var switchTo5x=true"),
+             tags$script(type="text/javascript", src="http://w.sharethis.com/button/buttons.js"),
+             tags$script(type="text/javascript",'stLight.options({publisher: "675b3562-a081-470a-9fc4-3dd6a712209d", doNotHash: true, doNotCopy: true, hashAddressBar: false})')
            )
          ),
          
          div(id = "home",
+             div(class="pull-right",
+                 span(class='st_twitter', displayText='Tweet'),
+                 span(class='st_linkedin', displayText='LinkedIn'),
+                 span(class='st_facebook', displayText='Facebook'),
+                 span(class='st_email', displayText='Email')
+                 ),
              img(src = "GlioVis_logo_trasnparent.gif", width = 750),
              hr(),
              p(class = "lead", "Welcome to", strong("GlioVis"),": a user friendly web application for data visualization and analysis to explore Glioma datasets."),
@@ -45,7 +54,7 @@ tabPanel(title = "Home", icon = icon("home"),
                              tags$p("No great discovery was ever made without a bold guess."), 
                              tags$small("Isaac Newton")),
              br(),br(),br(),br(),
-             includeHTML("tools/share.html"),
+             # includeHTML("tools/share.html"),
              includeHTML("tools/disqus.html")
          )
          
