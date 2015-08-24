@@ -26,6 +26,12 @@
   padding-top: 10px;
   line-height: 18px;
   text-align: center;
+	background-color: #F8F8F8;
+  border-color: #E7E7E7;
+  border-radius: 0px;
+  border-width: 0px 0px 1px;
+  border: 1px solid #d4d4d4;
+/*
 	background-color:#fafafa;
 	background-image:-moz-linear-gradient(top,#fff,#f2f2f2);
 	background-image:-webkit-gradient(linear,0 0,0 100%,from(#fff),to(#f2f2f2));
@@ -34,8 +40,7 @@
 	background-image:linear-gradient(to bottom,#fff,#f2f2f2);
 	background-repeat:repeat-x;
 	border:1px solid #d4d4d4;
-	-webkit-border-radius:4px;
-	-moz-border-radius:4px;
+*/	
 }
 
 .responsive-image{
