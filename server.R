@@ -359,14 +359,14 @@ shinyServer(
     #' Render tukey
     output$tukeyTest <- renderTable({    
       tukey()
-    })
+    }, digits = c(2,2,2,2,-1,2))
     
     #' Pairwise t test
     output$pairwiseTtest <- renderTable({
       data <-  dataStat()
       pttest <- pairwise.t.test(data$mRNA, data$group, na.rm= TRUE, p.adj = "bonferroni", paired = FALSE)
       pttest$p.value
-    })
+    }, digits = -1)
     
     #' Get the selected download file type.
     download_Plot_FileType <- reactive({
@@ -453,7 +453,7 @@ shinyServer(
       if (input$histologySurv != "All"){
         df <- filter(df, Histology == input$histologySurv)
       }
-      if (input$histologySurv == "GBM" & input$subtypeSurv != "All") {
+      if (input$subtypeSurv != "All") {
         df <- filter (df, Subtype == input$subtypeSurv)
       }
       # exclude G-CIMP is selected
