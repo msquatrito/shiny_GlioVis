@@ -402,7 +402,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                          ),
                          
                          tabPanel(title = "Mutations",  icon =  icon("adjust") ,value = 5,
-                                  p("Mutations are not currently supported in Gliovis, your search will be transfered to the MSKCC cBio Portal"),
+                                  p("Mutations are not currently supported in Gliovis, your search will be transfered to the MSKCC cBio Portal. (NOTE: visible only using Firefox browser)"),
                                   uiOutput('mut_link')
                          ),
                          
