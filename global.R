@@ -124,13 +124,13 @@ rmNA <- function (df) {
 ##########################################
 ##############  data table  ##############
 ##########################################
+options(DT.options  = list(lengthMenu = list(c(20, 50, 100, -1), c('20','50','100','All')), 
+                                    pagingType = "full",
+                                    dom = 'T<"clear">lfrtip', 
+                                    tableTools = list(sSwfPath = copySWF(dest = "www"))))
 data_table <- function (df) {
-datatable(df, rownames = FALSE, extensions = "TableTools",
-          options = list(lengthMenu = list(c(20, 50, 100, -1), c('20','50','100','All')), 
-                         pageLength = 20, 
-                         pagingType = "full",
-                         dom = 'T<"clear">lfrtip', 
-                         tableTools = list(sSwfPath = copySWF(dest = "www"))))
+datatable(df, rownames = FALSE, extensions = "TableTools")
+          
 }
 
 

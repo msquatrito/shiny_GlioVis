@@ -83,3 +83,5 @@ install_gliovis <- function() {
   message("\n All set. \n You might need to restart R before using GlioVis \n")
   return(invisible(NULL))
 }
+
+install_gliovis()

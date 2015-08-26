@@ -820,9 +820,7 @@ shinyServer(
       )   
       corr_filter_data()
     }, selection = 'single', extensions = "TableTools", 
-    options = list(orderClasses = TRUE, lengthMenu = list(c(20, 50, 100, -1), c('20','50','100','All')), pagingType = "full", 
-                   columnDefs = list(list(visible = FALSE, targets = 0)),
-                   dom = 'T<"clear">lfrtip', tableTools = list(sSwfPath = copySWF(dest = "www")))
+    options = list(orderClasses = TRUE, columnDefs = list(list(visible = FALSE, targets = 0)))
     )
     
     #' Generate a reactive value for the input$rows to set to NULL when the dataset change
@@ -913,9 +911,7 @@ shinyServer(
     output$rppaTable <- renderDataTable({
       rrppa_data_table()
     }, selection = 'single', extensions = "TableTools", 
-    options = list(orderClasses = TRUE, lengthMenu = list(c(20, 50, 100, -1), c('20','50','100','All')), pagingType = "full", 
-                   columnDefs = list(list(visible = FALSE, targets = 0)),
-                   dom = 'T<"clear">lfrtip', tableTools = list(sSwfPath = copySWF(dest = "www")))
+    options = list(orderClasses = TRUE, columnDefs = list(list(visible = FALSE, targets = 0)))
     )
     
     #' Generate a reactive value for the input$rows that set to NULL when the dataset change
@@ -1054,9 +1050,7 @@ shinyServer(
         data <- summary_data()
       }
       datatable(data, rownames = FALSE, extensions = c("FixedColumns", "TableTools"),
-                options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE,
-                               lengthMenu = list(c(10, 25, 50, -1), c('10','25','50','All')), dom = 'T<"clear">lfrtip',
-                               tableTools = list(sSwfPath = copySWF(dest = "www"))))
+                options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE))
     })
     
     #' Generate a graphic summary of the dataset, using ggvis
@@ -1330,9 +1324,7 @@ shinyServer(
       )
       est.call()
     }, selection = 'single', extensions = "TableTools", 
-    options = list(orderClasses = TRUE, lengthMenu = list(c(20, 50, 100, -1), c('20','50','100','All')), pagingType = "full", 
-                   columnDefs = list(list(visible = FALSE, targets = 0)), autoWidth = TRUE,
-                   dom = 'T<"clear">lfrtip', tableTools = list(sSwfPath = copySWF(dest = "www")))
+    options = list(orderClasses = TRUE, columnDefs = list(list(visible = FALSE, targets = 0)), autoWidth = TRUE)
     )
 
     #' Generate the Purity plot
@@ -1451,10 +1443,7 @@ shinyServer(
           need(input$goDec != 0,'Please press "Submit Deconvolute"')
       )
       datatable(deconv.call()[["scores"]], rownames = FALSE, extensions = c("FixedColumns", "TableTools"),
-                options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE,
-                               lengthMenu = list(c(20, 50, 100, -1), c('20','50','100','All')), 
-                               pageLength = 20, dom = 'T<"clear">lfrtip',
-                               tableTools = list(sSwfPath = copySWF(dest = "www")))
+                options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE)
                 )
     })
     
