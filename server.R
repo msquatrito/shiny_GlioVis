@@ -949,27 +949,54 @@ shinyServer(
       grid.arrange(p1, p2, ncol=1)
     },height = 600)
 
+    #' Mutation call using FirebrowseR
+    cohort <- reactive({       
+      switch(input$dataset, 
+             "TCGA GBM" = "GBM",
+             "TCGA LGG" = "LGG",
+             "TCGA GBMLGG" = "GBMLGG"
+      )
+    })
     
-    #' Link to cBioportal for mutation analysis
-    # Need addon on firefox for iframe to work correctly https://addons.mozilla.org/en-US/firefox/addon/ignore-x-frame-options/
-    output$mut_link=renderUI({
+    output$mut <- renderDataTable({
       validate(
-        need(input$dataset %in% c("TCGA GBM","TCGA LGG"), "Mutations data available only for TCGA GBM and TCGA LGG datasets")%then%
+        need(input$dataset %in% c("TCGA GBM","TCGA LGG","TCGA GBMLGG"), "Mutations data available only for TCGA datasets")%then%
           need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
           need(input$gene %in% names(exprs()),"Gene not available for this dataset")
       )
-      gene <- input$gene
-      if(input$dataset == "TCGA GBM") {
-        link <- paste0("http://www.cbioportal.org/index.do?cancer_study_list=gbm_tcga&cancer_study_id=gbm_tcga&genetic_profile_ids_PROFILE_MUTATION_EXTENDED=gbm_tcga_mutations&Z_SCORE_THRESHOLD=2.0&RPPA_SCORE_THRESHOLD=2.0&data_priority=0&case_set_id=gbm_tcga_sequenced&case_ids=&gene_set_choice=user-defined-list&gene_list=",gene,
-                       "%0D%0A&clinical_param_selection=null&tab_index=tab_visualize&Action=Submit")
-      } else if (input$dataset == "TCGA LGG") {
-        link <- paste0("http://www.cbioportal.org/index.do?cancer_study_list=lgg_tcga&cancer_study_id=lgg_tcga&genetic_profile_ids_PROFILE_MUTATION_EXTENDED=lgg_tcga_mutations&Z_SCORE_THRESHOLD=2.0&RPPA_SCORE_THRESHOLD=2.0&data_priority=0&case_set_id=lgg_tcga_sequenced&case_ids=&gene_set_choice=user-defined-list&gene_list=",gene,
-                       "%0D%0A%0D%0A&clinical_param_selection=null&tab_index=tab_visualize&Action=Submit")
+      mut <- Analyses.Mutation.MAF(gene = input$gene, cohort = cohort(), page_size = 2000)
+      if(!is.null(mut)) {
+        mut <- mut[,c(1,3,4,5)] # select only useful columns
+        names(mut)[1] <- "Sample"
+        mut$Sample <- gsub("-",".",mut$Sample)
+      } else {
+        stop(paste("No mutations identified for", input$gene, "in the", cohort(), "cohort"))
       }
-      
-      tags$iframe(src= link, style="width: 1000px; height: 600px")
-
+      data_table(mut)
+#       datatable(mut, rownames = FALSE, extensions = c("FixedColumns", "TableTools"),
+#                 options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE))
     })
+    
+#     #' Link to cBioportal for mutation analysis
+#     # Need addon on firefox for iframe to work correctly https://addons.mozilla.org/en-US/firefox/addon/ignore-x-frame-options/
+#     output$mut_link=renderUI({
+#       validate(
+#         need(input$dataset %in% c("TCGA GBM","TCGA LGG"), "Mutations data available only for TCGA GBM and TCGA LGG datasets")%then%
+#           need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
+#           need(input$gene %in% names(exprs()),"Gene not available for this dataset")
+#       )
+#       gene <- input$gene
+#       if(input$dataset == "TCGA GBM") {
+#         link <- paste0("http://www.cbioportal.org/index.do?cancer_study_list=gbm_tcga&cancer_study_id=gbm_tcga&genetic_profile_ids_PROFILE_MUTATION_EXTENDED=gbm_tcga_mutations&Z_SCORE_THRESHOLD=2.0&RPPA_SCORE_THRESHOLD=2.0&data_priority=0&case_set_id=gbm_tcga_sequenced&case_ids=&gene_set_choice=user-defined-list&gene_list=",gene,
+#                        "%0D%0A&clinical_param_selection=null&tab_index=tab_visualize&Action=Submit")
+#       } else if (input$dataset == "TCGA LGG") {
+#         link <- paste0("http://www.cbioportal.org/index.do?cancer_study_list=lgg_tcga&cancer_study_id=lgg_tcga&genetic_profile_ids_PROFILE_MUTATION_EXTENDED=lgg_tcga_mutations&Z_SCORE_THRESHOLD=2.0&RPPA_SCORE_THRESHOLD=2.0&data_priority=0&case_set_id=lgg_tcga_sequenced&case_ids=&gene_set_choice=user-defined-list&gene_list=",gene,
+#                        "%0D%0A%0D%0A&clinical_param_selection=null&tab_index=tab_visualize&Action=Submit")
+#       }
+#       
+#       tags$iframe(src= link, style="width: 1000px; height: 600px")
+# 
+#     })
     
     #' Generate reports
     output$reportPlots <- renderUI({

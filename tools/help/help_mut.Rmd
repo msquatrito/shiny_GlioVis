@@ -1,0 +1,6 @@
+---
+title: "Mutations"
+output: html_document
+---
+
+Mutation data (identified with the MutSig2CV algorithm) are dinamically downloaded from the Broad Firebrowse using the `Analyses.Mutation.MAF` function of the [‘FirebrowseR’](https://github.com/mariodeng/FirebrowseR) package.

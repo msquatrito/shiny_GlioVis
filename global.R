@@ -35,6 +35,7 @@ library(reshape2)
 library(heatmap3)
 library(RColorBrewer)
 library(scales)
+library(FirebrowseR)
 options(shiny.usecairo=TRUE)
 `%then%` <- shiny:::`%OR%`
 
@@ -129,7 +130,7 @@ options(DT.options  = list(lengthMenu = list(c(20, 50, 100, -1), c('20','50','10
                                     dom = 'T<"clear">lfrtip', 
                                     tableTools = list(sSwfPath = copySWF(dest = "www"))))
 data_table <- function (df) {
-datatable(df, rownames = FALSE, extensions = "TableTools")
+datatable(df, selection = 'none', rownames = FALSE, extensions = "TableTools")
           
 }
 

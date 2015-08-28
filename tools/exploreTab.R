@@ -402,8 +402,15 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                          ),
                          
                          tabPanel(title = "Mutations",  icon =  icon("adjust") ,value = 5,
-                                  p("Mutations are not currently supported in Gliovis, your search will be transfered to the MSKCC cBio Portal. (NOTE: visible only using Firefox browser)"),
-                                  uiOutput('mut_link')
+                                  div(style = "width: 100%; overflow: hidden;",
+                                      div(style = "width: 300px; float: left;", p(class = "lead","Mutation data for TCGA datasets")),
+                                      div(style = "margin-left: 300x;", helpModal(modal_title ="Mutations", link = "helpMut", help_file = includeMarkdown("tools/help/help_mut.Rmd")))
+                                  ),
+                                  busy("Retrieving mutations from Broad Firebrowse"),
+                                  dataTableOutput(outputId = "mut", width = 600)
+#                                   ,
+#                                   p("Mutations are not currently supported in Gliovis, your search will be transfered to the MSKCC cBio Portal. (NOTE: visible only using Firefox browser)"),
+#                                   uiOutput('mut_link')
                          ),
                          
                          tabPanel(title = "Summary", icon =  icon("pie-chart") , value = 6,
