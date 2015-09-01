@@ -3,4 +3,17 @@ title: "Deconvolute"
 output: html_document
 ---
    
-       
+To deconvolute gene expression profiles we use Single-sample GSEA (ssGSEA), an extension of Gene Set Enrichment Analysis
+(GSEA), that calculates separate enrichment scores for each pairing of a sample and gene
+set. Each ssGSEA enrichment score represents the degree to which the genes in a
+particular gene set are coordinately up- or down-regulated within a sample. In this
+manner ssGSEA projects a single sample’s gene expression profile from the space of
+single genes onto the space of gene sets. The benefit
+here is that the ssGSEA projection transforms the data to a higher-level (pathways
+instead of genes) space representing a more biologically interpretable set of features on
+which analytic methods can be applied. (Ref:[*GenePattern*](http://www.broadinstitute.org/cancer/software/genepattern/modules/docs/ssGSEAProjection/4)).     
+
+* **ssGSEA**, is performed using the `gsva` function of the [‘gsva’](http://www.bioconductor.org/packages/2.12/bioc/html/GSVA.html) package (method = "ssgsea"). Two genes list are currently available: 
+1. [Engler JR. et al. 2012](http://www.ncbi.nlm.nih.gov/pubmed/22937035)
+2. [Bindea G. et al. 2013](http://www.ncbi.nlm.nih.gov/pubmed/24138885)   
+
