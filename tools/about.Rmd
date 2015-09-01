@@ -9,6 +9,10 @@
 **Survival**         
 * Kaplan–Meier survival analysis are performed using the [‘survival’](http://cran.r-project.org/web/packages/survival/survival.pdf) package in R. Hazard ratios were determined utilizing the `coxph` function from the ‘survival’ package. To generate HR plot we partially use some code previously describend in [*Cutoff finder*](http://molpath.charite.de/cutoff/index.jsp).    
 
+**Mutations**  
+* Mutation data (identified with the MutSig2CV algorithm) are dinamically downloaded from the Broad Firebrowse using the `Analyses.Mutation.MAF` function of the [‘FirebrowseR’](https://github.com/mariodeng/FirebrowseR) package.     
+
+
 **Classification**      
 **- GBM**   
 For the GBM subtype classification we use the 4 TCGA expression subtypes (Classical, Mesenchymal, Neural, Proneural) as defined in [Verhaak RG. et al. 2010](http://www.ncbi.nlm.nih.gov/pubmed/20129251).   
