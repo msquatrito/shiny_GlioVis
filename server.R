@@ -71,7 +71,6 @@ shinyServer(
     
     #' Text matching with the gene names list
     updateSelectizeInput(session, inputId = "gene", choices = gene_names, server = TRUE)
-    # updateSelectizeInput(session, inputId = "geneCor", choices = gene_names, server = TRUE)
     updateSelectizeInput(session, inputId = "gene2", choices = gene_names, server = TRUE)
     updateSelectizeInput(session, inputId = "genelist", choices = gene_names, server = TRUE) 
     
@@ -226,47 +225,34 @@ shinyServer(
                      options = list(plugins = list('remove_button')))
     })
     
+    #' Populate Xaxis labels
+    observe({
+      updateTextInput(session,inputId = "myXlab",value = paste0("\n",plot_Type()))
+    })
+    
     #' Reactive function to generate the box plots
     box_Plot <- reactive ({
       data <- filter_plot_Data() 
-      xlabel <- ifelse(input$labelsTitle, paste0("\n", input$myXlab), paste0("\n",plot_Type()))
-      ylabel <- ifelse(input$scale, "Normalized mRNA expression\n", "mRNA expression (log2)\n")
-      ylabel <- ifelse(input$labelsTitle, paste0("\n", input$myYlab), ylabel)
-      theme <- theme(axis.text.x = element_text(size = input$axis_text_size), axis.text.y = element_text(size = input$axis_text_size),
-                     axis.title.x = element_text(size = input$axis_title_size), axis.title.y = element_text(size = input$axis_title_size),
-                     plot.margin = unit(c(0,0,0,0), "lines"))
+      xlabel <- paste("\n", input$myXlab)
+      ylabel <- paste(input$myYlab,"\n")
+      fillBox <- NULL
+      col <- input$colorP
+      shape <- input$shapeP
+      theme <- theme(axis.text.x = element_text(size = input$axis_text_size, angle = input$xaxisLabelAngle, hjust = ifelse(input$xaxisLabelAngle == 0,0.5,1)), 
+                     axis.text.y = element_text(size = input$axis_text_size),
+                     axis.title.x = element_text(size = input$axis_title_size), 
+                     axis.title.y = element_text(size = input$axis_title_size))
+
+      if (input$colBox) fillBox <- plot_Type()
+      if(input$colorP == "None") col <-  NULL
+      if(input$shapeP == "None") shape <-  NULL
+      if (input$bw) theme <- theme_bw () + theme
       
-      if (input$bw) {
-        theme <- theme_bw () + theme
-      }
-      
-      p <- ggplot(data, mapping=aes_string(x=plot_Type(), y = "mRNA")) + ylab(ylabel) + xlab(xlabel) + theme
-     
-       if (input$colBox) {
-        p <- p + geom_boxplot(aes_string(fill = plot_Type()), outlier.size = 0)
-      } else {
-        p <- p + geom_boxplot(outlier.size = 0)
-      }
-      
-      if (input$typePoint) {
-        col <- input$colorP
-        shape <- input$shapeP
-        if(input$colorP == "None") {
-          col <-  NULL
-        }
-        if(input$shapeP == "None") {
-          shape <-  NULL
-        }
-        map <- aes_string(colour = col, shape = shape)
-      } else {
-        map <- NULL
-      }
-        
-      p <- p + geom_jitter(position = position_jitter(width = .2), mapping = map, size = input$point_size, alpha = input$alpha)
-      
-      if (input$xaxisLabelAngle) {
-        p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
-      }
+      p <- ggplot(data, mapping=aes_string(x=plot_Type(), y = "mRNA")) + 
+        geom_boxplot(aes_string(fill = fillBox), outlier.size = 0) + 
+        geom_jitter(position = position_jitter(width = .2), mapping = aes_string(colour = col, shape = shape), 
+                    size = input$point_size, alpha = input$alpha) +
+        ylab(ylabel) + xlab(xlabel) + theme
       
       if (input$tukeyHSD && input$tukeyPlot) {
         t <- tukey() %>%
@@ -287,37 +273,24 @@ shinyServer(
       data_table(data)
     })
     
-    #' Generate radiobuttons for the various categories in the pData
-    output$colorPoints <- renderUI({
-      validate(
-        need(input$gene != "", FALSE)
-      )
+    observe({
       data <- rmNA(filter_plot_Data())
-      # colnames <- names(data)[!names(data) %in% c("mRNA","Sample","status","survival")]
-      colnames <- names(data)[!sapply(data, is.numeric)]
+      colnames <- names(data)[!sapply(data, is.numeric)] # remove muneric categories
       colnames <- colnames[!colnames %in% "Sample"]
       # Create the selectInput for the different pData categories
-      div(class="row",
-          div(class="col-xs-6",
-              selectInput("colorP", "Color by:", choices = c("None",colnames), selected = plot_Type())
-          ),
-          div(class="col-xs-6",
-              selectInput("shapeP", "Shape by:", choices = c("None",colnames), selected = "None")
-          )
-      )
+      updateSelectInput(session, "colorP", "Color by:", choices = c("None",colnames), selected = "None")
+      updateSelectInput(session, "shapeP", "Shape by:", choices = c("None",colnames), selected = "None")
     })
     
     #' Create the selected plot
     output$plot <- renderPlot({
       # To avoid an error when switching datasets in case the colStrip is not available.
-        if(input$typePoint){
-        data <- rmNA(filter_plot_Data())
-        colnames <- names(data)[!names(data) %in% c("mRNA","Sample","status","survival")]
-        validate(
-          need(input$colorP %in% c("None", colnames), FALSE) %then%
-            need(input$shapeP %in% c("None", colnames), FALSE)
-          )
-        }
+      data <- rmNA(filter_plot_Data())
+      colnames <- names(data)[!names(data) %in% c("mRNA","Sample","status","survival")]
+      validate(
+        need(input$colorP %in% c("None", colnames), FALSE) %then%
+          need(input$shapeP %in% c("None", colnames), FALSE)
+      )
       print(box_Plot())
     }, width = function()ifelse(input$tukeyPlot, input$plot_width * 1.5, input$plot_width), height = function()input$plot_height)
     
@@ -333,11 +306,12 @@ shinyServer(
     #' Summary statistic
     output$summary <- renderTable({    
       data <- dataStat()
-      stat <- data.frame(data %>%
-                           group_by(group) %>%
-                           summarise(Sample_count = paste0(n()," (", round(n()*100/dim(data)[1], 2), "%)" ), # prop.table
-                                     median = median (mRNA, na.rm=T), mad = mad(mRNA, na.rm=T), mean = mean(mRNA, na.rm=T), 
-                                     sd = sd(mRNA, na.rm=T)))
+      stat <- data %>%
+        group_by(group) %>%
+        summarise(Sample_count = paste0(n()," (", round(n()*100/dim(data)[1], 2), "%)" ), # prop.table
+                  median = median (mRNA, na.rm=T), mad = mad(mRNA, na.rm=T), mean = mean(mRNA, na.rm=T), 
+                  sd = sd(mRNA, na.rm=T)) %>%
+        data.frame()
       row.names(stat) <- stat$group
       tot <- data %>%
         summarise(Sample_count = n(),median = median (mRNA, na.rm=T), 
@@ -420,7 +394,7 @@ shinyServer(
     
     #' Reactive expressions for the conditonal panels to work in the right way
     gcimp_Surv <- reactive ({
-      if(input$histologySurv == "GBM") {
+      if(input$histologySurv == "GBM" & input$dataset !="TCGA GBMLGG") {
         gcimpSurv <- input$gcimpSurv
       } else {
         gcimpSurv <- FALSE
@@ -521,9 +495,9 @@ shinyServer(
       # Use 'try' to suppress a message throwed the first time manual cutoff is selected
       if(all_Sub_Surv()) {
         try({
-          par(mfrow=c(2,2), mar=c(3,3,3,1), mgp=c(2.2,.95,0))
+          par(mfrow=c(2,2), mar=c(3.5,3.5,3.5,1.5), mgp=c(2.2,.95,0))
           for (i in c("Classical","Mesenchymal","Neural","Proneural")) {
-            survivalPlot (surv_Data(), input$gene, group = "GBM", subtype = i,
+            survivalPlot (surv_Data(), input$gene, group = input$histologySurv, subtype = i,
                           cutoff = input$cutoff, numeric = input$mInput)
           }
         }, silent = TRUE)} else {
@@ -726,7 +700,7 @@ shinyServer(
         cor <- tidy(cor.test(df[ ,input$gene], df[ ,input$gene2], use = "complete.obs", method = tolower(input$statCorr)))
       }
       cor
-    })
+    }, digits = ifelse(input$statCorr == "Pearson",c(2,2,2,-1,2,2,2),c(2,2,2,-1)))
     
     #' Table with the data used for the correlation plot
     output$corrDataTable <- renderDataTable({
@@ -831,7 +805,7 @@ shinyServer(
     observeEvent(c(datasetInput(),input$histologyCorr,input$gene,input$cor), {
       v$rows <- NULL
     })
-
+    
     #' Generate the correlation plot
     output$corrAllPlot <- renderPlot({
       v$rows
@@ -948,7 +922,7 @@ shinyServer(
         ylab(paste(protein,"RPPA score")) + theme(legend.position = "none")
       grid.arrange(p1, p2, ncol=1)
     },height = 600)
-
+    
     #' Mutation call using FirebrowseR
     cohort <- reactive({       
       switch(input$dataset, 
@@ -964,39 +938,42 @@ shinyServer(
           need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
           need(input$gene %in% names(exprs()),"Gene not available for this dataset")
       )
+      closeAlert(session, "mutAlertId")
       mut <- Analyses.Mutation.MAF(gene = input$gene, cohort = cohort(), page_size = 2000)
       if(!is.null(mut)) {
         mut <- mut[,c(1,3,4,5)] # select only useful columns
         names(mut)[1] <- "Sample"
         mut$Sample <- gsub("-",".",mut$Sample)
       } else {
-        stop(paste("No mutations identified for", input$gene, "in the", cohort(), "cohort"))
+        createAlert(session, anchorId = "mutAlert", alertId = "mutAlertId", title = "Sorry...",
+                    content = paste("No mutations identified for", input$gene, "in the", cohort(), "cohort"), 
+                    style = "danger")
       }
       data_table(mut)
-#       datatable(mut, rownames = FALSE, extensions = c("FixedColumns", "TableTools"),
-#                 options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE))
+      #       datatable(mut, rownames = FALSE, extensions = c("FixedColumns", "TableTools"),
+      #                 options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE))
     })
     
-#     #' Link to cBioportal for mutation analysis
-#     # Need addon on firefox for iframe to work correctly https://addons.mozilla.org/en-US/firefox/addon/ignore-x-frame-options/
-#     output$mut_link=renderUI({
-#       validate(
-#         need(input$dataset %in% c("TCGA GBM","TCGA LGG"), "Mutations data available only for TCGA GBM and TCGA LGG datasets")%then%
-#           need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
-#           need(input$gene %in% names(exprs()),"Gene not available for this dataset")
-#       )
-#       gene <- input$gene
-#       if(input$dataset == "TCGA GBM") {
-#         link <- paste0("http://www.cbioportal.org/index.do?cancer_study_list=gbm_tcga&cancer_study_id=gbm_tcga&genetic_profile_ids_PROFILE_MUTATION_EXTENDED=gbm_tcga_mutations&Z_SCORE_THRESHOLD=2.0&RPPA_SCORE_THRESHOLD=2.0&data_priority=0&case_set_id=gbm_tcga_sequenced&case_ids=&gene_set_choice=user-defined-list&gene_list=",gene,
-#                        "%0D%0A&clinical_param_selection=null&tab_index=tab_visualize&Action=Submit")
-#       } else if (input$dataset == "TCGA LGG") {
-#         link <- paste0("http://www.cbioportal.org/index.do?cancer_study_list=lgg_tcga&cancer_study_id=lgg_tcga&genetic_profile_ids_PROFILE_MUTATION_EXTENDED=lgg_tcga_mutations&Z_SCORE_THRESHOLD=2.0&RPPA_SCORE_THRESHOLD=2.0&data_priority=0&case_set_id=lgg_tcga_sequenced&case_ids=&gene_set_choice=user-defined-list&gene_list=",gene,
-#                        "%0D%0A%0D%0A&clinical_param_selection=null&tab_index=tab_visualize&Action=Submit")
-#       }
-#       
-#       tags$iframe(src= link, style="width: 1000px; height: 600px")
-# 
-#     })
+    #     #' Link to cBioportal for mutation analysis
+    #     # Need addon on firefox for iframe to work correctly https://addons.mozilla.org/en-US/firefox/addon/ignore-x-frame-options/
+    #     output$mut_link=renderUI({
+    #       validate(
+    #         need(input$dataset %in% c("TCGA GBM","TCGA LGG"), "Mutations data available only for TCGA GBM and TCGA LGG datasets")%then%
+    #           need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
+    #           need(input$gene %in% names(exprs()),"Gene not available for this dataset")
+    #       )
+    #       gene <- input$gene
+    #       if(input$dataset == "TCGA GBM") {
+    #         link <- paste0("http://www.cbioportal.org/index.do?cancer_study_list=gbm_tcga&cancer_study_id=gbm_tcga&genetic_profile_ids_PROFILE_MUTATION_EXTENDED=gbm_tcga_mutations&Z_SCORE_THRESHOLD=2.0&RPPA_SCORE_THRESHOLD=2.0&data_priority=0&case_set_id=gbm_tcga_sequenced&case_ids=&gene_set_choice=user-defined-list&gene_list=",gene,
+    #                        "%0D%0A&clinical_param_selection=null&tab_index=tab_visualize&Action=Submit")
+    #       } else if (input$dataset == "TCGA LGG") {
+    #         link <- paste0("http://www.cbioportal.org/index.do?cancer_study_list=lgg_tcga&cancer_study_id=lgg_tcga&genetic_profile_ids_PROFILE_MUTATION_EXTENDED=lgg_tcga_mutations&Z_SCORE_THRESHOLD=2.0&RPPA_SCORE_THRESHOLD=2.0&data_priority=0&case_set_id=lgg_tcga_sequenced&case_ids=&gene_set_choice=user-defined-list&gene_list=",gene,
+    #                        "%0D%0A%0D%0A&clinical_param_selection=null&tab_index=tab_visualize&Action=Submit")
+    #       }
+    #       
+    #       tags$iframe(src= link, style="width: 1000px; height: 600px")
+    # 
+    #     })
     
     #' Generate reports
     output$reportPlots <- renderUI({
@@ -1007,7 +984,8 @@ shinyServer(
       groups <- c(plotList[[input$dataset]], plotUserSelection())
       plot_output_list <- lapply(groups, function(i) {
         plot_report <- paste("plotReport", i, sep = "")
-        box(height = 300, title = paste0(i), width = NULL, solidHeader = TRUE, status = "primary", 
+        box(height = 300, title = paste0(i), width = NULL, solidHeader = TRUE, status = "primary",
+            busy(paste("Rendering", i, "boxplot")),
             plotOutput(plot_report, height = 245)
         )
       })
@@ -1023,34 +1001,34 @@ shinyServer(
           plot_report <- paste("plotReport", my_i, sep = "")
           output[[plot_report]] <- renderPlot({
             validate(
-                need(!all(is.na(data[ ,my_i])),"Sorry,no gene data available for this group")
+              need(!all(is.na(data[ ,my_i])),"Sorry,no gene data available for this group")
             )
             data <- filter(data,!is.na(data[,my_i]))
             p <- ggplot(data, mapping=aes_string(x=my_i, y = "mRNA")) + geom_boxplot(outlier.size = 0) +  
               geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5) + 
               ylab("mRNA expression (log2)") + theme(axis.title.x = element_blank()) + theme(axis.title.y=element_text(vjust=1)) 
-            stat <- substitute(data %>%
-                                 group_by(x) %>%
-                                 summarise(Sample_count = paste0(n()," (", round(n()*100/dim(data)[1],2), "%)" ), # prop.table
-                                           median = round(median (mRNA, na.rm=T),2), mad = round(mad(mRNA, na.rm=T),2),
-                                           mean = round(mean(mRNA, na.rm=T),2), sd = round(sd(mRNA, na.rm=T),2)),
-                               list(x = as.name(my_i)))
-            stat <- data.frame(eval(stat))
+            stat <- data %>%
+              group_by_(my_i) %>%
+              summarise(Sample_count = paste0(n()," (", round(n()*100/dim(data)[1],2), "%)" ), # prop table
+                        median = round(median (mRNA, na.rm=T),2), mad = round(mad(mRNA, na.rm=T),2),
+                        mean = round(mean(mRNA, na.rm=T),2), sd = round(sd(mRNA, na.rm=T),2)) %>%
+              data.frame()
             row.names(stat) <- stat[,my_i]
-            tot <- eval(substitute(data %>%
-                                     summarise(Sample_count = n(), median = round(median (mRNA, na.rm=T),2), mad = round(mad(mRNA, na.rm=T),2),
-                                               mean = round(mean(mRNA, na.rm=T),2), sd = round(sd(mRNA, na.rm=T),2)),
-                                   list(x = as.name(my_i))))
+            tot <- data %>%
+              summarise(Sample_count = n(), 
+                        median = round(median (mRNA, na.rm=T),2), mad = round(mad(mRNA, na.rm=T),2),
+                        mean = round(mean(mRNA, na.rm=T),2), sd = round(sd(mRNA, na.rm=T),2))
             stat <- stat[,-1]
             stat <- rbind(stat,TOTAL = tot)
             t <- tableGrob(stat)
-                           # , gp = gpar(fontsize=14),row.just = "right", core.just = "right")
-#             t <- tableGrob(stat, theme = ttheme_default(core = list(fg_params = list(hjust=1, x=0.9)),
-#                                                         rowhead = list(fg_params=list(hjust=1, x=0.95))))
+            # , gp = gpar(fontsize=14),row.just = "right", core.just = "right")
+            #             t <- tableGrob(stat, theme = ttheme_default(core = list(fg_params = list(hjust=1, x=0.9)),
+            #                                                         rowhead = list(fg_params=list(hjust=1, x=0.95))))
             grid.arrange(p, t, ncol = 2, just = c("center", "top")) # `just` it's not working
           })
         })
       }
+      
     })
     
     #' Reactive function for an HTML table view of the data
@@ -1230,8 +1208,8 @@ shinyServer(
         pData.core <- pData[row.names(train),]
         Training <- pData.core$Subtype
         subtypes <- c("IDHmut-codel","IDHmut-non-codel","IDHwt")
-#         Training <- pData.core$RNASeqCluster # Expression subtype (not the molecular subtype)
-#         subtypes <- c("R1","R2","R3","R4")
+        #         Training <- pData.core$RNASeqCluster # Expression subtype (not the molecular subtype)
+        #         subtypes <- c("R1","R2","R3","R4")
         k <- 3
       }
       row.names(train) <- train[,"Sample"]
@@ -1353,7 +1331,7 @@ shinyServer(
     }, selection = 'single', extensions = "TableTools", 
     options = list(orderClasses = TRUE, columnDefs = list(list(visible = FALSE, targets = 0)), autoWidth = TRUE)
     )
-
+    
     #' Generate the Purity plot
     output$purityPlot <- renderPlot({
       validate(
@@ -1363,7 +1341,7 @@ shinyServer(
       )
       plotPurity(est.call(), est.call()[input$estScore_rows_selected,"Sample"], platform = input$platformEst)
     })
-       
+    
     #' Reactive function to generate Deconvolute scores to pass to data table 
     deconv.call <- eventReactive (input$goDec,{
       inFile <- input$upFile
@@ -1471,7 +1449,7 @@ shinyServer(
       )
       datatable(deconv.call()[["scores"]], rownames = FALSE, extensions = c("FixedColumns", "TableTools"),
                 options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE)
-                )
+      )
     })
     
   })
