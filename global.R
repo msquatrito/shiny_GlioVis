@@ -36,6 +36,7 @@ library(heatmap3)
 library(RColorBrewer)
 library(scales)
 library(FirebrowseR)
+library(shinyBS)
 options(shiny.usecairo=TRUE)
 `%then%` <- shiny:::`%OR%`
 
@@ -231,6 +232,27 @@ get_cutoff <- function(mRNA, cutoff, numeric) {
   strat
 }
 
+get_cutoff <- function(mRNA, cutoff, numeric) {
+  mRNA.q <- round(quantile(mRNA, probs=c(0.25, 0.5, 0.75), na.rm = TRUE),2)
+  if (cutoff == "quartiles"){
+    strat <- cut(mRNA, quantile(mRNA,na.rm = T), include.lowest = TRUE)
+  }
+  if (cutoff != "quartiles") {
+    if (cutoff == "high vs low") {
+      strat <- ifelse(mRNA >= mRNA.q [3], "high", ifelse(mRNA <= mRNA.q [1], "low",NA))
+    } else {
+      cut <- switch(cutoff, 
+                    "median" = mRNA.q[2],
+                    "lower quartile" = mRNA.q [1],
+                    "upper quartile" = mRNA.q [3],
+                    "Use a specific mRNA value" = numeric)
+      f <- function(x) ifelse(x >= cut, c("high"),c("low"))
+      strat <- f(mRNA)
+    }
+  }
+  strat
+}
+
 survivalPlot <- function (df, gene, group, subtype, cutoff, numeric) {
   # Select a specific subtype
   if (group == "GBM" & subtype != "All") {
@@ -253,7 +275,7 @@ survivalPlot <- function (df, gene, group, subtype, cutoff, numeric) {
   smax <- max(surv.time, na.rm = TRUE)
   tmax <- smax-(25*smax)/100
   xmax <- (95*tmax)/100
-
+  
   strat <- get_cutoff(mRNA, cutoff, numeric)
   expr.surv <- survfit(my.Surv ~ strat, conf.type = "none")
   log.rank <- survdiff(my.Surv ~ strat, rho = 0)
@@ -356,34 +378,6 @@ myCorggPlot <- function (df, gene1, gene2, colorBy = "none", separateBy = "none"
   } 
 }
 
-# ########################################
-# ############## myCorrTest ##############
-# ########################################
-# # Use to generate summary data for the correlation analysis
-# myCorrTest <- function (df, gene1, gene2, colorBy = "none", separateBy = "none", statCorrMethod = "pearson", ...) {
-#   if (separateBy == "Histology") {
-#     cor <- substitute(df %>%
-#                         group_by(Histology)%>%
-#                         summarise(n = n(),
-#                                   r = cor.test(x, y, use = "complete.obs", method = statCorrMethod)$estimate,
-#                                   p.value = cor.test(x, y, use = "complete.obs", method = statCorrMethod)$p.value), 
-#                       list(x = as.name(gene1), y = as.name(gene2)))
-#     cor <- data.frame(eval(cor))
-#   } else if (separateBy == "Subtype") {
-#     cor <- substitute(df %>%
-#                         group_by(Subtype)%>%
-#                         do(tidy(cor.test(x, y, use = "complete.obs", method = statCorrMethod))),
-# #                         summarise(n = n(),
-# #                                   r = cor.test(x, y, use = "complete.obs", method = statCorrMethod)$estimate,
-# #                                   p.value = cor.test(x, y, use = "complete.obs", method = statCorrMethod)$p.value), 
-#                       list(x = as.name(gene1), y = as.name(gene2)))
-#     cor <- data.frame(eval(cor))
-#   } else if (separateBy == "none"){
-#     cor <- tidy(cor.test(df[ ,gene1], df[ ,gene2], use = "complete.obs", method = statCorrMethod))
-# #     cor <- data.frame(n = cor$parameter[[1]]+2, r = cor$estimate, p.value = cor$p.value)
-#   }
-#   cor
-# }
 
 ########################################
 ############## pairs panels ############
