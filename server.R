@@ -716,7 +716,7 @@ shinyServer(
       content = function(file) {
         plotFunction <- match.fun(download_Plot_FileType())
         plotFunction(file, width = download_Plot_Width(), height = download_Plot_Height())
-        myCorggPlot (corr_Two_Genes(), input$gene, input$gene2, color_by(), separate_by())
+        print(myCorggPlot (corr_Two_Genes(), input$gene, input$gene2, color_by(), separate_by()))
         dev.off()
       }
     )
