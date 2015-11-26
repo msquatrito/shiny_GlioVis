@@ -10,13 +10,41 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                          br(),
                          br(),
                          wellPanel(                      
+                           # dataset
                            selectInput(inputId = "dataset", label = h4("Dataset:"),
                                        choices = datasets,
                                        selected = "TCGA GBM", selectize = TRUE),
+                           # genes
                            conditionalPanel(
-                             condition = "input.tabCorr != 'corrMany'",
+                             condition = "input.tabCorr != 'corrMany' & input.tab1 != 5 & input.tab1 != 8",
                              selectizeInput(inputId = "gene", label = h4("Gene:"), choices = NULL,  
                                             options = list(placeholder = "Enter gene, eg: EGFR", plugins = list('restore_on_backspace')))
+                           ),
+                           conditionalPanel(
+                             condition = "input.tab1 == 3 & input.tabCorr == 'corrTwo'",
+                             selectizeInput(inputId = "gene2", label = h4("Gene 2:"), choices ="", 
+                                            options = list(placeholder = "Enter gene 2, eg: SOCS2", plugins = list('restore_on_backspace')))
+                           ),
+                           conditionalPanel(
+                             condition = "input.tab1 == 3 & input.tabCorr == 'corrMany'",
+                             selectizeInput(inputId = "corrGene", label = h4("Genes:"), choices ="", multiple = TRUE,
+                                            options = list(placeholder = "Enter two or more genes", plugins = list('remove_button'))),
+                             helpText("- or paste -"),
+                             textInput(inputId = "genelist_corr", label = h4("Genes list:"), value = "Paste gene list...")
+                           ),
+                           conditionalPanel(
+                             condition = "input.tab1 == 5",
+                             selectizeInput(inputId = "mutGene", label = h4("Gene(s):"), choices ="", multiple = TRUE,
+                                            options = list(placeholder = "Enter gene(s), eg: TP53, ATRX", plugins = list('remove_button'))),
+                             helpText("- or paste -"),
+                             textInput(inputId = "genelist_mut", label = h4("Genes list:"), value = "Paste gene list...")
+                           ),
+                           
+                           # histology and subtype
+                           conditionalPanel(
+                             condition = "input.tab1 == 2 | input.tab1 == 3 | input.tab1 == 7",
+                             selectInput(inputId = "histology", label = h4("Histology:"), choices = ""),
+                             selectInput(inputId = "subtype", label = h4("Subtype:"), choices = "")
                            ),
                            
                            # Tab Boxplot
@@ -43,17 +71,15 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                            # Tab Survival
                            conditionalPanel(
                              condition = "input.tab1 == 2",
-                             selectInput(inputId = "histologySurv", label = h4("Histology:"), choices = ""),
                              conditionalPanel(
-                               condition = "input.histologySurv == 'GBM' & input.dataset != 'TCGA GBMLGG'",
+                               condition = "input.histology == 'GBM' & input.dataset != 'TCGA GBMLGG'",
                                checkboxInput(inputId = "gcimpSurv", label = "Exclude G-CIMP samples", value = FALSE),
-                               checkboxInput(inputId = "primarySurv", label = "Exclude Recurrent samples", value = FALSE),
-                               selectInput(inputId = "subtypeSurv", label = h4("Subtype:"), 
-                                           choices = c("All", "Classical", "Mesenchymal", "Neural", "Proneural")),
-                               conditionalPanel(
-                                 condition = "input.subtypeSurv == 'All'",
-                                 checkboxInput(inputId = "allSubSurv", label = "Separate by subtype", value = FALSE)
-                               )
+                               checkboxInput(inputId = "primarySurv", label = "Exclude Recurrent samples", value = FALSE)
+                             ),
+                             conditionalPanel(
+                               condition = "input.subtype == 'All'",
+                               checkboxInput(inputId = "allSubSurv", label = "Separate by subtype", value = FALSE)
+                               
                              ),
                              conditionalPanel(
                                condition = "input.tabSurv == 'km'",
@@ -74,22 +100,6 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                            # Tab Correlation
                            conditionalPanel(
                              condition = "input.tab1 == 3",
-                             conditionalPanel(
-                               condition = "input.tabCorr == 'corrTwo'",
-                               selectizeInput(inputId = "gene2", label = h4("Gene 2:"), choices ="", 
-                                              options = list(placeholder = "Enter gene 2, eg: SOCS2", plugins = list('restore_on_backspace')))
-                             ),
-                             conditionalPanel(
-                               condition = "input.tabCorr == 'corrMany'",
-                               selectizeInput(inputId = "genelist", label = h4("Genes list"), choices ="", multiple = TRUE,
-                                              options = list(placeholder = "Enter genes", plugins = list('remove_button')))
-                             ),
-                             selectInput(inputId = "histologyCorr", label = h4("Histology:"), choices = ""),
-                             conditionalPanel(
-                               condition = "input.histologyCorr == 'GBM' & input.dataset != 'TCGA GBMLGG'",
-                               selectInput(inputId = "subtype", label = h4("Subtype:"), 
-                                           choices = c("All", "Classical", "Mesenchymal", "Neural", "Proneural"))
-                             ),
                              helpModal(modal_title ="Correlation", link = "helpCorr", help_file = includeMarkdown("tools/help/help_corr.Rmd"))
                            ),
                            
@@ -101,8 +111,27 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                              conditionalPanel(
                                condition = "output.boxRppaRNA",
                                helpText("mRNA expression (log2). Blue lines represent 25%, 50% and 75% quartiles. Red line represents the current selection."))
+                           ),
+                           
+  
+                           # Tab Differential expression
+                           conditionalPanel(
+                             condition = "input.tab1 == 7",
+                             selectInput(inputId = "DEcutoff", label = h4("Cutoff:"), 
+                                         choices = c("high vs low","median", "lower quartile", "upper quartile"),
+                                         selected = "high vs low"),
+                             helpModal(modal_title ="Differential expression", link = "helpDE", help_file = includeMarkdown("tools/help/help_de.Rmd"))
+                             #                              ,
+                             #                              conditionalPanel(
+                             #                                condition = "input.cutoff == 'Use a specific percentile'",
+                             #                                br(),
+                             #                                uiOutput("numericCutoff"),
+                             #                                plotOutput(outputId = "boxmRNA", width = "100%", height = 50),
+                             #                                helpText("mRNA expression (log2). Blue lines represent 25%, 50% and 75% quartiles. Red line represents the current selection.")
+                             #                              )
                            )
                          ),
+                         
                          
                          # Tab Boxplot plotting options
                          conditionalPanel(
@@ -216,9 +245,47 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                            )
                          ),
                          
+                         # Tab Mut, Oncoprint plotting options
+                         conditionalPanel(
+                           condition = "input.tab1 == 5",
+                           wellPanel( 
+                             h4("Oncoprint options:"),
+                             checkboxInput(inputId = "add_cna", label = "Show copy number alterations", value = FALSE),
+                             checkboxInput(inputId = "hide_cases", label = "Hide unaltered cases", value = FALSE),
+                             checkboxInput(inputId = "column_barplot", label = "Show column bar plot", value = FALSE),
+                             checkboxInput(inputId = "row_barplot", label = "Show row bar plot", value = TRUE)
+                           )
+                         ),
+                         
+                         # Tab Differential expression options
+                         conditionalPanel(
+                           condition = "input.tab1 == 7",
+                           wellPanel(
+                             h4("Filter data:"),
+                             div(class="row",
+                                 div(class="col-xs-6",
+                                     numericInput(inputId = "lfc", label = "Log2 fold change:", min = 0.5, max = 4, step = 0.25, value = 1)
+                                 ),
+                                 div(class="col-xs-6",
+                                     numericInput(inputId = "pvalueDE", label = "p value:", min = 0.001, max = 0.1,step = 0.01, value = 0.05)
+                                     # sliderInput(inputId = "pvalueDE", label = "p value:", min = 1e-4, max = 1e-1, step = 1e-2, value = 5e-2)
+                                     # radioButtons(inputId = "pvalueDE", label = "p value:",choices = c(0.05, 0.01),inline = TRUE)
+                                 )
+                             )
+                           ),
+                           wellPanel(
+                             checkboxInput(inputId = "pDataHeatmap", label = "Include annotation to heatmap", value = FALSE),
+                             conditionalPanel(
+                               condition = "input.pDataHeatmap",
+                               selectInput(inputId = "colorSideHeatmap", label = h4("Select group:"), choices = "")
+                             )
+                           )
+                         ),
+                         
+                         
                          # Allow the user to set the height and width of the plot download.
                          conditionalPanel(
-                           condition = "input.tab1 != 4 & input.tab1 != 5 & input.tab1 != 6 & input.tabCorr != 'corrAll'",
+                           condition = "input.tab1 != 4 & input.tab1 != 5 & input.tab1 != 6 & input.tab1 != 7 & input.tab1 != 8 & input.tabCorr != 'corrAll'",
                            wellPanel( 
                              h4("Download:"),
                              selectInput(inputId = "downloadPlotFileType", label = strong("Select download file type"),
@@ -383,7 +450,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                           tabPanel(title = "Corr-Many", value = "corrMany",
                                                                    tabsetPanel(
                                                                      tabPanel(title = "Plot",
-                                                                              plotOutput(outputId = "pairsPlot")
+                                                                              plotOutput(outputId = "pairsPlot", height = "100%")
                                                                      ),
                                                                      tabPanel(title = "Data",
                                                                               dataTableOutput(outputId = "corrPairsDataTable", width = 600)
@@ -418,10 +485,30 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                   div(style = "width: 300px; float: left;", p(class = "lead","Mutation data for TCGA datasets")),
                                                   div(style = "margin-left: 300x;", helpModal(modal_title ="Mutations", link = "helpMut", help_file = includeMarkdown("tools/help/help_mut.Rmd")))
                                               ),
-                                              busy("Retrieving mutations from Broad Firebrowse"),
                                               bsAlert("mutAlert"),
-                                              dataTableOutput(outputId = "mut", width = 600)
-                                              #                                   uiOutput('mut_link')
+                                              plotOutput(outputId = "oncoprint", height = "100%"),
+                                              br(),hr(),br(),
+                                              busy("Retrieving mutation data"),
+                                              dataTableOutput(outputId = "mut")
+                                              
+                                     ),
+                                     
+                                     tabPanel(title = "Differential expression", icon = icon("barcode"),  value = 7,
+                                              
+                                              tabsetPanel(id = "tabDE",
+                                                          
+                                                          tabPanel(title = "Heatmap", 
+                                                                   bsAlert("DEAlert"),
+                                                                   busy(),
+                                                                   plotOutput(outputId = "DEheatmap", height = 1000)      
+                                                          ),
+                                                          
+                                                          tabPanel(title = "Data",
+                                                                   busy(),
+                                                                   dataTableOutput(outputId = "DETable")        
+                                                          )
+                                                          
+                                              )
                                      ),
                                      
                                      tabPanel(title = "Summary", icon =  icon("pie-chart"), value = 6,
@@ -444,7 +531,16 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                          )
                                                 )
                                               )
-                                     )                  
+                                     ),
+                                     
+                                     tabPanel(title = "Dataset download", icon =  icon("download"), value = 8,
+                                              p(class = "lead","Download complete dataset"),
+                                              br(),
+                                              downloadButton(outputId = "downloadExpressionData", label = "Download expression data", class= "btn-primary"),
+                                              p(""),
+                                              downloadButton(outputId = "downloadpData", label = "Download pheno data", class= "btn-primary")
+                                     )
+                                     
                          )
                        )
          )

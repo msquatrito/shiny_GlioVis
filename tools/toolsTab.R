@@ -24,12 +24,19 @@ tabPanel(title = "Tools", icon = icon("gear"),
                             radioButtons(inputId = "platformDec", label = strong("Select platform:"), 
                                          choices = c("Microarray" = "microarray", "RNAseq" = "rnaseq"),inline = T),
                             br(),
-                            radioButtons(inputId = "geneListDec", label = strong("Select genelist:"), 
-                                         choices = c("Engler et al." = "engler", "Bindea et al." = "galon", 
-                                                     "Engler_Bindea" = "galon_engler"),inline = T),
-                            br()
+                            div(class="row",
+                                div(class="col-xs-8",
+                                    selectInput(inputId = "geneListDec", label = strong("Select genelist:"), 
+                                                choices = c("Newman et al. 2015", "Bindea et al. 2013", "Engler et al. 2012"))
+                                ),
+                                div(class="col-xs-2",
+                                    br(), p(" "),
+                                    helpModal(modal_title ="Deconvolute", link = "helpDeconv", help_file = includeMarkdown("tools/help/help_deconv.Rmd"))
+                                )
+                            ),
+                            p(" ")
                           ),
-                          fileInput(inputId = "upFile", label = "Choose Expression data File",
+                          fileInput(inputId = "upFile", label = "Choose Expression data file:",
                                     accept=c("text/csv", "text/comma-separated-values,text/plain", ".csv")
                                     ),
                           conditionalPanel(
@@ -166,7 +173,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                          tabPanel(title ="DeconvoluteME",
                                   # I've use a slight different HTML style for this Title, I was not able to use the strategy used for the other titles
                                   div(style = "display: inline-block;", p(class = "lead","Deconvolute gene expression profiles into cell-type-specific subprofiles ")),
-                                  div(style = "display: inline-block;", helpModal(modal_title ="Deconvolute", link = "helpDeconv", help_file = includeMarkdown("tools/help/help_deconv.Rmd"))),
+                                  # div(style = "display: inline-block;", helpModal(modal_title ="Deconvolute", link = "helpDeconv", help_file = includeMarkdown("tools/help/help_deconv.Rmd"))),
                                   
                                   tabsetPanel(
                                     tabPanel(title = "Heatmap", id = "deconvHeatmap",

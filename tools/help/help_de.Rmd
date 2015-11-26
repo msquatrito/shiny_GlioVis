@@ -1,0 +1,13 @@
+---
+title: "Differential expression analysis"
+output: html_document
+---
+
+1. Select a dataset.
+2. Enter a gene name.
+3. Choose one of the histological group, default setting will show all the samples. 
+4. Select cutoff:       
+  + **Median**: split in two groups by the median   
+  + **Lower quartile**: split in two groups, 25% lower expressing vs the rest   
+  + **Upper quartile**: split in two groups, 25% higher expressing vs the rest   
+  + **High vs low**: split in two groups, 25% lower expressing vs 25% higher expressing     
