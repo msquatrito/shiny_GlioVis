@@ -1494,7 +1494,7 @@ shinyServer(
       row.names(upData) <- upData[,"Sample"]
       exprs <- data.frame(t(upData[,-1]),check.names=FALSE)
       gene_list <- switch(input$geneListDec,
-                          "Newman et al. 2015" = LM22_genes_list,
+                          "Newman et al. 2015" = LM22_gene_set_list,
                           "Engler et al. 2012" = engler_gene_set_list, 
                           "Bindea et al. 2013" = galon_gene_set_list)
       platformDec <- ifelse(input$platformDec == "rnaseq",TRUE, FALSE)
