@@ -3,4 +3,6 @@ title: "Mutations"
 output: html_document
 ---
 
-Mutation data (identified with the MutSig2CV algorithm) are dinamically downloaded from the Broad Firebrowse using the `Analyses.Mutation.MAF` function of the [‘FirebrowseR’](https://github.com/mariodeng/FirebrowseR) package.     
+Mutation data (identified with the MutSig2CV algorithm) are dinamically downloaded from the cBio Portal using the [‘cgdsr’](https://cran.r-project.org/web/packages/cgdsr) package.    
+Oncoprints are generated using the `oncoPrint()` function of the [‘complexHeatmap’](https://github.com/jokergoo/ComplexHeatmap) package.   
+

@@ -10,7 +10,7 @@
 * Kaplan–Meier survival analysis are performed using the [‘survival’](http://cran.r-project.org/web/packages/survival/survival.pdf) package in R. Hazard ratios were determined utilizing the `coxph` function from the ‘survival’ package. To generate HR plot we partially use some code previously describend in [*Cutoff finder*](http://molpath.charite.de/cutoff/index.jsp).    
 
 **Mutations**  
-* Mutation data (identified with the MutSig2CV algorithm) are dinamically downloaded from the Broad Firebrowse using the `Analyses.Mutation.MAF` function of the [‘FirebrowseR’](https://github.com/mariodeng/FirebrowseR) package.     
+* Mutation data (identified with the MutSig2CV algorithm) are dinamically downloaded from the cBio Portal using the [‘cgdsr’](https://cran.r-project.org/web/packages/cgdsr) package.      
 
 
 **Classification**      
