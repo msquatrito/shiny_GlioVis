@@ -1,28 +1,15 @@
 **27-11-2015**   
 
-* **New features** 
+**New features** 
   + Differential gene expression analysis for Microarray datasets.   
   + Oncoprints for the TCGA mutation data.   
   + Dataset download tab: it's now possible to dowload a full dataset as a .txt file.   
   
-* **Updates** 
+**Updates** 
   + TCGA datasets have been updated to the 21-08-2015 data freeze.   
   + Rppa data are now available also for the TCGA GBMLLGG dataset.   
   + New gene list, the LM22 ([Newman AM. et al. 2015](www.ncbi.nlm.nih.gov/pubmed/25822800)), for deconvolution analysis.  
   + Mutations data for TCGA sudies are now downloaded from the cBio Portal. 
   + In survival and correlation analysis it's now possible to specify subtypes, when available, for all histologies and not only for GBMs.  
 
-**30-09-2015**   
-
-- Reformatted box plot options.  
-
-**14-08-2015**   
-
-- User interface update.  
-- 4 new datasets included: TCGA GBMLGG, Lee Y, POLA Network, Gleize.    
-- New tool, DeconvoluteMe: Deconvolute gene expression profiles from heterogeneous tissue samples into cell-type-specific subprofiles.    
-
-**07-05-2015**   
-
-Gliovis 0.1 is live!!
-
+  
