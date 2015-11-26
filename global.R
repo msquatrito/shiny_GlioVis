@@ -35,10 +35,14 @@ library(reshape2)
 library(heatmap3)
 library(RColorBrewer)
 library(scales)
-library(FirebrowseR)
+library(cgdsr)
 library(shinyBS)
+library(limma)
+library(ComplexHeatmap)
+
 options(shiny.usecairo=TRUE)
 `%then%` <- shiny:::`%OR%`
+`%notin%` <- Negate('%in%')
 
 #######################################
 ############## Datasets  ##############
@@ -47,7 +51,8 @@ datasets <- c("TCGA GBM", "TCGA LGG","TCGA GBMLGG", "Rembrandt", "Gravendeel", "
               "Gill", "Freije", "Murat", "Gorovets", "POLA Network", "Reifenberger", "Joo", "Ducray", "Nutt", "Vital",
                "Grzmil", "Gleize", "Donson", "Li")
 
-noSurvDataset <- c("Bao","Reifenberger","Gill","Li", "Oh","Ivy GAP","Gleize")
+no_surv_dataset <- c("Bao","Reifenberger","Gill","Li", "Oh","Ivy GAP","Gleize")
+rnaseq_datasets <- c("TCGA LGG", "TCGA GBMLGG", "Bao", "Ivy GAP","Gill")
 
 gbm.tcga <- readRDS("data/TCGA.GBM.Rds")
 lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
@@ -86,13 +91,16 @@ lgg.core.samples <- readRDS("data/lgg.core.229samples.Rds")
 galon_gene_set_list <- readRDS("data/galon_gene_set_list.Rds")
 engler_gene_set_list <- readRDS("data/engler_gene_set_list.Rds")
 galon_engler <- readRDS("data/galon_engler_gene_set_list.RDS")
+LM22_gene_set_list <- readRDS("data/LM22_gene_set_list.Rds")
+# gbm_seq_samples <- readRDS("data/gbm_seq_samples.Rds")
+# lgg_seq_samples <- readRDS("data/lgg_seq_samples.Rds")
 
 #######################################
 ############## plotList  ##############
 #######################################
 plotList <- list("TCGA GBM" = c("Histology", "Copy_number", "Subtype", "CIMP_status", "Recurrence"),
                  "TCGA LGG" = c("Histology", "Grade", "Copy_number", "Subtype"),
-                 "TCGA GBMLGG" = c("Histology", "Grade", "Copy_number"),
+                 "TCGA GBMLGG" = c("Histology", "Grade", "Copy_number", "Subtype"),
                  "Rembrandt" = c("Histology", "Grade", "Subtype", "CIMP_status"),
                  "Gravendeel" = c("Histology", "Grade", "Subtype", "CIMP_status"),
                  "Phillips" = c("Histology", "Grade", "Subtype", "Recurrence", "CIMP_status"),
@@ -134,7 +142,6 @@ data_table <- function (df) {
 datatable(df, selection = 'none', rownames = FALSE, extensions = "TableTools")
           
 }
-
 
 ####################################
 ##############  busy  ##############
@@ -232,30 +239,13 @@ get_cutoff <- function(mRNA, cutoff, numeric) {
   strat
 }
 
-get_cutoff <- function(mRNA, cutoff, numeric) {
-  mRNA.q <- round(quantile(mRNA, probs=c(0.25, 0.5, 0.75), na.rm = TRUE),2)
-  if (cutoff == "quartiles"){
-    strat <- cut(mRNA, quantile(mRNA,na.rm = T), include.lowest = TRUE)
-  }
-  if (cutoff != "quartiles") {
-    if (cutoff == "high vs low") {
-      strat <- ifelse(mRNA >= mRNA.q [3], "high", ifelse(mRNA <= mRNA.q [1], "low",NA))
-    } else {
-      cut <- switch(cutoff, 
-                    "median" = mRNA.q[2],
-                    "lower quartile" = mRNA.q [1],
-                    "upper quartile" = mRNA.q [3],
-                    "Use a specific mRNA value" = numeric)
-      f <- function(x) ifelse(x >= cut, c("high"),c("low"))
-      strat <- f(mRNA)
-    }
-  }
-  strat
-}
-
 survivalPlot <- function (df, gene, group, subtype, cutoff, numeric) {
+  # Select a specific Histology
+  if (group != "All") {
+    df <- filter(df, Histology == group)
+  }
   # Select a specific subtype
-  if (group == "GBM" & subtype != "All") {
+  if (subtype != "All") {
     df <- filter(df, Subtype == subtype)
   } 
   if(cutoff == "Use a specific mRNA value") {
@@ -275,7 +265,6 @@ survivalPlot <- function (df, gene, group, subtype, cutoff, numeric) {
   smax <- max(surv.time, na.rm = TRUE)
   tmax <- smax-(25*smax)/100
   xmax <- (95*tmax)/100
-  
   strat <- get_cutoff(mRNA, cutoff, numeric)
   expr.surv <- survfit(my.Surv ~ strat, conf.type = "none")
   log.rank <- survdiff(my.Surv ~ strat, rho = 0)
@@ -299,7 +288,7 @@ survivalPlot <- function (df, gene, group, subtype, cutoff, numeric) {
   text (xmax, 0.575, sprintf("%s Wilcoxon p value= %s",star.mcox, mantle.cox.p), cex = 1)
   
   if (cutoff == "quartiles"){
-    expr.surv <- survfit(my.Surv ~ strata(strat), data=df, conf.type="none")
+    expr.surv <- survfit(my.Surv ~ strata(strat), conf.type="none")
     z <- data.frame(summary(expr.surv)$table) 
     plot(expr.surv, xlab="Months", ylab="% Surviving", yscale = 100, xlim = c(0,smax), 
          main = main, col= c(1:4), mark.time=FALSE)
@@ -445,6 +434,30 @@ kmPlot <- function (cutoff,surv){
   text (smax-10, 0.575, paste (star.mcox, "Wilcoxon p value=", mantle.cox.p), cex = 1)
 }
 
+######################################
+############## alter_fun_list #######
+######################################
+
+alter_fun_list = list(
+  background = function(x, y, w, h) {
+    grid.rect(x, y, w-unit(0.5, "mm"), h-unit(0.5, "mm"), gp = gpar(fill = "#CCCCCC", col = NA))
+  },
+  HOMDEL = function(x, y, w, h) {
+    grid.rect(x, y, w-unit(0.5, "mm"), h-unit(0.5, "mm"), gp = gpar(fill = "blue3", col = NA))
+  },
+  HETLOSS = function(x, y, w, h) {
+    grid.rect(x, y, w-unit(0.5, "mm"), h-unit(0.5, "mm"), gp = gpar(fill = "cadetblue1", col = NA))
+  },
+  GAIN = function(x, y, w, h) {
+    grid.rect(x, y, w-unit(0.5, "mm"), h-unit(0.5, "mm"), gp = gpar(fill = "pink", col = NA))
+  },
+  AMP = function(x, y, w, h) {
+    grid.rect(x, y, w-unit(0.5, "mm"), h-unit(0.5, "mm"), gp = gpar(fill = "red", col = NA))
+  },
+  MUT = function(x, y, w, h) {
+    grid.rect(x, y, w-unit(0.5, "mm"), h*0.33, gp = gpar(fill = "#008000", col = NA))
+  }
+)
 
 ############################################################################
 ############## Help popup (https://gist.github.com/jcheng5/5913297)  #######
