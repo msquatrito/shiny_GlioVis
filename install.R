@@ -38,7 +38,8 @@ install_gliovis <- function() {
   # install needed packages from CRAN
   pkg <- c("shiny", "survival", "weights", "googleVis", "dplyr", "ggplot2","shinydashboard", 
            "htmlwidgets","kernlab","devtools","GGally","markdown","caret","Cairo","broom",
-           "Cairo","reshape2","heatmap3","RColorBrewer","scales","htmlwidgets")
+           "Cairo","reshape2","heatmap3","RColorBrewer","scales","htmlwidgets","cgdsr",
+            "shinyBS", "limma")
   
   new.pkg <- pkg[!(pkg %in% installed.packages())]
   
@@ -61,6 +62,7 @@ install_gliovis <- function() {
   }
   
   devtools::install_github("rstudio/DT")
+  devtools::install_github("jokergoo/ComplexHeatmap")
   
   # if (!require("estimate")){
   #   library(utils)
