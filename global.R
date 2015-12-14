@@ -39,10 +39,11 @@ library(cgdsr)
 library(shinyBS)
 library(limma)
 library(ComplexHeatmap)
+# library(shinyjs)
 
 options(shiny.usecairo=TRUE)
 `%then%` <- shiny:::`%OR%`
-`%notin%` <- Negate('%in%')
+# `%notin%` <- Negate('%in%')
 
 #######################################
 ############## Datasets  ##############
@@ -283,9 +284,9 @@ survivalPlot <- function (df, gene, group, subtype, cutoff, numeric) {
   legend("topright", legend = c(sprintf("%s High, (n=%s, events=%s, median=%s)", gene, surv$records[1], surv$events[1], surv$median[1]), 
                                 sprintf("%s Low, (n=%s, events=%s, median=%s)", gene, surv$records[2], surv$events[2], surv$median[2])),
          col= c("red", "blue"), lty = 1, cex = 1)
-  text (xmax, 0.725, sprintf("HR = %s, (%s - %s)",HR, HR.lower, HR.upper), cex = 1)
-  text (xmax, 0.65, sprintf("%s Log-rank p value= %s", star.log, log.rank.p), cex = 1)
-  text (xmax, 0.575, sprintf("%s Wilcoxon p value= %s",star.mcox, mantle.cox.p), cex = 1)
+  graphics::text(xmax, 0.725, sprintf("HR = %s, (%s - %s)",HR, HR.lower, HR.upper), cex = 1)
+  graphics::text(xmax, 0.65, sprintf("%s Log-rank p value= %s", star.log, log.rank.p), cex = 1)
+  graphics::text(xmax, 0.575, sprintf("%s Wilcoxon p value= %s",star.mcox, mantle.cox.p), cex = 1)
   
   if (cutoff == "quartiles"){
     expr.surv <- survfit(my.Surv ~ strata(strat), conf.type="none")
@@ -334,7 +335,7 @@ myCorggPlot <- function (df, gene1, gene2, colorBy = "none", separateBy = "none"
           axis.text.y = element_blank(), axis.ticks = element_blank()
     )
   # scatterplot of x and y variables
-  scatter <- ggplot(df,mapping = aes_string(x = gene1, y = gene2)) + theme(legend.position=c(1,1),legend.justification=c(1,1)) 
+  scatter <- ggplot(df,mapping = aes_string(x = gene1, y = gene2)) 
   # marginal density of x - plot on top
   plot_top <- ggplot(df, mapping = aes_string(x = gene1)) + 
     theme(legend.position = "none", axis.text.x=element_blank(), axis.ticks=element_blank(), axis.title.x = element_blank())
@@ -345,10 +346,17 @@ myCorggPlot <- function (df, gene1, gene2, colorBy = "none", separateBy = "none"
   if (colorBy != "none") {
     col <- aes_string(color = colorBy)
     scatter <- scatter + geom_point(col, alpha=.5) + geom_smooth(col, method = "lm", se = TRUE) + geom_rug(col, alpha = 0.1)
+    # grab the legend
+    g1 <- ggplotGrob(scatter)
+    id.legend <- grep("guide", g1$layout$name)
+    legend <- g1[["grobs"]][[id.legend]]
+    # scatter without the legend
+    scatter <- scatter + theme(legend.position = "none")
     plot_top <- plot_top + geom_density(col, alpha=.5) 
     plot_right <- plot_right + geom_density(col, alpha=.5)
   }  else {
     scatter <- scatter + geom_point(alpha=.5) + geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1)
+    legend <- empty
     plot_top <- plot_top + geom_density(alpha=.5) 
     plot_right <- plot_right + geom_density(alpha=.5)
   }
@@ -361,48 +369,48 @@ myCorggPlot <- function (df, gene1, gene2, colorBy = "none", separateBy = "none"
   
   if (separateBy == "none") {
     #arrange the plots together, with appropriate height and width for each row and column
-    arrangeGrob(plot_top, empty, scatter, plot_right, ncol=2, nrow=2, widths=c(3, 1), heights=c(1.5, 3))
+    grid.draw(grid.arrange(plot_top, legend, scatter, plot_right, ncol=2, nrow=2, widths=c(3, 1), heights=c(1.5, 3)))
   } else {
-    scatter
+    print(scatter)
   } 
 }
 
 
-########################################
-############## pairs panels ############
-########################################
-myPairsPlot <- function(df,...) { 
-  panel.cor <- function(x, y, digits = 3, prefix="", cex.cor, ...) {
-    usr <- par("usr")
-    on.exit(par(usr))
-    par(usr = c(0, 1, 0, 1))
-    r <- cor(x, y, use="complete.obs")
-    txt <- format(c(r, 0.123456789), digits = digits)[1]
-    txt <- paste(prefix, txt, sep="")
-    if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
-    text(0.5, 0.5, txt, cex = cex.cor * (1 + abs(r)) / 2)
-  } 
-  panel.hist <- function(x, ...) {
-    usr <- par("usr")
-    on.exit(par(usr))
-    par(usr = c(usr[1:2], 0, 1.5) )
-    h <- hist(x, plot = FALSE)
-    breaks <- h$breaks
-    nB <- length(breaks)
-    y <- h$counts
-    y <- y/max(y)
-    rect(breaks[-nB], 0, breaks[-1], y, col="white", ...)
-  }
-  panel.lm <- function (x, y, col = par("col"), bg = NA, pch = par("pch"),
-                        cex = .8, col.smooth = "black", ...) {
-    points(x, y, pch = pch, col=rgb(0, 0, 0, 0.5), bg = bg, cex = cex)
-    abline(stats::lm(y ~ x), col = "red", ...)
-  }
-  #   ggpairs(df)
-  pairs (df,upper.panel = panel.cor,
-         diag.panel = panel.hist,
-         lower.panel = panel.lm, pch= 20)
-}
+# ########################################
+# ############## pairs panels ############
+# ########################################
+# myPairsPlot <- function(df,...) { 
+#   panel.cor <- function(x, y, digits = 3, prefix="", cex.cor, ...) {
+#     usr <- par("usr")
+#     on.exit(par(usr))
+#     par(usr = c(0, 1, 0, 1))
+#     r <- cor(x, y, use="complete.obs")
+#     txt <- format(c(r, 0.123456789), digits = digits)[1]
+#     txt <- paste(prefix, txt, sep="")
+#     if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+#     text(0.5, 0.5, txt, cex = cex.cor * (1 + abs(r)) / 2)
+#   } 
+#   panel.hist <- function(x, ...) {
+#     usr <- par("usr")
+#     on.exit(par(usr))
+#     par(usr = c(usr[1:2], 0, 1.5) )
+#     h <- hist(x, plot = FALSE)
+#     breaks <- h$breaks
+#     nB <- length(breaks)
+#     y <- h$counts
+#     y <- y/max(y)
+#     rect(breaks[-nB], 0, breaks[-1], y, col="white", ...)
+#   }
+#   panel.lm <- function (x, y, col = par("col"), bg = NA, pch = par("pch"),
+#                         cex = .8, col.smooth = "black", ...) {
+#     points(x, y, pch = pch, col=rgb(0, 0, 0, 0.5), bg = bg, cex = cex)
+#     abline(stats::lm(y ~ x), col = "red", ...)
+#   }
+#   #   ggpairs(df)
+#   pairs (df,upper.panel = panel.cor,
+#          diag.panel = panel.hist,
+#          lower.panel = panel.lm, pch= 20)
+# }
 
 ######################################
 ############## kmPlot  ###############
@@ -429,9 +437,9 @@ kmPlot <- function (cutoff,surv){
   legend("topright", c(paste("High expr. ", paste(" (n=", sTable$records[1]),", events=",sTable$events[1],", median=",sTable$median[1],")", sep = ""), 
                        paste("Low expr. ", paste(" (n=", sTable$records[2]),", events=",sTable$events[2],", median=",sTable$median[2],")", sep = "")), 
          col= c("red", "blue"), lty = 1, cex = 1)
-  text (smax-10, 0.725, paste("HR = ",HR, " (", HR.lower, "-", HR.upper,")", sep=""), cex = 1)
-  text (smax-10, 0.65, paste (star.log, "Log-rank p value=", log.rank.p), cex = 1)
-  text (smax-10, 0.575, paste (star.mcox, "Wilcoxon p value=", mantle.cox.p), cex = 1)
+  graphics::text(smax-10, 0.725, paste("HR = ",HR, " (", HR.lower, "-", HR.upper,")", sep=""), cex = 1)
+  graphics::text(smax-10, 0.65, paste (star.log, "Log-rank p value=", log.rank.p), cex = 1)
+  graphics::text(smax-10, 0.575, paste (star.mcox, "Wilcoxon p value=", mantle.cox.p), cex = 1)
 }
 
 ######################################

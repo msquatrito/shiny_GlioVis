@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License along with
 # this program; if not, see <http://www.gnu.org/licenses/>.
 `%notin%` <- Negate('%in%')
-
 shinyServer(
   function(input, output, session) {
     
@@ -170,20 +169,10 @@ shinyServer(
         "All"
       }
     })
-    
-    #' When switching datasets for DE, if the selected histo is not available it will choose "All"
-#     histo_DE_Selected <- reactive ({
-#       if (input$histologyDE %in% histo()){
-#         input$histologyDE
-#       } else {
-#         "All"
-#       }
-#     })
    
     observe({
       updateSelectInput(session, inputId = "histology", choices = c("All", histo()), selected = histo_selected())
       updateSelectInput(session, inputId = "subtype", choices = c("All", subtype()), selected = subtype_selected())
-      # updateSelectInput(session, inputId = "histologyDE", choices = c("All", histo()), selected = histo_DE_Selected()) #line 168
     })
 
     #' Generate a dataframe with the data to plot 
@@ -265,6 +254,11 @@ shinyServer(
       if(input$colorP == "None") col <-  NULL
       if(input$shapeP == "None") shape <-  NULL
       if (input$bw) theme <- theme_bw () + theme
+      t <- tukey() %>%
+        mutate(comparison = row.names(.)) %>%
+        ggplot(aes(reorder(comparison, diff), diff, ymin = lwr, ymax= upr, colour = Significance)) +
+        geom_point() + geom_errorbar(width = 0.25) + ylab("\nDifferences in mean levels") + xlab("") + 
+        geom_hline(xintercept = 0, colour="darkgray", linetype = "longdash") + coord_flip() + theme
       
       p <- ggplot(data, mapping=aes_string(x=plot_Type(), y = "mRNA")) + 
         geom_boxplot(aes_string(fill = fillBox), outlier.size = 0) + 
@@ -272,16 +266,10 @@ shinyServer(
                     size = input$point_size, alpha = input$alpha) +
         ylab(ylabel) + xlab(xlabel) + theme
       
-      if (input$tukeyHSD && input$tukeyPlot) {
-        t <- tukey() %>%
-          mutate(comparison = row.names(.)) %>%
-          ggplot(aes(reorder(comparison, diff), diff, ymin = lwr, ymax= upr, colour = Significance)) +
-          geom_point() + geom_errorbar(width = 0.25) + ylab("\nDifferences in mean levels") + xlab("") + 
-          geom_hline(xintercept = 0, colour="darkgray", linetype = "longdash") + coord_flip() + theme
-        
-        arrangeGrob(p, t, ncol=2, widths = c(3,2))
+      if (input$tukeyPlot) {
+        grid.arrange(p, t, ncol=2, widths = c(3,2))
       } else {
-        p
+        return(p)
       }
     })
     
@@ -309,7 +297,7 @@ shinyServer(
         need(input$colorP %in% c("None", colnames), FALSE) %then%
           need(input$shapeP %in% c("None", colnames), FALSE)
       )
-      print(box_Plot())
+      box_Plot()
     }, width = function()ifelse(input$tukeyPlot, input$plot_width * 1.5, input$plot_width), height = function()input$plot_height)
     
     #' Data for the statistic
@@ -405,8 +393,12 @@ shinyServer(
         # Gets the name of the function to use from the downloadFileType reactive element.
         plotFunction <- match.fun(download_Plot_FileType())
         plotFunction(file, width = download_Plot_Width(), height = download_Plot_Height())
-        print(box_Plot())  
-        dev.off(which=dev.cur())
+        if (input$tukeyPlot) {
+          grid.draw(box_Plot()) 
+        } else {
+          print(box_Plot())
+        }
+        dev.off()
       }
     )
     
@@ -700,8 +692,7 @@ shinyServer(
     
     #' Generate the correlation plot
     output$corrPlot <- renderPlot({    
-      p <- myCorggPlot(corr_Two_Genes(), input$gene, input$gene2, colorBy = color_by(), separateBy = separate_by())
-      print(p)
+        myCorggPlot(corr_Two_Genes(), input$gene, input$gene2, colorBy = color_by(), separateBy = separate_by())
     }, width = function()input$cor_plot_width, height = function()input$cor_plot_height)
     
     #' Generate a summary of the correlation test
@@ -733,7 +724,7 @@ shinyServer(
       content = function(file) {
         plotFunction <- match.fun(download_Plot_FileType())
         plotFunction(file, width = download_Plot_Width(), height = download_Plot_Height())
-        print(myCorggPlot (corr_Two_Genes(), input$gene, input$gene2, color_by(), separate_by()))
+        myCorggPlot(corr_Two_Genes(), input$gene, input$gene2, color_by(), separate_by())
         dev.off()
       }
     )
@@ -1171,7 +1162,7 @@ shinyServer(
             # , gp = gpar(fontsize=14),row.just = "right", core.just = "right")
             #             t <- tableGrob(stat, theme = ttheme_default(core = list(fg_params = list(hjust=1, x=0.9)),
             #                                                         rowhead = list(fg_params=list(hjust=1, x=0.95))))
-            grid.arrange(p, t, ncol = 2, just = c("center", "top")) # `just` it's not working
+            grid.arrange(p, t, ncol = 2) 
           })
         })
       }

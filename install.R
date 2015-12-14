@@ -39,7 +39,7 @@ install_gliovis <- function() {
   pkg <- c("shiny", "survival", "weights", "googleVis", "dplyr", "ggplot2","shinydashboard", 
            "htmlwidgets","kernlab","devtools","GGally","markdown","caret","Cairo","broom",
            "Cairo","reshape2","heatmap3","RColorBrewer","scales","htmlwidgets","cgdsr",
-            "shinyBS", "limma")
+            "shinyBS", "limma","gridExtra")
   
   new.pkg <- pkg[!(pkg %in% installed.packages())]
   
@@ -54,12 +54,12 @@ install_gliovis <- function() {
     biocLite("GSVA")
   # }
   
-  if (packageVersion('gridExtra') > '0.9.1') {
-    continue <- select.list(choices = c("Yes", "No"), 
-                            title = "GlioVis requires a previous version of gridExtra. Do you want to continue?", graphics = FALSE)
-    packageurl <- "http://cran.r-project.org/src/contrib/Archive/gridExtra/gridExtra_0.9.1.tar.gz"
-    install.packages(packageurl, repos=NULL, type="source")
-  }
+#   if (packageVersion('gridExtra') > '0.9.1') {
+#     continue <- select.list(choices = c("Yes", "No"), 
+#                             title = "GlioVis requires a previous version of gridExtra. Do you want to continue?", graphics = FALSE)
+#     packageurl <- "http://cran.r-project.org/src/contrib/Archive/gridExtra/gridExtra_0.9.1.tar.gz"
+#     install.packages(packageurl, repos=NULL, type="source")
+#   }
   
   devtools::install_github("rstudio/DT")
   devtools::install_github("jokergoo/ComplexHeatmap")
