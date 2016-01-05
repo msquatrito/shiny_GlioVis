@@ -28,16 +28,16 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                            conditionalPanel(
                              condition = "input.tab1 == 3 & input.tabCorr == 'corrMany'",
                              selectizeInput(inputId = "corrGene", label = h4("Genes:"), choices ="", multiple = TRUE,
-                                            options = list(placeholder = "Enter two or more genes", plugins = list('remove_button'))),
+                                            options = list(placeholder = "Enter two or more genes", plugins = list('remove_button','drag_drop'))),
                              helpText("- or paste -"),
-                             textInput(inputId = "genelist_corr", label = h4("Genes list:"), value = "Paste gene list...")
+                             textInput(inputId = "genelist_corr", label = h4("Genes list:"),  placeholder = "Paste genes list...")
                            ),
                            conditionalPanel(
                              condition = "input.tab1 == 5",
                              selectizeInput(inputId = "mutGene", label = h4("Gene(s):"), choices ="", multiple = TRUE,
                                             options = list(placeholder = "Enter gene(s), eg: TP53, ATRX", plugins = list('remove_button'))),
                              helpText("- or paste -"),
-                             textInput(inputId = "genelist_mut", label = h4("Genes list:"), value = "Paste gene list...")
+                             textInput(inputId = "genelist_mut", label = h4("Genes list:"), placeholder = "Paste genes list...")
                            ),
                            
                            # histology and subtype

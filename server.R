@@ -180,11 +180,11 @@ shinyServer(
       validate(
         need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
           # Not all genes are available for all the dataset
-          need(input$gene %in% names(exprs()),"Gene not available for this dataset"),
+          need(input$gene %in% names(exprs()),"Gene not available for this dataset")
+        )
         # Trying to avoid an error when switching datasets in case the plotType is not available.
-        need(plot_Selected() %in% plotList[[input$dataset]], FALSE),
-        need(plot_User_Selected() %in% plotUserSelection(), FALSE)
-      ) 
+        req(plot_Selected() %in% plotList[[input$dataset]])
+        req(plot_User_Selected() %in% plotUserSelection())
       mRNA <- exprs()[ ,input$gene]
       if (input$scale) {
         mRNA <- scale(mRNA)
@@ -293,10 +293,7 @@ shinyServer(
       # To avoid an error when switching datasets in case the colStrip is not available.
       data <- rmNA(filter_plot_Data())
       colnames <- names(data)[names(data) %notin% c("mRNA","Sample","status","survival")]
-      validate(
-        need(input$colorP %in% c("None", colnames), FALSE) %then%
-          need(input$shapeP %in% c("None", colnames), FALSE)
-      )
+      req(input$colorP %in% c("None", colnames) & input$shapeP %in% c("None", colnames)) 
       box_Plot()
     }, width = function()ifelse(input$tukeyPlot, input$plot_width * 1.5, input$plot_width), height = function()input$plot_height)
     
@@ -455,7 +452,7 @@ shinyServer(
     #' Create a slider for the manual cutoff of the Kaplan Meier plot
     mRNA_surv <- reactive({
       surv_Need()
-      validate(need(input$histology %in% c("All", histo()),""))      
+      req(input$histology %in% c("All", histo()))      
       mRNA <- surv_Data()[ ,"mRNA"]
       mRNA.values <- round(mRNA[!is.na(mRNA)],2)
       # Generate a vector of continuos values, excluding the first an last value
@@ -464,7 +461,7 @@ shinyServer(
     
     #' Create a rug plot with the mRNA expression value for the manual cutoff
     output$boxmRNA <- renderPlot({    
-      validate(need(input$mInput, ""))      
+      req(input$mInput)      
       mRNA <- round(mRNA_surv(),2)
       q <- quantile(mRNA)
       xrange <-range(mRNA)
@@ -502,7 +499,7 @@ shinyServer(
     #' Create a Kaplan Meier plot with cutoff based on quantiles or manual selection
     output$survPlot <- renderPlot({     
       surv_Need ()
-      validate(need(input$histology %in% c("All", histo()), FALSE))   
+      req(input$histology %in% c("All", histo()))   
       # Use 'try' to suppress a message throwed the first time manual cutoff is selected
       if(all_Sub_Surv()) {
         par(mfrow = c(3,2), mar=c(3.5,3.5,3.5,1.5), mgp=c(2.2,.95,0))
@@ -629,9 +626,7 @@ shinyServer(
     
     #' Create a Kaplan Meier plot on the HR cutoff
     output$kmPlot <- renderPlot({
-      validate(
-        need(histo_selected() == "GBM", FALSE)
-      )
+      req(histo_selected() == "GBM")
       surv_Need()
       cutoff <- get_Cutoff()
       surv <- survival_Fml()
@@ -731,7 +726,7 @@ shinyServer(
     
     #' Genes for multiple genes correlation
     corr_genes <- reactive({
-      if(input$genelist_corr != "Paste gene list...") {
+      if(input$genelist_corr != "") {
         corr_genes <- toupper(unlist(strsplit(input$genelist_corr, split = " ")))
       } else {
         corr_genes <- input$corrGene
@@ -839,20 +834,16 @@ shinyServer(
     
     #' RPPA data analysis
     rppa_RNA <- reactive({
-      validate(
-        need(input$dataset %in% c("TCGA GBM","TCGA LGG","TCGA GBMLGG"), FALSE)%then%
-          need(input$gene != "", FALSE)%then%
-          need(input$gene %in% names(exprs()), FALSE)
-      )
+      req(input$dataset %in% c("TCGA GBM","TCGA LGG","TCGA GBMLGG"))
+      req(input$gene != "")
+      req(input$gene %in% names(exprs()))
       samples <- intersect(row.names(rppas()),exprs()[,"Sample"])
       mRNA <- round(exprs()[samples,input$gene],2)
     })
     
     #' Create a rug plot with the mRNA expression value for the manual cutoff
     output$boxRppaRNA <- renderPlot({    
-      validate(
-        need(input$rppaCut, FALSE)
-      )      
+      req(input$rppaCut, FALSE)
       mRNA <- rppa_RNA()
       q <- quantile(mRNA)
       xrange <-range(mRNA)
@@ -943,7 +934,7 @@ shinyServer(
     
     #' Genes for mutation analysis
     mut_genes <- reactive({
-      if(input$genelist_mut != "Paste gene list...") {
+      if(input$genelist_mut != "") {
         mut_genes <- toupper(unlist(strsplit(input$genelist_mut, split = " ")))
       } else {
         mut_genes <- input$mutGene
@@ -989,11 +980,9 @@ shinyServer(
     })
     
     output$mut <- renderDataTable({
-      validate(
-        need(input$dataset %in% c("TCGA GBM","TCGA LGG"), FALSE)%then%
-          need(mut_genes() != "", FALSE)%then%
-          need(any(mut_genes() %in% names(exprs())),FALSE)
-      )
+      req(input$dataset %in% c("TCGA GBM","TCGA LGG"))
+      req(mut_genes() != "")
+      req(any(mut_genes() %in% names(exprs())))
       mut <- mutData()[["ann"]]
       datatable(mut, rownames = FALSE, extensions = c("FixedColumns", "TableTools"), filter="top",
                 options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE))
@@ -1015,7 +1004,7 @@ shinyServer(
     output$oncoprint <- renderPlot({
       validate(
         need(input$dataset %in% c("TCGA GBM","TCGA LGG"), "Mutations data available only for TCGA GBM and LGG datasets")%then%
-          need(mut_genes() != "", "Please, enter a gene or a list of gene in the panel on the left")%then%
+          need(mut_genes() != "", "Please, enter a gene or a list of genes in the panel on the left")%then%
           need(any(mut_genes() %in% names(exprs())),"Gene(s) not available for this dataset")%then%
           need(nrow(mutData()[["ann"]])>1,FALSE)
       )
@@ -1066,9 +1055,7 @@ shinyServer(
       esetSel <- eset[row.names(topT), ]
       heat_data <- list(eset= esetSel, topTable = topT)
       if (input$pDataHeatmap) {
-        validate(
-          need(input$colorSideHeatmap %in% names(pDatas()),FALSE)
-        )
+        req(input$colorSideHeatmap %in% names(pDatas()))
         pData <- pDatas()[pDatas()$Sample %in% strat$Sample, ]
         n <- nlevels(pData[,input$colorSideHeatmap])
         colors <- data.frame(levels(as.factor(pData[,input$colorSideHeatmap])), color = brewer_pal(palette = "Dark2")(n))
@@ -1090,9 +1077,7 @@ shinyServer(
       )
       heatmap3(DEdata()[["eset"]], Rowv = NA, scale = "row", col = colorRampPalette(c("green","black", "red"))(1024), margins = c(0,11),labCol=NA, cexRow = 1.25)
       if(input$pDataHeatmap) {
-        validate(
-          need(input$colorSideHeatmap %in% names(pDatas()),FALSE)
-        )
+        req(input$colorSideHeatmap %in% names(pDatas()))
         dataColor <-DEdata()[["sideColors"]]
         colors <- DEdata()[["colors"]]
         col <- as.character(dataColor$color)
@@ -1105,7 +1090,7 @@ shinyServer(
     
     output$DETable <- renderDataTable({
       validate(
-        need(dim(DEdata()[["topTable"]])[1]>0,message = "No differentially regulated genes were identified using the current setting. 
+        need(dim(DEdata()[["topTable"]])[1]>0, message = "No differentially regulated genes were identified using the current setting. 
              Consider to change either the cutoff, the Log2 fold change filter or the p value")
       )
       data <- DEdata()[["topTable"]]
@@ -1117,7 +1102,7 @@ shinyServer(
     output$reportPlots <- renderUI({
       validate(
         need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
-          need(input$gene %in% names(exprs()),"Gene not available for this dataset")
+          need(input$gene %in% names(exprs()), "Gene not available for this dataset")
       )
       groups <- c(plotList[[input$dataset]], plotUserSelection())
       plot_output_list <- lapply(groups, function(i) {
@@ -1390,7 +1375,7 @@ shinyServer(
       exprs <- data.frame(t(upData[,-1]))
       set.seed(1234)
       gsva_results <- gsva(expr=as.matrix(exprs), gset.idx.list = gene_list, method="ssgsea", rnaseq=FALSE, parallel.sz = 0,
-                           min.sz=0, max.sz=10000, verbose=TRUE)
+                           min.sz=0, max.sz=10000)
       subtype_scores <- round(t(gsva_results),3)
       subtype_final <- data.frame(Sample = rownames(upData), gsea.subtype.call = names(gene_list)[apply(subtype_scores,1,which.max)], 
                                   subtype_scores)
@@ -1410,7 +1395,8 @@ shinyServer(
     #' Reactive function to generate the 3 subtype calls to pass to data table and download handler
     sub3.call <- eventReactive (input$goSub3, {
       validate(
-        need(input$tumorType == "gbm","'3-way' analysis currently available for GBM samples only"))
+        need(input$tumorType == "gbm","'3-way' analysis currently available for GBM samples only")
+      )
       inFile <- input$upFile
       upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote,stringsAsFactors=FALSE)
       sub3 <- data_frame(Sample = upData$Sample, svm.call = svm.call()[,"svm.subtype.call"], 
@@ -1501,7 +1487,7 @@ shinyServer(
       }
       set.seed(1234)
       gsva_results <- gsva(expr=as.matrix(exprs), gset.idx.list = gene_list, method="ssgsea", rnaseq = platformDec, parallel.sz = 0,
-                           min.sz=25, max.sz=10000, verbose=TRUE)
+                           min.sz=25, max.sz=10000)
       deconv_scores <- data.frame(Sample = rownames(upData),t(gsva_results))
       deconv <- list(results = gsva_results, scores = deconv_scores)
     })
