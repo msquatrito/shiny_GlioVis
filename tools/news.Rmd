@@ -1,3 +1,7 @@
+**8-01-2016** 
+* **Updates**
+  + DeconvoluteMe: user can now specify any gene sets in [MSigDB](http://software.broadinstitute.org/gsea/msigdb/index.jsp).      
+
 **27-11-2015**   
 
 * **New features** 

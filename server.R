@@ -1479,17 +1479,26 @@ shinyServer(
       plotPurity(est.call(), est.call()[input$estScore_rows_selected,"Sample"], platform = input$platformEst)
     })
     
+    #' Gene sets in msigdb.v5
+    updateSelectizeInput(session, inputId = "genesets_msigdb", choices = row.names(msigdb.v5), server = TRUE)
+    
     #' Reactive function to generate Deconvolute scores to pass to data table 
-    deconv.call <- eventReactive (input$goDec,{
+    deconv.call <- eventReactive(input$goDec,{
       inFile <- input$upFile
       upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote, stringsAsFactors=FALSE)
       row.names(upData) <- upData[,"Sample"]
       exprs <- data.frame(t(upData[,-1]),check.names=FALSE)
-      gene_list <- switch(input$geneListDec,
-                          "Newman et al. 2015" = LM22_gene_set_list,
-                          "Engler et al. 2012" = engler_gene_set_list, 
-                          "Bindea et al. 2013" = galon_gene_set_list)
       platformDec <- ifelse(input$platformDec == "rnaseq",TRUE, FALSE)
+      if(input$geneListDec == "MSigDB gene sets"){
+        gene_list <- msigdb.v5[input$genesets_msigdb,-1]
+        gene_list <- as.list(data.frame(t(gene_list),stringsAsFactors = FALSE))
+        # gene_list <- getBroadSets(asBroadUri(input$genesets_msigdb))
+      } else {
+        gene_list <- switch(input$geneListDec,
+                            "Newman et al. 2015" = LM22_gene_set_list,
+                            "Engler et al. 2012" = engler_gene_set_list, 
+                            "Bindea et al. 2013" = galon_gene_set_list)
+      }
       set.seed(1234)
       gsva_results <- gsva(expr=as.matrix(exprs), gset.idx.list = gene_list, method="ssgsea", rnaseq = platformDec, parallel.sz = 0,
                            min.sz=25, max.sz=10000, verbose=TRUE)
@@ -1518,10 +1527,15 @@ shinyServer(
     
     #' Rerndering the Deconvolute scores as a heatmap
     output$deconvHeatmap <- renderPlot({ 
+      if(input$geneListDec == "MSigDB gene sets"){
+        validate(
+          need(input$genesets_msigdb != "", "Please specify MSigDB gene set(s)")
+        )
+      }
       validate(
         need(!is.null(input$upFile),"Please upload the dataset to be analyzed")%then%
           need(input$goDec != 0,'Please press "Submit Deconvolute"')
-      )
+      )      
       data <- deconv.call()[["results"]]
       heatmap3(data,margins = c(0,11),labCol=NA,cexRow = 1.25)
       if(input$deconvPData){

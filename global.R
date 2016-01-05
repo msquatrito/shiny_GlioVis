@@ -95,6 +95,7 @@ galon_engler <- readRDS("data/galon_engler_gene_set_list.RDS")
 LM22_gene_set_list <- readRDS("data/LM22_gene_set_list.Rds")
 # gbm_seq_samples <- readRDS("data/gbm_seq_samples.Rds")
 # lgg_seq_samples <- readRDS("data/lgg_seq_samples.Rds")
+msigdb.v5 <- read.delim("data/msigdb.v5.0.symbols.gmt.txt", header=FALSE, row.names=1, stringsAsFactors=FALSE)
 
 #######################################
 ############## plotList  ##############

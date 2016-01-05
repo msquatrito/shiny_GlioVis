@@ -27,12 +27,18 @@ tabPanel(title = "Tools", icon = icon("gear"),
                             div(class="row",
                                 div(class="col-xs-8",
                                     selectInput(inputId = "geneListDec", label = strong("Select genelist:"), 
-                                                choices = c("Newman et al. 2015", "Bindea et al. 2013", "Engler et al. 2012"))
+                                                choices = c("Newman et al. 2015", "Bindea et al. 2013", "Engler et al. 2012","MSigDB gene sets"))
                                 ),
                                 div(class="col-xs-2",
                                     br(), p(" "),
                                     helpModal(modal_title ="Deconvolute", link = "helpDeconv", help_file = includeMarkdown("tools/help/help_deconv.Rmd"))
                                 )
+                            ),
+                            conditionalPanel(
+                              condition = "input.geneListDec == 'MSigDB gene sets'",
+                              selectizeInput(inputId = "genesets_msigdb", label = strong("MSigDB gene sets:"), choices ="", multiple = TRUE,
+                                             options = list(placeholder = "Enter MSigDB gene set name(s)", plugins = list('remove_button')))
+                              # textInput(inputId = "genesets_msigdb", label = strong("MSigDB gene sets:"), value = "Paste genes set names, separated by commas")
                             ),
                             p(" ")
                           ),
