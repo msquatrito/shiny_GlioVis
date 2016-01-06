@@ -39,7 +39,7 @@ install_gliovis <- function() {
   pkg <- c("shiny", "survival", "weights", "googleVis", "dplyr", "ggplot2","shinydashboard", 
            "htmlwidgets","kernlab","devtools","GGally","markdown","caret","Cairo","broom",
            "Cairo","reshape2","heatmap3","RColorBrewer","scales","htmlwidgets","cgdsr",
-            "shinyBS", "limma","gridExtra")
+           "shinyBS", "gridExtra")
   
   new.pkg <- pkg[!(pkg %in% installed.packages())]
   
@@ -49,38 +49,13 @@ install_gliovis <- function() {
   
   update.packages(pkg[!(pkg %in% new.pkg)])
   
-  # if (!require("GSVA")) {
-    source("http://bioconductor.org/biocLite.R")
-    biocLite("GSVA")
-  # }
+  # install needed packages from Bioconductor
+  source("http://bioconductor.org/biocLite.R")
+  biocLite("GSVA","limma")
   
-#   if (packageVersion('gridExtra') > '0.9.1') {
-#     continue <- select.list(choices = c("Yes", "No"), 
-#                             title = "GlioVis requires a previous version of gridExtra. Do you want to continue?", graphics = FALSE)
-#     packageurl <- "http://cran.r-project.org/src/contrib/Archive/gridExtra/gridExtra_0.9.1.tar.gz"
-#     install.packages(packageurl, repos=NULL, type="source")
-#   }
-  
+  # install needed packages from Github
   devtools::install_github("rstudio/DT")
   devtools::install_github("jokergoo/ComplexHeatmap")
-  
-  # if (!require("estimate")){
-  #   library(utils)
-  #   mdacc <- local({
-  #     rvers <- getRversion()
-  #     repos.hostname <- "bioinformatics.mdanderson.org"
-  #     sprintf("http://%s/OOMPA/%s",
-  #             repos.hostname,
-  #             paste(rvers$maj, rvers$min, sep="."))
-  #   })
-  #   install.packages("estimate", repos=mdacc, dependencies=TRUE)
-  # }
-  
-  # install needed packages from GitHub
-#   if (!require("shinydashboard")) devtools::install_github("rstudio/shinydashboard")
-#   if (!requireNamespace('htmlwidgets') || packageVersion('htmlwidgets') <= '0.3.2')
-#     devtools::install_github('ramnathv/htmlwidgets')
-#   if (!require("DT")) devtools::install_github("rstudio/DT")
   
   message("\n All set. \n You might need to restart R before using GlioVis \n")
   return(invisible(NULL))
