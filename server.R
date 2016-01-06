@@ -216,7 +216,7 @@ shinyServer(
     #' Filtered data for the box plot
     filter_plot_Data <- reactive({
       if (input$removeMe) {
-        validate(need(input$removeGp %in% plot_Data()[ ,plot_Type()],message = FALSE)) #To silence an error thrown by the stat analysis
+        req(input$removeGp %in% plot_Data()[ ,plot_Type()]) #To silence an error thrown by the stat analysis
         data <- plot_Data()
         data <- subset(data, data[ ,plot_Type()] %in% input$removeGp)
       } else {
@@ -258,11 +258,11 @@ shinyServer(
         mutate(comparison = row.names(.)) %>%
         ggplot(aes(reorder(comparison, diff), diff, ymin = lwr, ymax= upr, colour = Significance)) +
         geom_point() + geom_errorbar(width = 0.25) + ylab("\nDifferences in mean levels") + xlab("") + 
-        geom_hline(xintercept = 0, colour="darkgray", linetype = "longdash") + coord_flip() + theme
+        geom_hline(yintercept = 0, colour="darkgray", linetype = "longdash") + coord_flip() + theme
       
       p <- ggplot(data, mapping=aes_string(x=plot_Type(), y = "mRNA")) + 
-        geom_boxplot(aes_string(fill = fillBox), outlier.size = 0) + 
-        geom_jitter(position = position_jitter(width = .2), mapping = aes_string(colour = col, shape = shape), 
+        geom_boxplot(aes_string(fill = fillBox), outlier.size = 0, outlier.stroke = 0) + 
+        geom_jitter(position = position_jitter(width = .5), mapping = aes_string(colour = col, shape = shape), 
                     size = input$point_size, alpha = input$alpha) +
         ylab(ylabel) + xlab(xlabel) + theme
       
@@ -673,7 +673,7 @@ shinyServer(
     })
     
     #' Data for the correlation plot
-    corr_Two_Genes <- reactive({
+    corr_two_data <- reactive({
       validate(
         need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
           need(input$gene %in% names(exprs()),"Gene not available for this dataset"),
@@ -687,12 +687,12 @@ shinyServer(
     
     #' Generate the correlation plot
     output$corrPlot <- renderPlot({    
-        myCorggPlot(corr_Two_Genes(), input$gene, input$gene2, colorBy = color_by(), separateBy = separate_by())
+        myCorggPlot(corr_two_data(), input$gene, input$gene2, colorBy = color_by(), separateBy = separate_by())
     }, width = function()input$cor_plot_width, height = function()input$cor_plot_height)
     
     #' Generate a summary of the correlation test
     output$corrTest <- renderTable({
-      df <- corr_Two_Genes()
+      df <- corr_two_data()
       if (separate_by() != "none") {
         cor <- substitute(df %>%
                             group_by(g) %>%
@@ -707,7 +707,7 @@ shinyServer(
     
     #' Table with the data used for the correlation plot
     output$corrDataTable <- renderDataTable({
-      data <- corr_Two_Genes()
+      data <- corr_two_data()
       data_table(data)
     })
     
@@ -719,7 +719,7 @@ shinyServer(
       content = function(file) {
         plotFunction <- match.fun(download_Plot_FileType())
         plotFunction(file, width = download_Plot_Width(), height = download_Plot_Height())
-        myCorggPlot(corr_Two_Genes(), input$gene, input$gene2, color_by(), separate_by())
+        myCorggPlot(corr_two_data(), input$gene, input$gene2, color_by(), separate_by())
         dev.off()
       }
     )
@@ -735,7 +735,7 @@ shinyServer(
     })
     
     #' Multiple genes correlation
-    corr_Many_Genes <- reactive({
+    corr_many_data <- reactive({
       validate(
         # Need two or more genes
         need(length(corr_genes()) > 1, "Please enter 2 or more genes in the panel on the left")%then%
@@ -748,14 +748,18 @@ shinyServer(
       data
     })
     
+    corr_many_genes <- reactive({
+      corr_many_data()[,4:length(corr_many_data())]
+    })
+    
     #' Generate the pairs plot
     output$pairsPlot <- renderPlot({
-      ggpairs(corr_Many_Genes()[,4:length(corr_Many_Genes())],lower=list(continuous="smooth", params=list(alpha=0.5)))  
-    }, height = function(){150*length(intersect(corr_genes(), names(corr_data())))}, width = function(){200*length(intersect(corr_genes(), names(corr_data())))})
+      ggpairs(corr_many_genes(),lower=list(continuous="smooth", params = list(alpha=0.5)))  
+    }, height = function(){150*length(corr_many_genes())}, width = function(){200*length(corr_many_genes())})
     
     #' Table with the data used for the pairs plot
     output$corrPairsDataTable <- renderDataTable({
-      data <- corr_Many_Genes()
+      data <- corr_many_data()
       data_table(data)
     })
     
@@ -767,7 +771,7 @@ shinyServer(
       content = function(file) {
         plotFunction <- match.fun(download_Plot_FileType())
         plotFunction(file, width = download_Plot_Width(), height = download_Plot_Height())
-        print(ggpairs(corr_Many_Genes()[,4:length(corr_Many_Genes())], lower = list(continuous="smooth", params=c(alpha=0.5)))) 
+        print(ggpairs(corr_many_data()[,4:length(corr_many_data())], lower = list(continuous="smooth", params=c(alpha=0.5)))) 
         dev.off()
       }
     )
@@ -829,7 +833,7 @@ shinyServer(
       y <- as.character(corr_filter_data()[v$rows,"Gene"]) # v$rows return only the row index, need to get the gene name
       aes_scatter <- aes_string(x = input$gene, y = y)
       ggplot(corr_data(), mapping = aes_scatter) + theme(legend.position=c(1,1),legend.justification=c(1,1)) +
-        geom_point(alpha=.5) + geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1) + theme_linedraw() 
+        geom_point(alpha=0.5) + geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1) + theme_linedraw() 
     })
     
     #' RPPA data analysis
@@ -921,11 +925,11 @@ shinyServer(
       data <- data.frame(mRNA, strat, rppa = rppas()[,protein])
       r <- round(cor.test(data$mRNA,data$rppa, use = "complete.obs")$estimate,3)
       p.value <- round(cor.test(data$mRNA,data$rppa, use = "complete.obs")$p.value,4)
-      p1 <- ggplot(data, aes(x=strat, y = rppa)) + geom_boxplot(outlier.size = 0) + 
-        geom_jitter(aes(colour = strat), position = position_jitter(width = .2), size = 2, alpha = 0.5) + 
+      p1 <- ggplot(data, aes(x=strat, y = rppa)) + geom_boxplot(outlier.size = 0, outlier.stroke = 0) + 
+        geom_jitter(aes(colour = strat), position = position_jitter(width = .5), size = 2, alpha = 0.5) + 
         xlab(paste(input$gene, "mRNA")) + ylab(paste(protein,"RPPA score")) + 
         guides(colour=FALSE) + theme_linedraw()
-      p2 <- ggplot(data, aes(x=mRNA, y = rppa)) + geom_point(aes(colour = strat), alpha=.5) +
+      p2 <- ggplot(data, aes(x=mRNA, y = rppa)) + geom_point(aes(colour = strat), alpha=0.5) +
         geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1) + theme_linedraw() +
         xlab(sprintf("%s mRNA (log2) \n\n r = %s; p value = %s", input$gene, r, p.value)) + 
         ylab(paste(protein,"RPPA score")) + theme(legend.position = "none")

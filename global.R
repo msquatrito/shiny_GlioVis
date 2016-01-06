@@ -93,8 +93,6 @@ galon_gene_set_list <- readRDS("data/galon_gene_set_list.Rds")
 engler_gene_set_list <- readRDS("data/engler_gene_set_list.Rds")
 galon_engler <- readRDS("data/galon_engler_gene_set_list.RDS")
 LM22_gene_set_list <- readRDS("data/LM22_gene_set_list.Rds")
-# gbm_seq_samples <- readRDS("data/gbm_seq_samples.Rds")
-# lgg_seq_samples <- readRDS("data/lgg_seq_samples.Rds")
 msigdb.v5 <- read.delim("data/msigdb.v5.0.symbols.gmt.txt", header=FALSE, row.names=1, stringsAsFactors=FALSE)
 
 #######################################
@@ -327,14 +325,8 @@ getCorr <- function (data, gene, corrMethod) {
 ############## 2 genes correlation plot ##############
 ######################################################
 myCorggPlot <- function (df, gene1, gene2, colorBy = "none", separateBy = "none",...) {
-  #  empy plot to used in grid.arrange 
-  empty <- ggplot() + geom_point(aes(1,1), colour="white") + 
-    theme(plot.background = element_blank(), panel.grid.major = element_blank(), 
-          panel.grid.minor = element_blank(), panel.border = element_blank(), 
-          panel.background = element_blank(), axis.title.x = element_blank(),
-          axis.title.y = element_blank(), axis.text.x = element_blank(),
-          axis.text.y = element_blank(), axis.ticks = element_blank()
-    )
+  # empy plot to used in grid.arrange 
+  empty <- ggplot() + geom_point(aes(1,1), colour="white") + theme_void()
   # scatterplot of x and y variables
   scatter <- ggplot(df,mapping = aes_string(x = gene1, y = gene2)) 
   # marginal density of x - plot on top
@@ -346,20 +338,20 @@ myCorggPlot <- function (df, gene1, gene2, colorBy = "none", separateBy = "none"
   
   if (colorBy != "none") {
     col <- aes_string(color = colorBy)
-    scatter <- scatter + geom_point(col, alpha=.5) + geom_smooth(col, method = "lm", se = TRUE) + geom_rug(col, alpha = 0.1)
+    scatter <- scatter + geom_point(col, alpha=0.5) + geom_smooth(col, method = "lm", se = TRUE) + geom_rug(col, alpha = 0.1)
     # grab the legend
     g1 <- ggplotGrob(scatter)
     id.legend <- grep("guide", g1$layout$name)
     legend <- g1[["grobs"]][[id.legend]]
     # scatter without the legend
     scatter <- scatter + theme(legend.position = "none")
-    plot_top <- plot_top + geom_density(col, alpha=.5) 
-    plot_right <- plot_right + geom_density(col, alpha=.5)
+    plot_top <- plot_top + geom_density(col, alpha=0.5) 
+    plot_right <- plot_right + geom_density(col, alpha=0.5)
   }  else {
-    scatter <- scatter + geom_point(alpha=.5) + geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1)
+    scatter <- scatter + geom_point(alpha=0.5) + geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1)
     legend <- empty
-    plot_top <- plot_top + geom_density(alpha=.5) 
-    plot_right <- plot_right + geom_density(alpha=.5)
+    plot_top <- plot_top + geom_density(alpha=0.5) 
+    plot_right <- plot_right + geom_density(alpha=0.5)
   }
   
   if (separateBy != "none") {
@@ -369,49 +361,13 @@ myCorggPlot <- function (df, gene1, gene2, colorBy = "none", separateBy = "none"
   }
   
   if (separateBy == "none") {
-    #arrange the plots together, with appropriate height and width for each row and column
+    # arrange the plots together, with appropriate height and width for each row and column
     grid.draw(grid.arrange(plot_top, legend, scatter, plot_right, ncol=2, nrow=2, widths=c(3, 1), heights=c(1.5, 3)))
   } else {
     print(scatter)
   } 
 }
 
-
-# ########################################
-# ############## pairs panels ############
-# ########################################
-# myPairsPlot <- function(df,...) { 
-#   panel.cor <- function(x, y, digits = 3, prefix="", cex.cor, ...) {
-#     usr <- par("usr")
-#     on.exit(par(usr))
-#     par(usr = c(0, 1, 0, 1))
-#     r <- cor(x, y, use="complete.obs")
-#     txt <- format(c(r, 0.123456789), digits = digits)[1]
-#     txt <- paste(prefix, txt, sep="")
-#     if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
-#     text(0.5, 0.5, txt, cex = cex.cor * (1 + abs(r)) / 2)
-#   } 
-#   panel.hist <- function(x, ...) {
-#     usr <- par("usr")
-#     on.exit(par(usr))
-#     par(usr = c(usr[1:2], 0, 1.5) )
-#     h <- hist(x, plot = FALSE)
-#     breaks <- h$breaks
-#     nB <- length(breaks)
-#     y <- h$counts
-#     y <- y/max(y)
-#     rect(breaks[-nB], 0, breaks[-1], y, col="white", ...)
-#   }
-#   panel.lm <- function (x, y, col = par("col"), bg = NA, pch = par("pch"),
-#                         cex = .8, col.smooth = "black", ...) {
-#     points(x, y, pch = pch, col=rgb(0, 0, 0, 0.5), bg = bg, cex = cex)
-#     abline(stats::lm(y ~ x), col = "red", ...)
-#   }
-#   #   ggpairs(df)
-#   pairs (df,upper.panel = panel.cor,
-#          diag.panel = panel.hist,
-#          lower.panel = panel.lm, pch= 20)
-# }
 
 ######################################
 ############## kmPlot  ###############
