@@ -56,6 +56,7 @@ install_gliovis <- function() {
   # install needed packages from Github
   devtools::install_github("rstudio/DT")
   devtools::install_github("jokergoo/ComplexHeatmap")
+  devtools::install_github(c("GuangchuangYu/DOSE", "GuangchuangYu/clusterProfiler"))
   
   message("\n All set. \n You might need to restart R before using GlioVis \n")
   return(invisible(NULL))

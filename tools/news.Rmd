@@ -1,6 +1,11 @@
-**8-01-2016** 
+**15-01-2016**  
+
+* **New features**  
+  + Gene ontology and KEGG enrichment analysis for the results of differential gene expression analysis.  
+  
 * **Updates**
-  + DeconvoluteMe: user can now specify any gene sets in [MSigDB](http://software.broadinstitute.org/gsea/msigdb/index.jsp).      
+  + DeconvoluteMe: user can now specify any gene sets in [MSigDB](http://software.broadinstitute.org/gsea/msigdb/index.jsp).  
+  
 
 **27-11-2015**   
 

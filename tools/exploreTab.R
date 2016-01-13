@@ -273,12 +273,15 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                  )
                              )
                            ),
+                           conditionalPanel(
+                             condition = "input.tabDE == 'heatmap'",
                            wellPanel(
                              checkboxInput(inputId = "pDataHeatmap", label = "Include annotation to heatmap", value = FALSE),
                              conditionalPanel(
                                condition = "input.pDataHeatmap",
                                selectInput(inputId = "colorSideHeatmap", label = h4("Select group:"), choices = "")
                              )
+                           )
                            )
                          ),
                          
@@ -497,17 +500,88 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                               
                                               tabsetPanel(id = "tabDE",
                                                           
-                                                          tabPanel(title = "Heatmap", 
+                                                          tabPanel(title = "DE Heatmap", value = "heatmap",
                                                                    bsAlert("DEAlert"),
                                                                    busy(),
                                                                    plotOutput(outputId = "DEheatmap", height = 1000)      
                                                           ),
                                                           
-                                                          tabPanel(title = "Data",
+                                                          tabPanel(title = "DE Data",
                                                                    busy(),
                                                                    dataTableOutput(outputId = "DETable")        
-                                                          )
+                                                          ),
                                                           
+                                                          tabPanel(title = "Gene Ontology", 
+                                                                   p(class = "lead","Gene ontology enrichment analysis"),
+                                                                   sidebarLayout(fluid = FALSE,
+                                                                                 sidebarPanel(
+                                                                                   wellPanel(
+                                                                                     radioButtons(inputId = "ont", label = h5("Subontology:"), choices = c( "Biological process" = "BP",
+                                                                                                                                                            "Molecular function" = "MF", 
+                                                                                                                                                            "Cell compartment" = "CC"))),
+                                                                                   wellPanel(
+                                                                                     sliderInput(inputId = "pvalueCutoff", label = h5("p value cutoff:"), min = 0.0, max = 0.5, step = 0.01, value = 0.05),
+                                                                                     sliderInput(inputId = "qvalueCutoff", label = h5("q value cutoff:"), min = 0.0, max = 0.5, step = 0.01, value = 0.05)
+                                                                                   ),
+                                                                                   wellPanel(
+                                                                                     sliderInput(inputId = "showCategory", label = h5("# of category to be shown"), min = 1, max = 50, step = 1, value = 10)
+                                                                                   ),
+                                                                                   actionButton(inputId = "goGO", label = "Submit GO analysis", class= "btn-success"),
+                                                                                   helpText("Note: you will have to re-perform the analysis everytime one of the input parameters is changed")
+                                                                                 ),
+                                                                                 mainPanel(
+                                                                                   tabsetPanel(id= "tabGO",
+                                                                                               tabPanel(title = "Dotplot", value = "goPlot",
+                                                                                                        bsAlert("goAlert"),
+                                                                                                        busy(),
+                                                                                                        plotOutput(outputId = "enrichGOPlot", width = "800px")
+                                                                                               ),
+                                                                                               tabPanel(title = "Map",
+                                                                                                        busy(),
+                                                                                                        plotOutput(outputId = "enrichGOMap", height = "800px")
+                                                                                               ),
+                                                                                               tabPanel(title = "Data",
+                                                                                                        busy(),
+                                                                                                        dataTableOutput(outputId = "enrichGOTable")        
+                                                                                               )
+                                                                                   )
+                                                                                 )
+                                                                   )
+                                                          ),
+                                                          
+                                                          tabPanel(title = "KEGG", 
+                                                                   p(class = "lead","KEGG enrichment analysis"),
+                                                                   sidebarLayout(fluid = FALSE,
+                                                                                 sidebarPanel(
+                                                                                   wellPanel(
+                                                                                     sliderInput(inputId = "pvalueCutoffKegg", label = h5("p value cutoff:"), min = 0.0, max = 0.5, step = 0.01, value = 0.05),
+                                                                                     sliderInput(inputId = "qvalueCutoffKegg", label = h5("q value cutoff:"), min = 0.0, max = 0.5, step = 0.01, value = 0.1)
+                                                                                   ),
+                                                                                   wellPanel(
+                                                                                     sliderInput(inputId = "showCategoryKegg", label = h5("# of category to be shown"), min = 1, max = 50, step = 1, value = 10)
+                                                                                   ),
+                                                                                   actionButton(inputId = "goKegg", label = "Submit KEGG analysis", class= "btn-success"),
+                                                                                   helpText("Note: you will have to re-perform the analysis everytime one of the input parameters is changed")
+                                                                                 ),
+                                                                                 mainPanel(
+                                                                                   tabsetPanel(id= "tabKegg",
+                                                                                               tabPanel(title = "Dotplot", value = "kggPlot",
+                                                                                                        bsAlert("keggAlert"),
+                                                                                                        busy(),
+                                                                                                        plotOutput(outputId = "enrichKeggPlot", width = "800px")
+                                                                                               ),
+                                                                                               tabPanel(title = "Map",
+                                                                                                        busy(),
+                                                                                                        plotOutput(outputId = "enrichKeggMap", height = "800px")
+                                                                                               ),
+                                                                                               tabPanel(title = "Data",
+                                                                                                        busy(),
+                                                                                                        dataTableOutput(outputId = "enrichKeggTable")        
+                                                                                               )
+                                                                                   )
+                                                                                 )
+                                                                   )
+                                                          )
                                               )
                                      ),
                                      

@@ -39,6 +39,7 @@ library(cgdsr)
 library(shinyBS)
 library(limma)
 library(ComplexHeatmap)
+library(clusterProfiler)
 # library(shinyjs)
 
 options(shiny.usecairo=TRUE)

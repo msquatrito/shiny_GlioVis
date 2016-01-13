@@ -10,4 +10,12 @@ output: html_document
   + **Median**: split in two groups by the median   
   + **Lower quartile**: split in two groups, 25% lower expressing vs the rest   
   + **Upper quartile**: split in two groups, 25% higher expressing vs the rest   
-  + **High vs low**: split in two groups, 25% lower expressing vs 25% higher expressing     
+  + **High vs low**: split in two groups, 25% lower expressing vs 25% higher expressing   
+  
+
+Differential expression analyisis is performed using the `eBayes` and `lmFit` functions of the ['limma'](http://bioconductor.org/packages/release/bioc/html/limma.html) package.   
+Gene ontology and KEGG enrichment analyisis are performed with the ['clusterProfiler'](http://bioconductor.org/packages/release/bioc/html/clusterProfiler.html) package.   
+
+*References:*  
+[Ritchie ME K. et al., 2015](http://www.ncbi.nlm.nih.gov/pubmed/25605792)   
+[Guangchuang Yu et al., 2012](http://www.ncbi.nlm.nih.gov/pubmed/22455463)    

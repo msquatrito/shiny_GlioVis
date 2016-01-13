@@ -73,7 +73,10 @@ shinyServer(
     updateSelectizeInput(session, inputId = "gene", choices = gene_names, server = TRUE)
     updateSelectizeInput(session, inputId = "gene2", choices = gene_names, server = TRUE)
     updateSelectizeInput(session, inputId = "corrGene", choices = gene_names, server = TRUE)
-    updateSelectizeInput(session, inputId = "mutGene", choices = gene_names, server = TRUE) 
+    observe({
+      updateSelectizeInput(session, inputId = "mutGene", choices = gene_names, selected = input$gene, server = TRUE) 
+    })
+   
     
     #' Required for the conditional panel 'corrMany' to work correctly
     observe({
@@ -992,6 +995,7 @@ shinyServer(
                 options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE))
     })
     
+    #' Oncoprint
     oncoprint_height <- reactive({
       if(length(mut_genes()) <= 1) {
         if(input$column_barplot) {
@@ -1004,7 +1008,6 @@ shinyServer(
       }
       h
     })
-    
     output$oncoprint <- renderPlot({
       validate(
         need(input$dataset %in% c("TCGA GBM","TCGA LGG"), "Mutations data available only for TCGA GBM and LGG datasets")%then%
@@ -1027,7 +1030,8 @@ shinyServer(
                 top_annotation_height = unit(ifelse(input$column_barplot,55,0), "points"),
                 show_row_barplot = input$row_barplot, barplot_ignore = "NA")
     }, height = oncoprint_height)
-  
+
+    #' Differential Expression  
     observe({
       pData <- rmNA(pDatas())
       colnames <- names(pData)[!sapply(pData, is.numeric)] # remove muneric categories
@@ -1036,6 +1040,7 @@ shinyServer(
     })
     
     DEdata <- reactive({
+      req(input$tab1 ==7)
       validate(
         need(input$dataset %notin% rnaseq_datasets, "Differential gene expression analysis currently available only for Microarray data")%then%
         need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
@@ -1044,6 +1049,7 @@ shinyServer(
       df <- corr_data() # data filtetered by histology and subtype
       # strat <- get_cutoff(df[,input$gene], input$DEcutoff, NULL)
       strat <- na.omit(data.frame(Sample = df$Sample, strat = get_cutoff(df[,input$gene], input$DEcutoff, NULL)))
+      strat$strat <- factor(strat$strat,levels = c("low","high"))
       eset <- as.matrix(t(df[df$Sample %in% strat$Sample,-c(1:8)]))
       design <- model.matrix(~strat$strat)
       fit <- eBayes(lmFit(eset,design))
@@ -1101,6 +1107,107 @@ shinyServer(
       datatable(data, selection = 'none', rownames = TRUE, extensions = "TableTools")
     })
     
+    #' Gene Onthology
+    entrez <- eventReactive(input$goGO | input$goKegg ,{
+      validate(
+        need(dim(DEdata()[["topTable"]])[1]>5,
+             "Less than 5 genes were differentially expressed with the current settings, enrichment analysis will not be performed")
+      )
+      entrez <-  suppressWarnings(bitr(row.names(DEdata()[["topTable"]]), fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Hs.eg.db"))
+      entrez <- merge(entrez,DEdata()[["topTable"]], by.x="SYMBOL",by.y="row.names",all.x=T)
+      entrez
+    })
+
+    
+    go <- reactiveValues(Submit = NULL, KEGG = NULL)
+    observeEvent(input$goGO, {
+      go$GO <- input$goGO
+    })
+    observeEvent(input$goKegg, {
+      go$KEGG <- input$goKegg
+    })
+    observeEvent(c(DEdata(), input$gene, input$ont, input$pvalueCutoff, input$qvalueCutoff), {
+      go$GO <-  NULL
+    })
+    observeEvent(c(DEdata(), input$gene, input$pvalueCutoffKegg, input$qvalueCutoffKegg), {
+      go$KEGG <-  NULL
+    })
+    
+    enrich_GO <- eventReactive(go$GO ,{
+      ego <- enrichGO(gene = entrez()$ENTREZID, OrgDb = 'org.Hs.eg.db', ont = input$ont, pAdjustMethod = "BH", 
+                      pvalueCutoff  = input$pvalueCutoff, qvalueCutoff  = input$qvalueCutoff, readable=TRUE)
+      if(length(ego@geneInCategory)==0) {
+        createAlert(session, anchorId = "goAlert", alertId = "goAlertId", title = "Sorry...",
+                    content = paste("No categories identified, try to change p/q value cutoff"), 
+                    style = "danger")
+      } else {
+        closeAlert(session, "goAlertId")
+      }
+      ego 
+    })
+    
+    observe({
+      l <- length(enrich_GO()@geneInCategory)
+      if(l>50) l <- 50
+      updateSliderInput(session,inputId = "showCategory", max = l, value = 10)
+    })
+    
+    output$enrichGOPlot <- renderPlot({
+      validate(
+        need(!is.null(go$GO), message = "Please press the Submit button to initiate the analysis")%then%
+          need(length(enrich_GO()@geneInCategory)>0, FALSE)
+      )
+      dotplot(enrich_GO(), showCategory= input$showCategory)
+    })
+    
+    output$enrichGOMap <- renderPlot({
+      req(length(enrich_GO()@geneInCategory)>0)
+      # cnetplot(enrich_GO(), foldChange=entrez()$logFC,showCategory= input$showCategory)
+      enrichMap(enrich_GO(), n=input$showCategory)
+    })
+    
+    output$enrichGOTable <- renderDataTable({
+      req(length(enrich_GO()@geneInCategory)>0)
+      datatable(summary(enrich_GO()), selection = 'none', rownames = FALSE, extensions = "TableTools")
+    })
+    
+    #' KEGG
+    enrich_Kegg <- eventReactive(go$KEGG,{
+      eKegg <- enrichKEGG(gene = entrez()$ENTREZID, organism = "hsa", pAdjustMethod = "BH", pvalueCutoff  = input$pvalueCutoffKegg, 
+                          qvalueCutoff  = input$qvalueCutoffKegg)
+      if(length(eKegg@geneInCategory)==0) {
+        createAlert(session, anchorId = "keggAlert", alertId = "keggAlertId", title = "Sorry...",
+                    content = paste("No categories identified, try to change p/q value cutoff"), 
+                    style = "danger")
+      } else {
+        closeAlert(session, "keggAlertId")
+      }
+      eKegg 
+    })
+    
+    observe({
+      l <- length(enrich_Kegg()@geneInCategory)
+      updateSliderInput(session,inputId = "showCategoryKegg", max = l, value = 10)
+    })
+    
+    output$enrichKeggPlot <- renderPlot({
+      validate(
+        need(!is.null(go$KEGG), message = "Please press the Submit button to initiate the analysis")%then%
+        need(length(enrich_Kegg()@geneInCategory)>0, FALSE)
+      )
+      dotplot(enrich_Kegg(), showCategory= input$showCategoryKegg)
+    })
+    
+    output$enrichKeggMap <- renderPlot({
+      req(length(enrich_Kegg()@geneInCategory)>0)
+      enrichMap(enrich_Kegg(),n=input$showCategoryKegg)
+    })
+    
+    output$enrichKeggTable <- renderDataTable({
+      req(length(enrich_Kegg()@geneInCategory)>0)
+      eKegg <- setReadable(enrich_Kegg(), OrgDb = "org.Hs.eg.db", keytype = "ENTREZID")
+      datatable(summary(eKegg), selection = 'none', rownames = FALSE, extensions = "TableTools")
+    })
     
     #' Generate reports
     output$reportPlots <- renderUI({
@@ -1131,8 +1238,8 @@ shinyServer(
               need(!all(is.na(data[ ,my_i])),"Sorry,no gene data available for this group")
             )
             data <- filter(data,!is.na(data[,my_i]))
-            p <- ggplot(data, mapping=aes_string(x=my_i, y = "mRNA")) + geom_boxplot(outlier.size = 0) +  
-              geom_jitter(position = position_jitter(width = .2), size = 2, alpha = 0.5) + 
+            p <- ggplot(data, mapping=aes_string(x=my_i, y = "mRNA")) + geom_boxplot(outlier.stroke = 0, outlier.size = 0) +  
+              geom_jitter(position = position_jitter(width = .5), size = 2, alpha = 0.5) + 
               ylab("mRNA expression (log2)") + theme(axis.title.x = element_blank()) + theme(axis.title.y=element_text(vjust=1)) 
             stat <- data %>%
               group_by_(my_i) %>%
