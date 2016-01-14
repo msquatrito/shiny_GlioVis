@@ -121,14 +121,6 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                          choices = c("high vs low","median", "lower quartile", "upper quartile"),
                                          selected = "high vs low"),
                              helpModal(modal_title ="Differential expression", link = "helpDE", help_file = includeMarkdown("tools/help/help_de.Rmd"))
-                             #                              ,
-                             #                              conditionalPanel(
-                             #                                condition = "input.cutoff == 'Use a specific percentile'",
-                             #                                br(),
-                             #                                uiOutput("numericCutoff"),
-                             #                                plotOutput(outputId = "boxmRNA", width = "100%", height = 50),
-                             #                                helpText("mRNA expression (log2). Blue lines represent 25%, 50% and 75% quartiles. Red line represents the current selection.")
-                             #                              )
                            )
                          ),
                          

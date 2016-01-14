@@ -37,7 +37,7 @@ install_gliovis <- function() {
   
   # install needed packages from CRAN
   pkg <- c("shiny", "survival", "weights", "googleVis", "dplyr", "ggplot2","shinydashboard", 
-           "htmlwidgets","kernlab","devtools","GGally","markdown","caret","Cairo","broom",
+           "htmlwidgets","kernlab","devtools","markdown","caret","Cairo","broom",
            "Cairo","reshape2","heatmap3","RColorBrewer","scales","htmlwidgets","cgdsr",
            "shinyBS", "gridExtra")
   
@@ -48,6 +48,12 @@ install_gliovis <- function() {
   }
   
   update.packages(pkg[!(pkg %in% new.pkg)])
+  if ("GGally" %in% installed.packages() && packageVersion('GGally') > '0.5.0') {
+    continue <- select.list(choices = c("Yes", "No"), 
+                            title = "GlioVis requires a previous version of GGally. Do you want to continue?", graphics = FALSE)
+    packageurl <- "http://cran.r-project.org/src/contrib/Archive/GGally/GGally_0.5.0.tar.gz"
+    install.packages(packageurl, repos=NULL, type="source")
+  }
   
   # install needed packages from Bioconductor
   source("http://bioconductor.org/biocLite.R")

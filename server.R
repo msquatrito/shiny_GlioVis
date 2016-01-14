@@ -850,7 +850,7 @@ shinyServer(
     
     #' Create a rug plot with the mRNA expression value for the manual cutoff
     output$boxRppaRNA <- renderPlot({    
-      req(input$rppaCut, FALSE)
+      req(input$rppaCut)
       mRNA <- rppa_RNA()
       q <- quantile(mRNA)
       xrange <-range(mRNA)
