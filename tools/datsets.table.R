@@ -84,7 +84,7 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      </tr>
 
      <tr>
-     <td class="tg-0a3w"><a href="http://firebrowse.org/iCoMut/?cohort=GBMLGG" style="color: rgb(0,0,0)">TCGA GBMLGG*</a></td>
+     <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/26824661" style="color: rgb(0,0,0)">TCGA GBMLGG*</a></td>
      <td class="tg-9fhq-bd"><a href="http://firebrowse.org/?cohort=GBMLGG&download_dialog=true#" style="color: rgb(0,0,0)">RNA-seq</a></td>      
      <td class="tg-9fhq">0</td>
      <td class="tg-9fhq">515</td>
@@ -93,7 +93,7 @@ tfoot {color:gray; font-size:5px; text-align: left;}
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
-     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>

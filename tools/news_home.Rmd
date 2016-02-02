@@ -1,8 +1,4 @@
-**15-01-2016**  
-  
-**New features** 
-  + Gene ontology and KEGG enrichment analysis for the results of differential gene expression analysis.   
-  
-**Updates**
-  + DeconvoluteMe: user can now specify any gene sets in [MSigDB](http://software.broadinstitute.org/gsea/msigdb/index.jsp)    
+**02-02-2016**  
 
+* **Updates**
+TCGA GBMLGG (Pan-Glioma) subtyping and clustering have been updated accordingly to the recent publication in _Cell_ ([Ceccareli et al. 2016](http://www.ncbi.nlm.nih.gov/pubmed/26824661)).  

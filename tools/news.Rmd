@@ -1,3 +1,9 @@
+**02-02-2016**  
+
+* **Updates**
+  + TCGA GBMLGG (Pan-Glioma) subtyping and clustering have been updated accordingly to the recent publication in _Cell_ ([Ceccareli et al. 2016](http://www.ncbi.nlm.nih.gov/pubmed/26824661)).  
+
+
 **15-01-2016**  
 
 * **New features**  
