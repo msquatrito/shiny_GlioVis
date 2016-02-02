@@ -25,7 +25,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                          choices = c("Microarray" = "microarray", "RNAseq" = "rnaseq"),inline = T),
                             br(),
                             div(class="row",
-                                div(class="col-xs-8",
+                                div(class="col-xs-9",
                                     selectInput(inputId = "geneListDec", label = strong("Select genelist:"), 
                                                 choices = c("Newman et al. 2015", "Bindea et al. 2013", "Engler et al. 2012","MSigDB gene sets"))
                                 ),
@@ -36,8 +36,16 @@ tabPanel(title = "Tools", icon = icon("gear"),
                             ),
                             conditionalPanel(
                               condition = "input.geneListDec == 'MSigDB gene sets'",
-                              selectizeInput(inputId = "genesets_msigdb", label = strong("MSigDB gene sets:"), choices ="", multiple = TRUE,
-                                             options = list(placeholder = "Enter MSigDB gene set name(s)", plugins = list('remove_button')))
+                              wellPanel(selectizeInput(inputId = "genesets_msigdb", label = strong("MSigDB gene sets:"), choices ="", multiple = TRUE,
+                                             options = list(placeholder = "Enter MSigDB gene set name(s)", plugins = list('remove_button','drag_drop'))),
+                              div(class="row",
+                                  div(class="col-xs-6",
+                                      numericInput(inputId = "min.sz", label = strong("Minimum set size:"),value = 25, min = 5, max = 100, step = 5)
+                                  ),
+                                  div(class="col-xs-6",
+                                      numericInput(inputId = "max.sz", label = strong("Maximum set size:"),value = 2000, min = 100,max = 2000, step = 100)
+                                  )
+                              ))
                               # textInput(inputId = "genesets_msigdb", label = strong("MSigDB gene sets:"), value = "Paste genes set names, separated by commas")
                             ),
                             p(" ")

@@ -445,6 +445,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                           tabPanel(title = "Corr-Many", value = "corrMany",
                                                                    tabsetPanel(
                                                                      tabPanel(title = "Plot",
+                                                                              textOutput(outputId = "missingGene"),
                                                                               plotOutput(outputId = "pairsPlot", height = "100%")
                                                                      ),
                                                                      tabPanel(title = "Data",
