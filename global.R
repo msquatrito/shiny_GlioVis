@@ -240,7 +240,7 @@ get_cutoff <- function(mRNA, cutoff, numeric) {
   strat
 }
 
-survivalPlot <- function (df, gene, group, subtype, cutoff, numeric) {
+survivalPlot <- function (df, gene, group, subtype, cutoff, numeric, cex = 1) {
   # Select a specific Histology
   if (group != "All") {
     df <- filter(df, Histology == group)
@@ -250,13 +250,13 @@ survivalPlot <- function (df, gene, group, subtype, cutoff, numeric) {
     df <- filter(df, Subtype == subtype)
   } 
   if(cutoff == "Use a specific mRNA value") {
-    main <- paste("Histology: ", group, 
+    main <- paste0("Histology: ", group, 
                   "; Subtype: ", subtype,
-                  "; Cutoff: ", round(numeric, 2), sep = "") 
+                  "; Cutoff: ", round(numeric, 2)) 
   } else {
-    main <- paste("Histology: ", group, 
+    main <- paste0("Histology: ", group, 
                   "; Subtype: ", subtype,
-                  "; Cutoff: ", cutoff, sep = "")
+                  "; Cutoff: ", cutoff)
   }
   
   mRNA <- df[ ,"mRNA"]
@@ -283,10 +283,10 @@ survivalPlot <- function (df, gene, group, subtype, cutoff, numeric) {
        main = main, col = c("red", "blue"), mark.time = FALSE)
   legend("topright", legend = c(sprintf("%s High, (n=%s, events=%s, median=%s)", gene, surv$records[1], surv$events[1], surv$median[1]), 
                                 sprintf("%s Low, (n=%s, events=%s, median=%s)", gene, surv$records[2], surv$events[2], surv$median[2])),
-         col= c("red", "blue"), lty = 1, cex = 1)
-  graphics::text(xmax, 0.725, sprintf("HR = %s, (%s - %s)",HR, HR.lower, HR.upper), cex = 1)
-  graphics::text(xmax, 0.65, sprintf("%s Log-rank p value= %s", star.log, log.rank.p), cex = 1)
-  graphics::text(xmax, 0.575, sprintf("%s Wilcoxon p value= %s",star.mcox, mantle.cox.p), cex = 1)
+         col= c("red", "blue"), lty = 1, cex = cex)
+  graphics::text(xmax, 0.725, sprintf("HR = %s, (%s - %s)",HR, HR.lower, HR.upper), cex = cex)
+  graphics::text(xmax, 0.65, sprintf("%s Log-rank p value= %s", star.log, log.rank.p), cex = cex)
+  graphics::text(xmax, 0.575, sprintf("%s Wilcoxon p value= %s",star.mcox, mantle.cox.p), cex = cex)
   
   if (cutoff == "quartiles"){
     expr.surv <- survfit(my.Surv ~ strata(strat), conf.type="none")
@@ -298,7 +298,7 @@ survivalPlot <- function (df, gene, group, subtype, cutoff, numeric) {
                       sprintf("2nd (n=%s, median=%s)", z$records[2], z$median[2]),
                       sprintf("3rd (n=%s, median=%s)", z$records[3], z$median[3]),
                       sprintf("4th (n=%s, median=%s)", z$records[4], z$median[4])),
-           col= c(1:4), lty=1, cex=1)
+           col= c(1:4), lty=1, cex = cex)
   } 
 }
 
