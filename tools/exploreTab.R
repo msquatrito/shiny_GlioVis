@@ -11,9 +11,8 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                          br(),
                          wellPanel(                      
                            # dataset
-                           selectInput(inputId = "dataset", label = h4("Dataset:"),
-                                       choices = datasets,
-                                       selected = "TCGA GBM", selectize = TRUE),
+                           radioButtons(inputId ="datasetType", label = h4("Dataset:"), choices = c("Adult","Pediatric"), selected = "Adult", inline = T),
+                           selectizeInput(inputId = "dataset", label ="", choices = NULL, selected = NULL),
                            # genes
                            conditionalPanel(
                              condition = "input.tabCorr != 'corrMany' & input.tab1 != 5 & input.tab1 != 8",
@@ -59,10 +58,13 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                condition = "input.plotType == 'User-defined'",
                                selectInput(inputId = "plotTypeUserSel", label = NULL, choices = "", selectize = TRUE)
                              ),
-                             checkboxInput(inputId = "removeMe", label = "Remove/add a group of samples", value = FALSE),
+                             conditionalPanel(
+                               condition = "input.gene !=''",
+                             checkboxInput(inputId = "removeMe", label = "Remove/arrange samples", value = FALSE),
                              conditionalPanel(
                                condition="input.removeMe",
                                uiOutput(outputId = "removeGp")
+                             )
                              ),
                              helpModal(modal_title ="Box plots", link = "help", 
                                        help_file = includeMarkdown("tools/help/help.Rmd"))
@@ -72,7 +74,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                            conditionalPanel(
                              condition = "input.tab1 == 2",
                              conditionalPanel(
-                               condition = "input.histology == 'GBM' & input.dataset != 'TCGA GBMLGG'",
+                               condition = "input.datasetType != 'Pediatric' & input.histology == 'GBM' & input.dataset != 'TCGA GBMLGG'",
                                checkboxInput(inputId = "gcimpSurv", label = "Exclude G-CIMP samples", value = FALSE),
                                checkboxInput(inputId = "primarySurv", label = "Exclude Recurrent samples", value = FALSE)
                              ),
@@ -175,7 +177,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                  ),
                                  div(class="col-xs-6",
                                      numericInput(inputId = "xaxisLabelAngle",label = "X-axis angle",
-                                                  value = 0, min = 0, max = 90, step = 15)
+                                                  value = 30, min = 0, max = 90, step = 15)
                                  )
                              ),
                              textInput(inputId = "myYlab", label = "Y-axis label:", value = "mRNA expression (log2) \n"),
@@ -432,7 +434,8 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                                                 condition = "output.corrPlot",
                                                                                 p(style = "background-color: #F5F5F5; padding-left:10px; border: 1px solid #E3E3E3;",
                                                                                   strong("Test for association/Correlation between paired samples")),
-                                                                                tableOutput(outputId = "corrTest")
+                                                                                tableOutput(outputId = "corrTest"),
+                                                                                helpText("(Note: Correlation cannot be computed for groups with less then 4 samples)")
                                                                               )
                                                                      ),
                                                                      tabPanel(title = "Data",

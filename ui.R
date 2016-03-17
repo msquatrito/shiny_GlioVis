@@ -19,7 +19,7 @@ shinyUI(
   
   navbarPage(title = strong("GlioVis"), windowTitle = "GlioVis - Visualization Tools for Glioma Datasets", 
              fluid = TRUE, footer = includeHTML("tools/footer.html"), id = "nav",
-             
+
              source("tools/homeTab.R", local = TRUE)$value,
              source("tools/exploreTab.R", local = TRUE)$value,
              source("tools/toolsTab.R", local = TRUE)$value,
