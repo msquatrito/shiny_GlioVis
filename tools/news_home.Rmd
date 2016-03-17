@@ -1,4 +1,4 @@
-**02-02-2016**  
+**18-03-2016**  
 
-* **Updates**
-TCGA GBMLGG (Pan-Glioma) subtyping and clustering have been updated accordingly to the recent publication in _Cell_ ([Ceccareli et al. 2016](http://www.ncbi.nlm.nih.gov/pubmed/26824661)).  
+* **New datasets**   
+We have included 12 new datasets for pediatric gliomas.  

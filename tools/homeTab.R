@@ -1,11 +1,12 @@
 # UI-elements for Home tab
 tabPanel(title = "Home", icon = icon("home"),
-         absolutePanel(top = 80, right = 20, width = 300, draggable =TRUE, cursor = "move",
+         absolutePanel(top = 100, right = 20, width = 300, draggable =TRUE, cursor = "move",
                        div(style = "border: 1px solid; padding:10px; border-radius: 15px;",
+                           # span(class="label label-danger","NEWS"),
                          p(style = "background-color: #68cbd0; border-radius: 15px; padding-left:10px; border: 1px solid #E3E3E3;",
                            strong("NEWS")),
                          includeMarkdown("tools/news_home.Rmd")
-                       ) , style = "opacity: 0.92"),
+                       ), style = "opacity: 0.92"),
          tagList(
            tags$head(
              includeScript("tools/google-analytics.js"),
@@ -25,7 +26,8 @@ tabPanel(title = "Home", icon = icon("home"),
                  span(class='st_email', displayText='Email')
                  ),
              img(src = "GlioVis_logo_trasnparent.gif", width = 750),
-             hr(),
+             br(),
+             div(class="intro-divider"),
              p(class = "lead", "Welcome to", strong("GlioVis"),": a user friendly web application for data visualization and analysis to explore Glioma datasets."),
              h4(class = "outer", "How does it work?"),
              p(class = "outer"," GlioVis is very easy to use:"),
@@ -39,8 +41,13 @@ tabPanel(title = "Home", icon = icon("home"),
              p(class = "outer",'For each dataset it is available a list of common "pre-defined" plots (see the table below) and 
                                 a list of dataset-specific "user-defined" box plots. An overview of all the box plots for a 
                                 given dataset can be found at "Explore/Summary/Plots".'),
-             p(class = "outer", "Available datasets:"),                   
-             source("tools/datsets.table.R",local = TRUE)$value,
+             p(class = "outer", "Available datasets:"),
+             tabsetPanel(id = "datasets", #type = "pills",
+               tabPanel(title="Adult",
+                        source("tools/adult_datasets_table.R",local = TRUE)$value),
+               tabPanel(title= p("Pediatric",span(class="label label-danger","New")),  #HTML('<p>Pediatric <span class="label label-danger">New</span></p>'),
+                        source("tools/pediatric_datasets_table.R",local = TRUE)$value)
+             ),
              br(),
              h4(class = "outer", "Which gene ID can I use?"),
              p(class = "outer",'Currently only', a("HGNC-approved", href="http://www.genenames.org"), 'protein-coding "Gene Symbols" are supported. 
@@ -55,7 +62,6 @@ tabPanel(title = "Home", icon = icon("home"),
              p(class = "outer",'EstimateME: Estimate of STromal and Immune cells in MAlignant Tumor samples',
                a("(Yoshihara K. et al., 2013).", href="http://www.ncbi.nlm.nih.gov/pubmed/24113773", target="_blank")),
              p(class = "outer",'DeconvoluteME: Deconvolute gene expression profiles from heterogeneous tissue samples into cell-type-specific subprofiles '),
-               # a("(Engler JR. et al., 2012" , href="http://www.ncbi.nlm.nih.gov/pubmed/22937035"),";", a("Bindea G. et al., 2013).", href="http://www.ncbi.nlm.nih.gov/pubmed/24138885")),
              h4(class = "outer", "Can I use GlioVis results for my publication?"),
              p(class = "outer", strong("Of course!"), 'If you do so, please include references for the dataset(s) you used and cite:', a("Bowman R. and Squatrito M.", href="#addRef", target="_blank"), " (manuscript in preparation)."),
              p(class = "outer","Please adhere to the",  a("TCGA publication guidelines", href="http://cancergenome.nih.gov/publications/publicationguidelines"), 
