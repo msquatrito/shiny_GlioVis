@@ -4,9 +4,10 @@ HTML('<style type="text/css">
 .tg td{font-family:Arial, sans-serif;font-size:14px;padding: 0px 5px;border-style:solid;border-width:0px;overflow:hidden;word-break:normal;}
      .tg th{font-family:Arial, sans-serif;font-size:14px;font-weight:normal;padding: 0px 5px;border-style:solid;border-width:0px;overflow:hidden;word-break:normal;}
      .tg .tg-lvt2{font-size:14px;background-color:#68cbd0;color:#333333;text-align:center;padding: 0px 5px}
-     .tg .tg-eccc{font-weight:bold;font-style:italic;font-size:16px;padding: 0px 5px}
+     .tg .tg-eccc{text-align:center;font-weight:bold;font-style:italic;font-size:16px;padding: 0px 5px}
      .tg .tg-s6z2{text-align:center;padding: 0px 5px}
      .tg .tg-s6z2-bd{text-align:center;padding: 0px 5px;border-right: 1px dashed gray;}
+.tg .tg-s6z3-bd{text-align:center;font-weight:bold;font-style:italic;font-size:16px;padding: 0px 5px;border-right: 1px dashed gray;}
      .tg .tg-0a3w{background-color:#68cbd0;padding: 0px 5px;border-right: 1px dashed gray;}
      .tg .tg-cxkv{background-color:#ffffff;padding: 0px 5px}
      .tg .tg-eoji{font-size:14px;color:#333333;text-align:center;padding: 0px 5px}
@@ -14,29 +15,22 @@ HTML('<style type="text/css">
      .tg .tg-9fhq-bd{background-color:#68cbd0;text-align:center;padding: 0px 5px;border-right: 1px dashed gray;}
      .tg .tg-hgcj{font-weight:bold;text-align:center;padding: 0px 5px;}
      .tg .tg-hgcj-bd{font-weight:bold;text-align:center;padding: 0px 5px;border-right: 1px dashed gray;}
-    .tg .tg-bd{border-right: 1px dashed gray;}
-tfoot {color:gray; font-size:5px; text-align: left;}
+     .tg .tg-bd{border-right: 1px dashed gray;}
+     .tg .tg-bd-title{font-weight:bold; color: red; border-right: 1px dashed gray;}
+      tfoot {color:gray; font-size:5px; text-align: left;}
      </style>
      <table class="tg">
 
      <tr>
-     <th class="tg-bd"><br></th>
+     <th class="tg-bd-title"></th>
      <th class="tg-bd"></th>
-     <th class="tg-031e"></th>
-     <th class="tg-eccc">Samples</th>
-     <th class="tg-s6z2-bd"></th>
-     <th class="tg-031e"></th>
-     <th class="tg-031e"></th>
+     <th class="tg-s6z3-bd" colspan="3">Samples</th>
      <th class="tg-031e"><br></th>
-     <th class="tg-031e"></th>
-     <th class="tg-eccc">Plots</th>
-     <th class="tg-031e"></th>
-     <th class="tg-031e"></th>
-     <th class="tg-031e"></th>
+     <th class="tg-eccc" colspan="7">Plots</th>
      </tr>
  
      <tr>
-     <td class="tg-hgcj-bd"> Dataset</td>
+     <td class="tg-hgcj-bd">Dataset</td>
      <td class="tg-hgcj-bd">Data type</td>
      <td class="tg-hgcj">Non-tumor</td>
      <td class="tg-hgcj">Low-grade</td>
