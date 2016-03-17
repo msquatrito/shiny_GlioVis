@@ -43,17 +43,20 @@ library(clusterProfiler)
 # library(shinyjs)
 
 options(shiny.usecairo=TRUE)
+
 `%then%` <- shiny:::`%OR%`
 # `%notin%` <- Negate('%in%')
 
 #######################################
 ############## Datasets  ##############
 #######################################
-datasets <- c("TCGA GBM", "TCGA LGG","TCGA GBMLGG", "Rembrandt", "Gravendeel", "Bao", "Ivy GAP", "Lee Y", "Oh","Phillips", 
-              "Gill", "Freije", "Murat", "Gorovets", "POLA Network", "Reifenberger", "Joo", "Ducray", "Nutt", "Vital",
-               "Grzmil", "Gleize", "Donson", "Li")
+adult_datasets <- c("TCGA GBM", "TCGA LGG","TCGA GBMLGG", "Rembrandt", "Gravendeel", "Bao", "Ivy GAP", "Lee Y", "Oh","Phillips", 
+                  "Gill", "Freije", "Murat", "Gorovets", "POLA Network", "Reifenberger", "Joo", "Ducray", "Nutt", "Vital",
+                  "Grzmil", "Gleize", "Donson", "Li")
 
-no_surv_dataset <- c("Bao","Reifenberger","Gill","Li", "Oh","Ivy GAP","Gleize")
+pediatric_datasets <- c("Sturm_2016","Bergthold","Griesinger","Henriquez","Lambert","Paugh","Zakrzewski","Sturm_2012","Buczkowicz","Mascelli","Schwartzentruber","Bender")
+
+no_surv_dataset <- c("Bao","Reifenberger","Gill","Li", "Oh","Ivy GAP","Gleize","Sturm_2016","Henriquez","Bergthold","Buczkowicz","Mascelli","Lambert","Griesinger","Zakrzewski","Bender")#,"Sturm_2016")
 rnaseq_datasets <- c("TCGA LGG", "TCGA GBMLGG", "Bao", "Ivy GAP","Gill")
 
 gbm.tcga <- readRDS("data/TCGA.GBM.Rds")
@@ -80,6 +83,18 @@ oh <- readRDS("data/Oh.Rds")
 ivy <- readRDS("data/Ivy.Rds")
 pola <- readRDS("data/POLA.Rds")
 gleize <- readRDS("data/Gleize.Rds")
+sturm_2016 <- readRDS("data/Sturm_2016.Rds")
+paugh <- readRDS("data/Paugh.Rds")
+mascelli <- readRDS("data/Mascelli.Rds")
+schwartzentruber <- readRDS("data/Schwartzentruber.Rds")
+lambert <- readRDS("data/Lambert.Rds")
+griesinger <- readRDS("data/Griesinger.Rds")
+zakrzewski <- readRDS("data/Zakrzewski.Rds")
+sturm_2012<- readRDS("data/Sturm_2012.Rds")
+bender <- readRDS("data/Bender.Rds")
+bergthold <- readRDS("data/Bergthold.Rds")
+henriquez <- readRDS("data/Henriquez.Rds")
+buczkowicz <- readRDS("data/Buczkowicz.Rds")
 
 #######################################
 ########## other variables  ###########
@@ -122,7 +137,19 @@ plotList <- list("TCGA GBM" = c("Histology", "Copy_number", "Subtype", "CIMP_sta
                  "Oh" = c("Recurrence", "Subtype", "CIMP_status"),
                  "Ivy GAP" = c("Histology","Subtype","Recurrence", "CIMP_status"),
                  "POLA Network"= c("Subtype"),
-                 "Gleize" = c("Histology", "Grade"))
+                 "Gleize" = c("Histology", "Grade"),
+                 "Sturm_2016" = c("Histology","Subtype"),
+                 "Paugh" = c("Histology", "Grade", "Subtype"),
+                 "Mascelli" = c("Histology", "Grade"),
+                 "Schwartzentruber" = c("Recurrence"),
+                 "Lambert" = c("Histology"),
+                 "Griesinger" = c("Histology"),
+                 "Zakrzewski" = c("Histology"),
+                 "Sturm_2012" = c("Subtype"),
+                 "Bender" = c("Subtype"),
+                 "Bergthold" = c("Histology", "Recurrence"),
+                 "Henriquez"= c("Histology","Grade"),
+                 "Buczkowicz" = c("Histology", "Subtype"))
 
 
 ################################################
