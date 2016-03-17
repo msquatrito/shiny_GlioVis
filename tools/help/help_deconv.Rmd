@@ -14,7 +14,7 @@ instead of genes) space representing a more biologically interpretable set of fe
 which analytic methods can be applied. (Ref:[*GenePattern*](http://www.broadinstitute.org/cancer/software/genepattern/modules/docs/ssGSEAProjection/4)).     
 
 * **ssGSEA**, is performed using the `gsva` function of the [‘gsva’](http://www.bioconductor.org/packages/2.12/bioc/html/GSVA.html) package (method = "ssgsea"). Currently available genes list: 
-1. [Newman AM. et al. 2015](www.ncbi.nlm.nih.gov/pubmed/25822800)
+1. [Newman AM. et al. 2015](http://www.ncbi.nlm.nih.gov/pubmed/25822800)
 2. [Bindea G. et al. 2013](http://www.ncbi.nlm.nih.gov/pubmed/24138885) 
 3. [Engler JR. et al. 2012](http://www.ncbi.nlm.nih.gov/pubmed/22937035)   
 4. [MSigDB gene sets](http://software.broadinstitute.org/gsea/msigdb/index.jsp)   
