@@ -162,12 +162,18 @@ rmNA <- function (df) {
 ##########################################
 ##############  data table  ##############
 ##########################################
-options(DT.options  = list(lengthMenu = list(c(20, 50, 100, -1), c('20','50','100','All')), 
+options(DT.options  = list(lengthMenu = list(c(20, 50, 100, -1), c('20','50','100','All')),
                                     pagingType = "full",
-                                    dom = 'T<"clear">lfrtip', 
-                                    tableTools = list(sSwfPath = copySWF(dest = "www"))))
+                                    dom = 'lfBrtip',
+                                    buttons = list('copy', 'print', list(
+                                      extend = 'collection',
+                                      buttons = c('csv', 'excel', 'pdf'),
+                                      text = 'Download'
+                                    ))
+                           )
+        )
 data_table <- function (df) {
-datatable(df, selection = 'none', rownames = FALSE, extensions = "TableTools")
+datatable(df, selection = 'none', rownames = FALSE, extensions = 'Buttons')
           
 }
 
