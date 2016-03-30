@@ -124,7 +124,7 @@ shinyServer(
     plot_user_selection <- reactive ({
       # Exclude the pre-defeined plots and numeric variabe
       dropit <- c("Sample","Histology","Grade","Recurrence","Subtype", "CIMP_status", "survival",
-                "status", "Age", "ID","Patient_ID","Sample_ID", "Matching.sample", "Therapy_Class","title") 
+                "status", "Age", "ID","Patient_ID","Sample_ID", "Matching.sample", "Therapy_Class","title","tumor_name") 
       data <- pDatas()[,names(pDatas()) %notin% dropit, drop = FALSE]
       n <- names(data)
       n
@@ -484,7 +484,7 @@ shinyServer(
     
     #' Create a slider for the manual cutoff of the Kaplan Meier plot
     mRNA_surv <- reactive({
-      surv_Need()
+      surv_need()
       req(input$histology %in% c("All", histo()))      
       mRNA <- surv_data()[ ,"mRNA"]
       mRNA.values <- round(mRNA[!is.na(mRNA)],2)
@@ -640,7 +640,7 @@ shinyServer(
       validate(need(input$dataset %notin% c("TCGA LGG","Gorovets","POLA Network"), "Interactive HR plot currently available only for GBM samples") %then%
                  need(histo_selected() == "GBM","Please select GBM samples in the 'Histology' dropdown menu") %then%
                  need(input$dataset %notin% c("Grzmil","Vital"), "Sorry, too few samples to properly render the HR plot"))
-      surv_Need()
+      surv_need()
       input$tabSurv
       # Plot the hazardplot 
       hazardPlot(HR(), input$quantile)
@@ -653,7 +653,7 @@ shinyServer(
       validate(need(input$dataset %notin% c("TCGA LGG","Gorovets","POLA Network"), "Interactive HR plot currently available only for GBM samples") %then%
                  need(histo_selected() == "GBM","Please select GBM samples in the 'Histology' dropdown menu") %then%
                  need(input$dataset %notin% c("Grzmil","Vital"), "Sorry, too few samples to properly render the HR plot"))
-      surv_Need()
+      surv_need()
       data <- round(HR(),3)
       names(data) <- c("mRNA", "HR", "HR.lower", "HR.upper", "n.obs.1", "n.obs.2")
       data_table(data)
@@ -671,7 +671,7 @@ shinyServer(
     #' Create a Kaplan Meier plot on the HR cutoff
     output$kmPlot <- renderPlot({
       req(histo_selected() == "GBM")
-      surv_Need()
+      surv_need()
       cutoff <- get_Cutoff()
       surv <- survival_Fml()
       kmPlot(cutoff, surv)
@@ -861,7 +861,7 @@ shinyServer(
           need(input$gene %in% names(corr_data()),"Gene not available for this dataset")
       )   
       corr_filter_data()
-    }, selection = 'single', extensions = "TableTools", 
+    }, selection = 'single', extensions = 'Buttons', 
     options = list(orderClasses = TRUE, columnDefs = list(list(visible = FALSE, targets = 0)))
     )
     
@@ -948,7 +948,7 @@ shinyServer(
     
     output$rppaTable <- renderDataTable({
       rrppa_data_table()
-    }, selection = 'single', extensions = "TableTools", 
+    }, selection = 'single', extensions = 'Buttons', 
     options = list(orderClasses = TRUE, columnDefs = list(list(visible = FALSE, targets = 0)))
     )
     
@@ -1041,7 +1041,7 @@ shinyServer(
       req(mut_genes() != "")
       req(any(mut_genes() %in% names(exprs())))
       mut <- mut_data()[["ann"]]
-      datatable(mut, rownames = FALSE, extensions = c("FixedColumns", "TableTools"), filter="top",
+      datatable(mut, rownames = FALSE, extensions = c("FixedColumns", 'Buttons'), filter="top",
                 options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE))
     })
     
@@ -1157,7 +1157,7 @@ shinyServer(
              Consider to change either the cutoff, the Log2 fold change filter or the p value")
       )
       data <- de_data()[["topTable"]]
-      datatable(data, selection = 'none', rownames = TRUE, extensions = "TableTools")
+      datatable(data, selection = 'none', rownames = TRUE, extensions = 'Buttons')
     })
     
     #' Gene Onthology
@@ -1221,7 +1221,7 @@ shinyServer(
     
     output$enrichGOTable <- renderDataTable({
       req(length(enrich_GO()@geneInCategory)>0)
-      datatable(summary(enrich_GO()), selection = 'none', rownames = FALSE, extensions = "TableTools")
+      datatable(summary(enrich_GO()), selection = 'none', rownames = FALSE, extensions = 'Buttons')
     })
     
     #' KEGG
@@ -1259,7 +1259,7 @@ shinyServer(
     output$enrichKeggTable <- renderDataTable({
       req(length(enrich_Kegg()@geneInCategory)>0)
       eKegg <- setReadable(enrich_Kegg(), OrgDb = "org.Hs.eg.db", keytype = "ENTREZID")
-      datatable(summary(eKegg), selection = 'none', rownames = FALSE, extensions = "TableTools")
+      datatable(summary(eKegg), selection = 'none', rownames = FALSE, extensions = 'Buttons')
     })
     
     #' Generate reports
@@ -1341,7 +1341,7 @@ shinyServer(
       } else {
         data <- summary_data()
       }
-      datatable(data, rownames = FALSE, extensions = c("FixedColumns", "TableTools"),
+      datatable(data, rownames = FALSE, extensions = c("FixedColumns", 'Buttons'),
                 options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE))
     })
     
@@ -1617,7 +1617,7 @@ shinyServer(
           need(input$goEst != 0,'Please press "Submit ESTIMATE"')
       )
       est_call()
-    }, selection = 'single', extensions = "TableTools", 
+    }, selection = 'single', extensions = 'Buttons', 
     options = list(orderClasses = TRUE, columnDefs = list(list(visible = FALSE, targets = 0)), autoWidth = TRUE)
     )
     
@@ -1757,7 +1757,7 @@ shinyServer(
         need(!is.null(input$upFile),"Please upload the dataset to be analyzed")%then%
           need(!is.null(goDec$Submit),'Please press "Submit Deconvolute"')
       )
-      datatable(deconv_call()[["scores"]], rownames = FALSE, extensions = c("FixedColumns", "TableTools"),
+      datatable(deconv_call()[["scores"]], rownames = FALSE, extensions = c("FixedColumns", 'Buttons'),
                 options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE)
       )
     })
