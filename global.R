@@ -7,18 +7,18 @@
 # terms of the GNU General Public License as published by the Free Software
 # Foundation; either version 3 of the License, or (at your option) any later
 # version.
-# 
+#
 # GlioVis is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 # A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along with
 # this program; if not, see <http://www.gnu.org/licenses/>.
 
 library(shiny)
 library(survival)
-library(weights)
 library(ggplot2)
+library(weights)
 library(gridExtra)
 library(googleVis)
 library(dplyr)
@@ -40,71 +40,93 @@ library(shinyBS)
 library(limma)
 library(ComplexHeatmap)
 library(clusterProfiler)
-# library(shinyjs)
+library(survminer)
+
+# library(gliovis)
 
 options(shiny.usecairo=TRUE)
 
 `%then%` <- shiny:::`%OR%`
-# `%notin%` <- Negate('%in%')
+
 
 #######################################
 ############## Datasets  ##############
 #######################################
-adult_datasets <- c("TCGA GBM", "TCGA LGG","TCGA GBMLGG", "Rembrandt", "Gravendeel", "Bao", "Ivy GAP", "Lee Y", "Oh","Phillips", 
-                  "Gill", "Freije", "Murat", "Gorovets", "POLA Network", "Reifenberger", "Joo", "Ducray", "Nutt", "Vital",
-                  "Grzmil", "Gleize", "Donson", "Li")
+adult_datasets <- c("TCGA GBM", "TCGA LGG","TCGA GBMLGG", "Rembrandt", "Gravendeel","Bao", "Kamoun","Ivy GAP", "Lee Y", "Oh","Phillips",
+                    "Gill", "Freije", "Murat","Gorovets", "POLA Network", "Reifenberger", "Joo","Ducray", "Walsh", "Nutt", "Kwom", "Vital",
+                    "Grzmil", "Gleize", "Donson", "Li")
 
-pediatric_datasets <- c("Sturm_2016","Bergthold","Griesinger","Henriquez","Lambert","Paugh","Zakrzewski","Sturm_2012","Buczkowicz","Mascelli","Schwartzentruber","Bender")
+pediatric_datasets <- c("Northcott_2012","Sturm_2016","Bergthold","Griesinger","Gump","Northcott_2011","Pomeroy",
+                        "Johnson","Witt","Henriquez","Hoffman","Kool","Lambert","Paugh", "deBont","Johann",
+                        "Zakrzewski","Sturm_2012","Buczkowicz","Mascelli","Schwartzentruber","Bender")
 
-no_surv_dataset <- c("Bao","Reifenberger","Gill","Li", "Oh","Ivy GAP","Gleize","Sturm_2016","Henriquez","Bergthold","Buczkowicz","Mascelli","Lambert","Griesinger","Zakrzewski","Bender")#,"Sturm_2016")
+no_surv_dataset <- c("Bao","Reifenberger","Gill","Li", "Oh","Ivy GAP", "Kwom","Walsh","Gleize",
+                     "Sturm_2016","Henriquez","Bergthold","Buczkowicz","Mascelli","Lambert","Griesinger",
+                     "Zakrzewski","Bender", "deBont","Gump","Johnson","Northcott_2012","Northcott_2011", "Kool",
+                     "Johann")
 rnaseq_datasets <- c("TCGA LGG", "TCGA GBMLGG", "Bao", "Ivy GAP","Gill")
 
-gbm.tcga <- readRDS("data/TCGA.GBM.Rds")
-lgg.tcga <- readRDS("data/TCGA.LGG.Rds")
-lgg_gbm.tcga <- readRDS("data/TCGA.LGG_GBM.Rds")
-rembrandt <- readRDS("data/Rembrandt.Rds")
-freije <- readRDS("data/Freije.Rds")
-gravendeel <- readRDS("data/Gravendeel.Rds")
-murat <- readRDS("data/Murat.Rds")
-phillips <- readRDS("data/Phillips.Rds")
-leey <- readRDS("data/LeeY.Rds")
-reifenberger <- readRDS("data/Reifenberger.Rds")
-bao <- readRDS("data/Bao.Rds")
-gill <- readRDS("data/Gill.Rds")
-gorovets <- readRDS("data/Gorovets.Rds")
-nutt <- readRDS("data/Nutt.Rds")
-ducray <- readRDS("data/Ducray.Rds")
-grzmil <- readRDS("data/Grzmil.Rds")
-donson <- readRDS("data/Donson.Rds")
-li <- readRDS("data/Li.Rds")
-vital <- readRDS("data/Vital.Rds")
-joo <- readRDS("data/Joo.Rds")
-oh <- readRDS("data/Oh.Rds")
-ivy <- readRDS("data/Ivy.Rds")
-pola <- readRDS("data/POLA.Rds")
-gleize <- readRDS("data/Gleize.Rds")
-sturm_2016 <- readRDS("data/Sturm_2016.Rds")
-paugh <- readRDS("data/Paugh.Rds")
-mascelli <- readRDS("data/Mascelli.Rds")
-schwartzentruber <- readRDS("data/Schwartzentruber.Rds")
-lambert <- readRDS("data/Lambert.Rds")
-griesinger <- readRDS("data/Griesinger.Rds")
-zakrzewski <- readRDS("data/Zakrzewski.Rds")
-sturm_2012<- readRDS("data/Sturm_2012.Rds")
-bender <- readRDS("data/Bender.Rds")
-bergthold <- readRDS("data/Bergthold.Rds")
-henriquez <- readRDS("data/Henriquez.Rds")
-buczkowicz <- readRDS("data/Buczkowicz.Rds")
+gbm.tcga <- readRDS("data/datasets/TCGA.GBM.Rds")
+lgg.tcga <- readRDS("data/datasets/TCGA.LGG.Rds")
+lgg_gbm.tcga <- readRDS("data/datasets/TCGA.LGG_GBM.Rds")
+rembrandt <- readRDS("data/datasets/Rembrandt.Rds")
+freije <- readRDS("data/datasets/Freije.Rds")
+gravendeel <- readRDS("data/datasets/Gravendeel.Rds")
+murat <- readRDS("data/datasets/Murat.Rds")
+phillips <- readRDS("data/datasets/Phillips.Rds")
+leey <- readRDS("data/datasets/LeeY.Rds")
+reifenberger <- readRDS("data/datasets/Reifenberger.Rds")
+bao <- readRDS("data/datasets/Bao.Rds")
+gill <- readRDS("data/datasets/Gill.Rds")
+gorovets <- readRDS("data/datasets/Gorovets.Rds")
+nutt <- readRDS("data/datasets/Nutt.Rds")
+ducray <- readRDS("data/datasets/Ducray.Rds")
+walsh <- readRDS("data/datasets/Walsh.Rds")
+grzmil <- readRDS("data/datasets/Grzmil.Rds")
+donson <- readRDS("data/datasets/Donson.Rds")
+li <- readRDS("data/datasets/Li.Rds")
+vital <- readRDS("data/datasets/Vital.Rds")
+joo <- readRDS("data/datasets/Joo.Rds")
+oh <- readRDS("data/datasets/Oh.Rds")
+ivy <- readRDS("data/datasets/Ivy.Rds")
+pola <- readRDS("data/datasets/POLA.Rds")
+gleize <- readRDS("data/datasets/Gleize.Rds")
+sturm_2016 <- readRDS("data/datasets/Sturm_2016.Rds")
+paugh <- readRDS("data/datasets/Paugh.Rds")
+mascelli <- readRDS("data/datasets/Mascelli.Rds")
+schwartzentruber <- readRDS("data/datasets/Schwartzentruber.Rds")
+lambert <- readRDS("data/datasets/Lambert.Rds")
+griesinger <- readRDS("data/datasets/Griesinger.Rds")
+zakrzewski <- readRDS("data/datasets/Zakrzewski.Rds")
+sturm_2012<- readRDS("data/datasets/Sturm_2012.Rds")
+bender <- readRDS("data/datasets/Bender.Rds")
+bergthold <- readRDS("data/datasets/Bergthold.Rds")
+henriquez <- readRDS("data/datasets/Henriquez.Rds")
+buczkowicz <- readRDS("data/datasets/Buczkowicz.Rds")
+kamoun <- readRDS("data/datasets/Kamoun.Rds")
+kwom <- readRDS("data/datasets/Kwom.Rds")
+witt <- readRDS("data/datasets/Witt.Rds")
+deBont <- readRDS("data/datasets/deBont.Rds")
+gump <- readRDS("data/datasets/Gump.Rds")
+hoffman <- readRDS("data/datasets/Hoffman.Rds")
+johnson <- readRDS("data/datasets/Johnson.Rds")
+northcott_2012 <- readRDS("data/datasets/Northcott_2012.Rds")
+northcott_2011 <- readRDS("data/datasets/Northcott_2011.Rds")
+pomeroy <- readRDS("data/datasets/Pomeroy.Rds")
+kool <- readRDS("data/datasets/Kool.Rds")
+johann <- readRDS("data/datasets/Johann.Rds")
 
 #######################################
 ########## other variables  ###########
 #######################################
 genes <- readRDS("data/genes.Rds")
 gene_names <- as.character(genes[,"Gene"])
-gbm.subtype.list <- readRDS("data/subtype_list.Rds")
-gbm.core.samples <- readRDS("data/TCGA.core.345samples.Rds")
+# gbm.subtype.list <- readRDS("data/subtype_list.Rds")
+# gbm.subtype.list <- readRDS("data/subtype_list_2016.Rds")
+# subtypes_2016_list <- read.delim("data/subtypes_2016_gene_list.txt", stringsAsFactors=FALSE)
+# gbm.core.samples <- readRDS("data/TCGA.core.345samples.Rds")
+# gbm.core.samples <- readRDS("data/TCGA.GBM.core.samples.2016.Rds")
 lgg.core.samples <- readRDS("data/lgg.core.229samples.Rds")
-# lgg.core.samples <- readRDS("data/lgg.expSubtype.core.Rds")
 galon_gene_set_list <- readRDS("data/galon_gene_set_list.Rds")
 engler_gene_set_list <- readRDS("data/engler_gene_set_list.Rds")
 galon_engler <- readRDS("data/galon_engler_gene_set_list.RDS")
@@ -119,24 +141,27 @@ plotList <- list("TCGA GBM" = c("Histology", "Copy_number", "Subtype", "CIMP_sta
                  "TCGA GBMLGG" = c("Histology", "Grade", "Copy_number", "Subtype"),
                  "Rembrandt" = c("Histology", "Grade", "Subtype", "CIMP_status"),
                  "Gravendeel" = c("Histology", "Grade", "Subtype", "CIMP_status"),
+                 "Kamoun" = c("Histology", "Grade", "Subtype"),
                  "Phillips" = c("Histology", "Grade", "Subtype", "Recurrence", "CIMP_status"),
                  "Murat" = c("Histology", "Subtype", "Recurrence", "CIMP_status"),
                  "Freije" = c("Histology", "Grade", "Subtype", "CIMP_status"),
-                 "Lee Y" = c("Subtype", "CIMP_status"),
-                 "Reifenberger" = c("Subtype", "CIMP_status"),
+                 "Lee Y" = c("Histology","Subtype", "CIMP_status"),
+                 "Reifenberger" = c("Histology","Subtype", "CIMP_status"),
                  "Bao" = c("Histology", "Subtype", "Recurrence", "CIMP_status"),
                  "Gill" = c("Histology", "Subtype", "CIMP_status"),
+                 "Walsh" = c("Subtype","CIMP_status"),
                  "Gorovets" = c("Histology", "Grade", "Subtype"),
                  "Nutt" = c("Histology", "Subtype", "CIMP_status"),
-                 "Ducray" = c("Subtype", "CIMP_status"),
+                 "Ducray" = c("Histology","Subtype", "CIMP_status"),
                  "Grzmil"= c("Histology", "Subtype", "CIMP_status"),
                  "Donson"= c("Histology", "Subtype"),
-                 "Li" = c("Subtype", "CIMP_status"),
+                 "Li" = c("Histology","Subtype", "CIMP_status"),
                  "Vital" = c("Histology", "Grade", "Subtype"),
                  "Joo" = c("Histology", "Subtype", "Recurrence", "CIMP_status"),
-                 "Oh" = c("Recurrence", "Subtype", "CIMP_status"),
+                 "Oh" = c("Histology","Recurrence", "Subtype", "CIMP_status"),
                  "Ivy GAP" = c("Histology","Subtype","Recurrence", "CIMP_status"),
-                 "POLA Network"= c("Subtype"),
+                 "Kwom" = c("Histology","Subtype","Recurrence"),
+                 "POLA Network"= c("Histology","Subtype"),
                  "Gleize" = c("Histology", "Grade"),
                  "Sturm_2016" = c("Histology","Subtype"),
                  "Paugh" = c("Histology", "Grade", "Subtype"),
@@ -145,11 +170,21 @@ plotList <- list("TCGA GBM" = c("Histology", "Copy_number", "Subtype", "CIMP_sta
                  "Lambert" = c("Histology"),
                  "Griesinger" = c("Histology"),
                  "Zakrzewski" = c("Histology"),
-                 "Sturm_2012" = c("Subtype"),
-                 "Bender" = c("Subtype"),
+                 "Sturm_2012" = c("Histology","Subtype"),
+                 "Bender" = c("Histology","Subtype"),
                  "Bergthold" = c("Histology", "Recurrence"),
                  "Henriquez"= c("Histology","Grade"),
-                 "Buczkowicz" = c("Histology", "Subtype"))
+                 "Buczkowicz" = c("Histology", "Subtype"),
+                 "Witt" = c("Histology","Grade","Recurrence","Subtype"),
+                 "deBont" = c("Histology","Recurrence"),
+                 "Gump" = c("Histology"),
+                 "Hoffman" =c("Histology","Grade","Subtype","Recurrence"),
+                 "Johnson" = c("Histology","Subtype"),
+                 "Northcott_2012" = c("Histology","Subtype"), 
+                 "Northcott_2011" = c("Histology","Subtype"),
+                 "Pomeroy"= c("Histology"), 
+                 "Kool" = c("Histology", "Subtype"),
+                 "Johann" = c("Histology", "Subtype"))
 
 
 ################################################
@@ -163,44 +198,43 @@ rmNA <- function (df) {
 ##############  data table  ##############
 ##########################################
 options(DT.options  = list(lengthMenu = list(c(20, 50, 100, -1), c('20','50','100','All')),
-                                    pagingType = "full",
-                                    dom = 'lfBrtip',
-                                    buttons = list('copy', 'print', list(
-                                      extend = 'collection',
-                                      buttons = c('csv', 'excel', 'pdf'),
-                                      text = 'Download'
-                                    ))
-                           )
-        )
-data_table <- function (df) {
-datatable(df, selection = 'none', rownames = FALSE, extensions = 'Buttons')
-          
+                           pagingType = "full",
+                           dom = 'lfBrtip',
+                           buttons = list('copy', 'print', list(
+                             extend = 'collection',
+                             buttons = c('csv', 'excel', 'pdf'),
+                             text = 'Download'
+                           ))
+)
+)
+data_table <- function (df,rownames = FALSE, selection = 'none', filter = "none") {
+  datatable(df, selection = selection, rownames = rownames, filter = filter, extensions = 'Buttons')
+  
 }
 
 ####################################
 ##############  busy  ##############
 ####################################
-
 busy <- function (text = "") {
-  div(class = "busy",  
+  div(class = "busy",
       p("Calculating, please wait"),
       img(src="Rotating_brain.gif"),
       hr(),
       p(text)
   )
-}  
+}
 
 ######################################
 ############## Get HR  ###############
 ######################################
 getHR <- function (df) {
   mRNA <- df[ ,"mRNA"]
-  surv.status <- df[ ,"status"]
-  surv.time <- df[ ,"survival"]
+  surv.status <- df[ ,"survival_status"]
+  surv.time <- df[ ,"survival_month"]
   my.Surv <- Surv(surv.time, surv.status == 1)
   mRNA.values <- mRNA[!is.na(mRNA)]
   # Generate a vector of continuos values, excluding the first an last value
-  mRNA.values <- sort(mRNA.values[mRNA.values != min(mRNA.values) & mRNA.values != max(mRNA.values)]) 
+  mRNA.values <- sort(mRNA.values[mRNA.values != min(mRNA.values) & mRNA.values != max(mRNA.values)])
   scan_surv <-function(i, conf.level=95) {
     log.rank <- survdiff(my.Surv ~ mRNA <= i, data = df, rho = 0)
     model <- summary(coxph(my.Surv ~ mRNA <= i))
@@ -212,7 +246,7 @@ getHR <- function (df) {
   HRdata <- data.frame (t(sapply(mRNA.values, scan_surv)))
   HRdata <- data.frame (sapply(HRdata,unlist))
   # Exclude groups with less than 10 samples. They don't display properly in the plots(CI too wide)
-  HRdata <- subset(HRdata, HRdata[,5] >= 10 & HRdata[,6] >= 10) 
+  HRdata <- subset(HRdata, HRdata[,5] >= 10 & HRdata[,6] >= 10)
 }
 
 ##########################################
@@ -230,7 +264,7 @@ hazardPlot <- function (HRdata, quantile) {
   if (ymax < 1) ymax <- 2
   par(mar = c(5, 4, 4, 2))
   plot(0, 0, type = "n", xlim = range(HRdata[, 1]), ylim = c(ymin - 0.4, ymax + 0.2),
-       ylab = "HR with 95% CI", xlab = "mRNA expression (log2)", yaxt="n") 
+       ylab = "HR with 95% CI", xlab = "mRNA expression (log2)", yaxt="n")
   title(main = "Hazard ratio", line = 3, font.main = 1, cex.main = 1)
   at <- ymin:ymax
   at.pos <- 1:ymax
@@ -261,7 +295,7 @@ get_cutoff <- function(mRNA, cutoff, numeric) {
     if (cutoff == "high vs low") {
       strat <- ifelse(mRNA >= mRNA.q [3], "high", ifelse(mRNA <= mRNA.q [1], "low",NA))
     } else {
-      cut <- switch(cutoff, 
+      cut <- switch(cutoff,
                     "median" = mRNA.q[2],
                     "lower quartile" = mRNA.q [1],
                     "upper quartile" = mRNA.q [3],
@@ -273,38 +307,38 @@ get_cutoff <- function(mRNA, cutoff, numeric) {
   strat
 }
 
-survivalPlot <- function (df, gene, group, subtype, cutoff, numeric, cex = 1) {
+survivalPlot <- function (df, gene, group, subtype, cutoff, numeric, censor,risk.table, conf.int, font.legend) {
   # Select a specific Histology
-  if (group != "All") {
-    df <- filter(df, Histology == group)
-  }
+  # if (group != "All") {
+  #   df <- filter(df, Histology == group)
+  # }
   # Select a specific subtype
   if (subtype != "All") {
     df <- filter(df, Subtype == subtype)
-  } 
+  }
   if(cutoff == "Use a specific mRNA value") {
-    main <- paste0("Histology: ", group, 
-                  "; Subtype: ", subtype,
-                  "; Cutoff: ", round(numeric, 2)) 
+    main <- paste0("Histology: ", group,
+                   "; Subtype: ", subtype,
+                   "; Cutoff: ", round(numeric, 2),"\n")
   } else {
-    main <- paste0("Histology: ", group, 
-                  "; Subtype: ", subtype,
-                  "; Cutoff: ", cutoff)
+    main <- paste0("Histology: ", group,
+                   "; Subtype: ", subtype,
+                   "; Cutoff: ", cutoff,"\n")
   }
   
   mRNA <- df[ ,"mRNA"]
-  surv.status <- df[ ,"status"]
-  surv.time <- df[ ,"survival"]
+  surv.status <- df[ ,"survival_status"]
+  surv.time <- df[ ,"survival_month"]
   my.Surv <- Surv(time = surv.time, event = surv.status== 1)
   smax <- max(surv.time, na.rm = TRUE)
   tmax <- smax-(25*smax)/100
-  xmax <- (95*tmax)/100
-  strat <- get_cutoff(mRNA, cutoff, numeric)
-  expr.surv <- survfit(my.Surv ~ strat, conf.type = "none")
-  log.rank <- survdiff(my.Surv ~ strat, rho = 0)
-  mantle.cox <- survdiff(my.Surv~ strat, rho = 1)
+  xmax <- (90*tmax)/100
+  df$cutoff_group <- get_cutoff(mRNA, cutoff, numeric)
+  expr.surv <- survfit(my.Surv ~ cutoff_group, data=df)
+  log.rank <- survdiff(my.Surv ~ cutoff_group, rho = 0, data=df)
+  mantle.cox <- survdiff(my.Surv ~ cutoff_group, rho = 1, data=df)
   surv <- data.frame(summary(expr.surv)$table)
-  model <- summary(coxph(my.Surv ~ strat))
+  model <- summary(coxph(my.Surv ~ cutoff_group, data=df))
   HR <- round(model$conf.int[1],2)
   HR.lower <- round(model$conf.int[3],2)
   HR.upper <- round(model$conf.int[4],2)
@@ -312,36 +346,39 @@ survivalPlot <- function (df, gene, group, subtype, cutoff, numeric, cex = 1) {
   mantle.cox.p <- round(1 - pchisq(mantle.cox$chi, df = 1), 4)
   star.log <- starmaker(log.rank.p)
   star.mcox <- starmaker(mantle.cox.p)
-  plot(expr.surv, xlab = "Survival time (Months)", ylab = "% Surviving", yscale = 100, xlim = c(0,smax),
-       main = main, col = c("red", "blue"), mark.time = FALSE)
-  legend("topright", legend = c(sprintf("%s High, (n=%s, events=%s, median=%s)", gene, surv$records[1], surv$events[1], surv$median[1]), 
-                                sprintf("%s Low, (n=%s, events=%s, median=%s)", gene, surv$records[2], surv$events[2], surv$median[2])),
-         col= c("red", "blue"), lty = 1, cex = cex)
-  graphics::text(xmax, 0.725, sprintf("HR = %s, (%s - %s)",HR, HR.lower, HR.upper), cex = cex)
-  graphics::text(xmax, 0.65, sprintf("%s Log-rank p value= %s", star.log, log.rank.p), cex = cex)
-  graphics::text(xmax, 0.575, sprintf("%s Wilcoxon p value= %s",star.mcox, mantle.cox.p), cex = cex)
   
+  legend.labs = c(sprintf("%s High, (n=%s, events=%s, median=%s)", gene, surv$records[1], surv$events[1], surv$median[1]),
+                  sprintf("%s Low, (n=%s, events=%s, median=%s)", gene, surv$records[2], surv$events[2], surv$median[2]))
+  xlegend <- 0.65
   if (cutoff == "quartiles"){
-    expr.surv <- survfit(my.Surv ~ strata(strat), conf.type="none")
-    z <- data.frame(summary(expr.surv)$table) 
-    plot(expr.surv, xlab="Months", ylab="% Surviving", yscale = 100, xlim = c(0,smax), 
-         main = main, col= c(1:4), mark.time=FALSE)
-    legend("topright", title = "Quantile", 
-           legend = c(sprintf("1st (n=%s, median=%s)", z$records[1], z$median[1]),
-                      sprintf("2nd (n=%s, median=%s)", z$records[2], z$median[2]),
-                      sprintf("3rd (n=%s, median=%s)", z$records[3], z$median[3]),
-                      sprintf("4th (n=%s, median=%s)", z$records[4], z$median[4])),
-           col= c(1:4), lty=1, cex = cex)
-  } 
+    legend.labs = c(sprintf("1st (n=%s, median=%s)", surv$records[1], surv$median[1]),
+                    sprintf("2nd (n=%s, median=%s)", surv$records[2], surv$median[2]),
+                    sprintf("3rd (n=%s, median=%s)", surv$records[3], surv$median[3]),
+                    sprintf("4th (n=%s, median=%s)", surv$records[4], surv$median[4]))
+    xlegend <- 0.75
+  }
+  p <- ggsurvplot(expr.surv, censor = censor, conf.int = conf.int, legend = c(xlegend,0.9), surv.scale = "percent", ylab = "% Surviving", xlab = "Survival time (Months)",
+                  xlim = c(0,smax),main = main, legend.labs = legend.labs, legend.title = "", font.legend = font.legend, risk.table = risk.table,
+                  risk.table.y.text = F, risk.table.y.text.col = T, risk.table.height = 0.4)
+  plot <- p$plot
+  if (cutoff != "quartiles"){
+    plot <- plot + annotate("text", x = xmax, y = c(0.725,0.65,0.575), size = font.legend/3,
+                            label = c(sprintf("HR = %s, (%s - %s)",HR, HR.lower, HR.upper),
+                                      sprintf("%s Log-rank p value= %s", star.log, log.rank.p),
+                                      sprintf("%s Wilcoxon p value= %s",star.mcox, mantle.cox.p)))
+  }
+  p$plot <- plot
+  print(p)
 }
 
 #####################
 ## Get correlations ##
 #####################
-# To use to get correlation data (r an p value) on the fly. 
+# To use to get correlation data (r an p value) on the fly.
 # using Hadley suggestion: https://stat.ethz.ch/pipermail/r-help/2008-November/181049.html
 getCorr <- function (data, gene, corrMethod) {
   data <- data[ ,9:ncol(data)]
+  data <- data[complete.cases(data[,gene]),]
   mRNA <- data[ ,gene, drop = F]
   r <- apply(mRNA, 2, function(x) { apply(data, 2, function(y) { cor(x,y, method = corrMethod) })})
   df <- nrow(mRNA) - 2
@@ -349,7 +386,7 @@ getCorr <- function (data, gene, corrMethod) {
   p <- pt(t, df)
   p <- 2 * pmin(p, 1 - p)
   padj <- p.adjust(p, method = "bonferroni")
-  corr <- data.frame(row.names(r), round(r,3), round(p,10),round(padj,10))
+  corr <- data.frame(row.names(r), round(r,3), signif(p,3),signif(padj,3))
   names(corr) <- c("Gene","r","p.value", "adj.p.value")
   row.names(corr) <- corr$Gene
   corr
@@ -359,15 +396,15 @@ getCorr <- function (data, gene, corrMethod) {
 ############## 2 genes correlation plot ##############
 ######################################################
 myCorggPlot <- function (df, gene1, gene2, colorBy = "none", separateBy = "none",...) {
-  # empy plot to used in grid.arrange 
+  # empy plot to used in grid.arrange
   empty <- ggplot() + geom_point(aes(1,1), colour="white") + theme_void()
   # scatterplot of x and y variables
-  scatter <- ggplot(df,mapping = aes_string(x = gene1, y = gene2)) 
+  scatter <- ggplot(df,mapping = aes_string(x = gene1, y = gene2))
   # marginal density of x - plot on top
-  plot_top <- ggplot(df, mapping = aes_string(x = gene1)) + 
+  plot_top <- ggplot(df, mapping = aes_string(x = gene1)) +
     theme(legend.position = "none", axis.text.x=element_blank(), axis.ticks=element_blank(), axis.title.x = element_blank())
   # marginal density of y - plot on the right
-  plot_right <- ggplot(df, mapping = aes_string(x = gene2)) + coord_flip() + 
+  plot_right <- ggplot(df, mapping = aes_string(x = gene2)) + coord_flip() +
     theme(legend.position = "none",axis.title.y = element_blank(), axis.ticks=element_blank(),axis.text.y=element_blank())
   
   if (colorBy != "none") {
@@ -379,12 +416,12 @@ myCorggPlot <- function (df, gene1, gene2, colorBy = "none", separateBy = "none"
     legend <- g1[["grobs"]][[id.legend]]
     # scatter without the legend
     scatter <- scatter + theme(legend.position = "none")
-    plot_top <- plot_top + geom_density(col, alpha=0.5) 
+    plot_top <- plot_top + geom_density(col, alpha=0.5)
     plot_right <- plot_right + geom_density(col, alpha=0.5)
   }  else {
     scatter <- scatter + geom_point(alpha=0.5) + geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1)
     legend <- empty
-    plot_top <- plot_top + geom_density(alpha=0.5) 
+    plot_top <- plot_top + geom_density(alpha=0.5)
     plot_right <- plot_right + geom_density(alpha=0.5)
   }
   
@@ -399,15 +436,14 @@ myCorggPlot <- function (df, gene1, gene2, colorBy = "none", separateBy = "none"
     grid.draw(grid.arrange(plot_top, legend, scatter, plot_right, ncol=2, nrow=2, widths=c(3, 1), heights=c(1.5, 3)))
   } else {
     print(scatter)
-  } 
+  }
 }
-
 
 ######################################
 ############## kmPlot  ###############
 ######################################
 # Use to plot survival curves, getting the cutoff from the interactive HR plot
-kmPlot <- function (cutoff,surv){
+kmPlot <- function (cutoff,surv,censor,conf.int,risk.table,font.legend){
   sFit <- survfit(surv)
   sTable <- data.frame(summary(sFit)$table)
   sDiff.log <- survdiff(surv)
@@ -420,17 +456,21 @@ kmPlot <- function (cutoff,surv){
   HR <- round(model$conf.int[1],2)
   HR.lower <- round(model$conf.int[3],2)
   HR.upper <- round(model$conf.int[4],2)
-  smax <- max(sFit$time,na.rm=TRUE) 
-  smax <- smax-(20*smax)/100
-  plot(sFit, yscale = 100 , col = c("red", "blue"), mark.time=FALSE)
-  title (main="Kaplan Meier Survival Estimates", xlab="Survival Time (Months)", 
-         ylab="% Surviving", font.main = 1, cex.main = 1)
-  legend("topright", c(paste("High expr. ", paste(" (n=", sTable$records[1]),", events=",sTable$events[1],", median=",sTable$median[1],")", sep = ""), 
-                       paste("Low expr. ", paste(" (n=", sTable$records[2]),", events=",sTable$events[2],", median=",sTable$median[2],")", sep = "")), 
-         col= c("red", "blue"), lty = 1, cex = 1)
-  graphics::text(smax-10, 0.725, paste("HR = ",HR, " (", HR.lower, "-", HR.upper,")", sep=""), cex = 1)
-  graphics::text(smax-10, 0.65, paste (star.log, "Log-rank p value=", log.rank.p), cex = 1)
-  graphics::text(smax-10, 0.575, paste (star.mcox, "Wilcoxon p value=", mantle.cox.p), cex = 1)
+  smax <- max(sFit$time,na.rm=TRUE)
+  tmax <- smax-(25*smax)/100
+  xmax <- (90*tmax)/100
+  p <- ggsurvplot(sFit, censor = censor, conf.int = conf.int, legend = c(0.65,0.9), surv.scale = "percent", ylab = "% Surviving", xlab = "Survival time (Months)",
+                  xlim = c(0,smax), main = "Kaplan Meier Survival Estimates", legend.title = "", font.legend = font.legend, 
+                  legend.labs = c(sprintf("High expr., (n=%s, events=%s, median=%s)", sTable$records[1], sTable$events[1], sTable$median[1]),
+                                  sprintf("Low expr., (n=%s, events=%s, median=%s)", sTable$records[2], sTable$events[2], sTable$median[2])),
+                  risk.table = risk.table, risk.table.y.text = F, risk.table.y.text.col = T, risk.table.height = 0.4)
+  plot <- p$plot
+  plot <- plot + annotate("text", x = xmax, y = c(0.725,0.65,0.575), size = font.legend/3,
+                          label = c(sprintf("HR = %s, (%s - %s)",HR, HR.lower, HR.upper),
+                                    sprintf("%s Log-rank p value= %s", star.log, log.rank.p),
+                                    sprintf("%s Wilcoxon p value= %s",star.mcox, mantle.cox.p)))
+  p$plot <- plot
+  print(p)
 }
 
 ######################################
@@ -475,15 +515,15 @@ helpPopup <- function(title, content,
     ),
     tags$a(
       href = "#",
-      # class = "btn btn-default", 
+      # class = "btn btn-default",
       `data-toggle` = "popover",
-      title = title, 
+      title = title,
       `data-content` = content,
-      `data-html` = TRUE, 
+      `data-html` = TRUE,
       `data-animation` = TRUE,
       `data-placement` = match.arg(placement, several.ok=TRUE)[1],
-      `data-trigger` = match.arg(trigger, several.ok=TRUE)[1],  
-      glue, 
+      `data-trigger` = match.arg(trigger, several.ok=TRUE)[1],
+      glue,
       # tags$i(class="icon-info-sign")
       tags$i(class="icon-question-sign")
     ),
@@ -656,9 +696,9 @@ ggally_cor <- function(data, mapping, corAlignPercent = 0.6, ...){
       ...
     ) +
       #element_bw() +
-      theme(legend.position = "none", 
-            panel.grid.major = element_blank(), 
-            axis.ticks = element_blank(), 
+      theme(legend.position = "none",
+            panel.grid.major = element_blank(),
+            axis.ticks = element_blank(),
             panel.border = element_rect(linetype = "dashed", colour = "black", fill=NA))
     
     p$type <- "continuous"
@@ -704,7 +744,7 @@ myEstimateScore <- function (ds, platform = c("affymetrix", "agilent","illumina"
   for (gs.i in 1:N.gs) {
     gene.set <- gs[gs.i, ]
     gene.overlap <- intersect(gene.set, gene.names)
-    print(paste(gs.i, "gene set:", gs.names[gs.i], " overlap=", 
+    print(paste(gs.i, "gene set:", gs.names[gs.i], " overlap=",
                 length(gene.overlap)))
     if (length(gene.overlap) == 0) {
       score.matrix[gs.i, ] <- rep(NA, Ns)
@@ -737,7 +777,7 @@ myEstimateScore <- function (ds, platform = c("affymetrix", "agilent","illumina"
           arg.ES <- which.min(RES)
         }
         ES <- sum(RES)
-        EnrichmentScore <- list(ES = ES, arg.ES = arg.ES, 
+        EnrichmentScore <- list(ES = ES, arg.ES = arg.ES,
                                 RES = RES, indicator = TAG)
         ES.vector[S.index] <- EnrichmentScore$ES
       }
@@ -750,7 +790,7 @@ myEstimateScore <- function (ds, platform = c("affymetrix", "agilent","illumina"
   estimate.score <- apply(score.data, 2, sum)
   if (platform != "affymetrix") {
     score.data <- rbind(score.data, estimate.score)
-    rownames(score.data) <- c("StromalScore", "ImmuneScore", 
+    rownames(score.data) <- c("StromalScore", "ImmuneScore",
                               "ESTIMATEScore")
   }
   else {
@@ -766,17 +806,17 @@ myEstimateScore <- function (ds, platform = c("affymetrix", "agilent","illumina"
         next
       }
       else {
-        message(paste(sample.names[i], ": out of bounds", 
+        message(paste(sample.names[i], ": out of bounds",
                       sep = ""))
       }
     }
     colnames(est.new) <- c("TumorPurity")
     estimate.t1 <- cbind(estimate.score, est.new)
-    x.bad.tumor.purities <- estimate.t1[, "TumorPurity"] < 
+    x.bad.tumor.purities <- estimate.t1[, "TumorPurity"] <
       0
     estimate.t1[x.bad.tumor.purities, "TumorPurity"] <- NA
     score.data <- rbind(score.data, t(estimate.t1))
-    rownames(score.data) <- c("StromalScore", "ImmuneScore", 
+    rownames(score.data) <- c("StromalScore", "ImmuneScore",
                               "ESTIMATEScore", "TumorPurity")
   }
   score.data <- data.frame(t(score.data))
@@ -798,43 +838,505 @@ plotPurity <- function (estimate.df, sample, platform = c("affymetrix","agilent"
   purity <- estimate.df[sample, "TumorPurity"]
   max.af <- max(Affy.model$ESTIMATEScore)
   min.af <- min(Affy.model$ESTIMATEScore)
-    geMin <- est >= min.af
-    leMax <- est <= max.af
-    withinMinMax <- geMin && leMax
-    xlim <- if (!withinMinMax) {
-      adjustment <- 500
-      if (geMin) {
-        from <- min.af
-        to <- est + adjustment
+  geMin <- est >= min.af
+  leMax <- est <= max.af
+  withinMinMax <- geMin && leMax
+  xlim <- if (!withinMinMax) {
+    adjustment <- 500
+    if (geMin) {
+      from <- min.af
+      to <- est + adjustment
+    }
+    else {
+      from <- est - adjustment
+      to <- max.af
+    }
+    c(from, to)
+  }
+  else {
+    NULL
+  }
+  plot(Affy.model$tumor.purity ~ Affy.model$ESTIMATEScore,
+       Affy.model, main = sample, type = "n", xlab = "ESTIMATE score",
+       xlim = xlim, ylab = "Tumor purity", ylim = c(0, 1))
+  par(new = TRUE)
+  points(Affy.model$ESTIMATEScore, Affy.model$tumor.purity,
+         cex = 0.75, col = "lightgrey")
+  if (withinMinMax) {
+    matlines(Affy.model$ESTIMATEScore, pred.p, lty = c(1,
+                                                       2, 2), col = "darkgrey")
+  }
+  else {
+    matlines(Affy.model$ESTIMATEScore, pred.p, lty = c(1,
+                                                       2, 2), col = "darkgrey")
+    par(new = TRUE)
+    curve(convert_row_estimate_score_to_tumor_purity,
+          from, to, n = 10000, col = "grey", ylim = c(0,
+                                                      1), xlab = "", ylab = "")
+  }
+  points(est, purity, pch = 19, cex = 1.25)
+  abline(h = purity, col = "black", lty = 2)
+  abline(v = est, col = "black", lty = 2)
+}
+
+############################################
+########## ssgsea with permutations ########
+############################################
+run.ssgsea.GBM <- function (data, number_perms) {
+  data <- data.frame(Description = row.names(data),data)
+  size <- dim(data[-1])
+  num_rows <- size[1]
+  num_cols <- size[2]
+  num_perm <- number_perms
+  random_profile <- data[1]
+  for (i in 1:num_perm) {
+    a <- data[-1][cbind(seq(1:num_rows), sample(1:num_cols,
+                                                num_rows, replace = T))]
+    random_profile <- cbind(random_profile, a)
+    if (i%%100 == 0) {
+      print(i)
+    }
+  }
+  
+  # print("Random profiles was genereated!")
+  selected.models <- c("Proneural", "Classical", "Mesenchymal")
+  random_result <- OPAM.apply.model.2(input.ds = random_profile, models.dir = "www/ssgsea_temp/data/", models = selected.models)
+  original_result <- OPAM.apply.model.2(input.ds = data, models.dir = "www/ssgsea_temp/data/", models = selected.models)
+  random_result <- random_result[-1]
+  random_result <- t(random_result)
+  original_result <- original_result[-1]
+  original_result <- t(original_result)
+  p_result <- original_result
+  for (i in 1:dim(original_result)[1]) {
+    p_result[i, ] <- colSums(sweep(random_result, 2, original_result[i,
+                                                                     ]) >= 0)
+  }
+  
+  colnames(p_result) = paste(colnames(p_result), "pval", sep = "_")
+  p_result = t(apply(p_result, 1, function(x) {
+    (x + 1)/(number_perms + 1)
+  }))
+  
+  results <- data.frame(cbind(round(original_result,2), signif(p_result,3)))
+  results$gsea.subtype.call <- as.factor(names(results[4:6]) [apply(results[,4:6],1,which.min)])
+  results$gsea.subtype.call <- factor(results$gsea.subtype.call,labels = c("Classical","Mesenchymal", "Proneural"))
+  results
+}
+
+OPAM.apply.model.2 <- function (input.ds, input.cls = NA, models.dir, models = "ALL") {
+  erf <- function(x) 2 * pnorm(x * sqrt(2)) - 1
+  m <- data.matrix(input.ds)
+  gene.names <- gene.descs <- row.names(input.ds)
+  sample.names <- names(input.ds)
+  Ns <- length(m[1, ])
+  Ng <- length(m[, 1])
+  
+  class.labels <- rep(1, Ns)
+  class.phen <- "UNDEFINED_PHEN"
+  class.list <- rep("U", Ns)
+  
+  if (models[[1]] == "ALL") {
+    file.list <- list.files(models.dir)
+    models <- file.list[regexpr(pattern = ".mod", file.list) >
+                          1]
+    for (k.model in 1:length(models)) {
+      temp <- strsplit(models[k.model], ".mod")
+      models[k.model] <- temp[[1]]
+    }
+    models <- unique(models)
+  }
+  n.models <- length(models)
+  score.matrix <- matrix(0, nrow = n.models, ncol = Ns)
+  norm.score.matrix <- matrix(0, nrow = n.models, ncol = Ns)
+  model.score.matrix <- matrix(0, nrow = n.models, ncol = Ns)
+  probability.matrix <- matrix(0, nrow = n.models, ncol = Ns)
+  models.descs <- NULL
+  for (model.i in 1:n.models) {
+    # print(paste(model.i, "File:", models[model.i]))
+    m.file <- paste(models.dir, models[model.i], ".mod",
+                    sep = "")
+    con <- file(m.file, "r")
+    file.content <- readLines(con, n = -1)
+    close(con)
+    gc()
+    len <- length(file.content)
+    for (i in 1:len) {
+      temp <- unlist(strsplit(file.content[[i]], "\t"))
+      len.param <- length(temp)
+      if (len.param == 2) {
+        param.vals <- temp[2]
       }
       else {
-        from <- est - adjustment
-        to <- max.af
+        param.vals <- paste(noquote(temp[2:len.param]), collapse = ",")
+        param.vals <- paste("c(", param.vals, ")", sep = "")
       }
-      c(from, to)
+      assignment.string <- paste(noquote(temp[1]), " <- ", param.vals, sep = "")
+      eval(parse(text = assignment.string))
     }
-    else {
-      NULL
+
+    set.seed(12345)
+    if (!exists("sample.norm.type"))
+      sample.norm.type <- "rank"
+    if (sample.norm.type == "rank") {
+      for (j in 1:Ns) {
+        m[, j] <- rank(m[, j], ties.method = "average")
+      }
+      m <- 10000 * m/Ng
     }
-    plot(Affy.model$tumor.purity ~ Affy.model$ESTIMATEScore, 
-         Affy.model, main = sample, type = "n", xlab = "ESTIMATE score", 
-         xlim = xlim, ylab = "Tumor purity", ylim = c(0, 1))
-    par(new = TRUE)
-    points(Affy.model$ESTIMATEScore, Affy.model$tumor.purity, 
-           cex = 0.75, col = "lightgrey")
-    if (withinMinMax) {
-      matlines(Affy.model$ESTIMATEScore, pred.p, lty = c(1, 
-                                                         2, 2), col = "darkgrey")
+    else if (sample.norm.type == "log.rank") {
+      for (j in 1:Ns) {
+        m[, j] <- rank(m[, j], ties.method = "average")
+      }
+      m <- log(10000 * m/Ng + exp(1))
     }
-    else {
-      matlines(Affy.model$ESTIMATEScore, pred.p, lty = c(1, 
-                                                         2, 2), col = "darkgrey")
-      par(new = TRUE)
-      curve(convert_row_estimate_score_to_tumor_purity, 
-            from, to, n = 10000, col = "grey", ylim = c(0, 
-                                                        1), xlab = "", ylab = "")
+    else if (sample.norm.type == "log") {
+      m[m < 1] <- 1
+      m <- log(m + exp(1))
     }
-    points(est, purity, pch = 19, cex = 1.25)
-    abline(h = purity, col = "black", lty = 2)
-    abline(v = est, col = "black", lty = 2)
+    
+    if (exists("msig.up.genes3"))
+      msig.up.genes <- msig.up.genes3
+    gene.names.int <- intersect(msig.up.genes, gene.names)
+    if (length(gene.names.int) < 2) {
+      score.matrix[model.i, ] <- norm.score.matrix[model.i,] <- model.score.matrix[model.i, ] <- probability.matrix[model.i,] <- rep(0, Ns)
+      models.descs <- c(models.descs, model.description)
+      rm(model.creation.date, input.ds, input.cls, input2.ds,
+         input2.cls, target.class, target.class2, model.name,
+         model.description, sample.norm.type, marker.disc,
+         top.markers.up, top.markers.dn, top.markers.up2,
+         top.markers.dn2, statistic, weight, random.seed,
+         nperm, link.function, c1, msig.cntrl.genes, msig.up.genes,
+         msig.dn.genes, msig.up.genes2, msig.dn.genes2,
+         msig.up.genes3, msig.dn.genes3, beta.0, beta.1,
+         score, score.up, score.dn)
+      next
+    }
+    
+    locs <- match(gene.names.int, gene.names, nomatch = 0)
+    msig.up.test <- m[locs, ]
+    msig.up.genes.test <- gene.names[locs]
+    msig.up.descs.test <- gene.descs[locs]
+    msig.up.size.test <- length(locs)
+    
+    
+    OPAM <- OPAM.Projection(m, gene.names, Ns, Ng, weight,statistic, msig.up.genes.test, nperm = nperm)
+    
+    score <- OPAM$ES.vector
+# 
+#     if (!exists("beta.0"))
+#       beta.0 <- 0
+#     if (!exists("beta.1"))
+#       beta.1 <- 1
+#     if (!exists("link.function"))
+#       link.function <- "logit"
+#     model.formula <- "beta.0 + beta.1 * score[i]"
+#     model.formula
+#     prob.i <- matrix(0, nrow = Ns, ncol = 3)
+#     model.score <- vector(length = Ns, mode = "numeric")
+#     inv.logit <- function (x, min = 0, max = 1) {
+#       p <- exp(x)/(1 + exp(x))
+#       p <- ifelse(is.na(p) & !is.na(x), 1, p)
+#       p * (max - min) + min
+#     }
+#     for (i in 1:Ns) {
+#       model.score[i] <- eval(parse(text = model.formula))
+#       if (link.function == "logit") {
+#         p.vec <- paste("inv.logit(x=", model.formula,
+#                        ")", sep = "")
+#       }
+#       else if (link.function == "probit") {
+#         p.vec <- paste("(erf(", model.formula, ") + 1)/2",
+#                        sep = "")
+#       }
+#       else {
+#         stop("Unknown link function")
+#       }
+#       val <- eval(parse(text = p.vec))
+#       prob.i[i, 1] <- quantile(val, probs = 0.5)
+#       prob.i[i, 2] <- quantile(val, probs = 0.05)
+#       prob.i[i, 3] <- quantile(val, probs = 0.95)
+#     }
+#     probability <- prob.i[, 1]
+#     xmin <- min(model.score)
+#     xmax <- max(model.score)
+#     range.x <- xmax - xmin
+#     n.points <- 1000
+#     prob.m <- matrix(0, nrow = n.points, ncol = 3)
+#     x.m <- vector(length = n.points, mode = "numeric")
+#     for (k in 1:n.points) {
+#       x.m[k] <- xmin + k * (range.x/n.points)
+#       if (link.function == "logit") {
+#         p.vec <- paste("inv.logit(x=", x.m[k], ")", sep = "")
+#       }
+#       else if (link.function == "probit") {
+#         p.vec <- paste("(erf(", x.m[k], ") + 1)/2", sep = "")
+#       }
+#       else {
+#         stop("Unknown link function")
+#       }
+#       val <- eval(parse(text = p.vec))
+#       prob.m[k, 1] <- quantile(val, probs = 0.5)
+#       prob.m[k, 2] <- quantile(val, probs = 0.05)
+#       prob.m[k, 3] <- quantile(val, probs = 0.95)
+#     }
+#     istar <- which.min(abs(0.5 - prob.m[, 1]))
+#     istar <- xmin + istar * (range.x/1000)
+#     x.index <- order(model.score, decreasing = F)
+#     x.order <- model.score[x.index]
+#     prob.i.order <- prob.i[x.index, ]
+#     
+#     class.labels.order <- class.labels[x.index]
+#     boundary <- istar
+#     pred.class <- ifelse(prob.i.order[, 1] >= 0.5, 2, 1)
+#     z.range <- range(x.order)
+    # norm.score <- (score - min(score))/(max(score) - min(score))
+    score.matrix[model.i, ] <- score
+    # norm.score.matrix[model.i, ] <- norm.score
+    # model.score.matrix[model.i, ] <- model.score
+    # probability.matrix[model.i, ] <- probability
+    # models.descs <- c(models.descs, model.description)
+    # rm(model.creation.date, input.ds, input.cls, input2.ds,
+    #    input2.cls, target.class, target.class2, model.name,
+    #    model.description, sample.norm.type, marker.disc,
+    #    top.markers.up, top.markers.dn, top.markers.up2,
+    #    top.markers.dn2, statistic, weight, random.seed,
+    #    nperm, link.function, c1, msig.cntrl.genes, msig.up.genes,
+    #    msig.dn.genes, msig.up.genes2, msig.dn.genes2, msig.up.genes3,
+    #    msig.dn.genes3, beta.0, beta.1, score, score.up,
+    #    score.dn)
+  }
+  
+  V.GCT <- data.frame(score.matrix)
+  names(V.GCT) <- sample.names
+  row.names(V.GCT) <- models
+  V.GCT
+  
 }
+
+
+OPAM.Projection <- function (data.array, gene.names, n.cols, n.rows, weight = 0,
+                             statistic = "Kolmogorov-Smirnov", gene.set, nperm = 200) {
+  ES.vector <- vector(length = n.cols)
+  NES.vector <- vector(length = n.cols)
+  p.val.vector <- vector(length = n.cols)
+  correl.vector <- vector(length = n.rows, mode = "numeric")
+  phi <- array(0, c(n.cols, nperm))
+  for (sample.index in 1:n.cols) {
+    gene.list <- order(data.array[, sample.index], decreasing = T)
+    gene.set2 <- match(gene.set, gene.names)
+    if (weight == 0) {
+      correl.vector <- rep(1, n.rows)
+    }
+    else if (weight > 0) {
+      correl.vector <- data.array[gene.list, sample.index]
+    }
+    GSEA.results <- GSEA.EnrichmentScore5(gene.list = gene.list,
+                                          gene.set = gene.set2, statistic = statistic, alpha = weight,
+                                          correl.vector = correl.vector)
+    ES.vector[sample.index] <- GSEA.results$ES
+    if (nperm == 0) {
+      NES.vector[sample.index] <- ES.vector[sample.index]
+      p.val.vector[sample.index] <- 1
+    }
+    else {
+      for (r in 1:nperm) {
+        reshuffled.gene.labels <- sample(1:n.rows)
+        if (weight == 0) {
+          correl.vector <- rep(1, n.rows)
+        }
+        else if (weight > 0) {
+          correl.vector <- data.array[reshuffled.gene.labels,
+                                      sample.index]
+        }
+        GSEA.results <- GSEA.EnrichmentScore5(gene.list = reshuffled.gene.labels,
+                                              gene.set = gene.set2, statistic = statistic,
+                                              alpha = weight, correl.vector = correl.vector)
+        phi[sample.index, r] <- GSEA.results$ES
+      }
+      if (ES.vector[sample.index] >= 0) {
+        pos.phi <- phi[sample.index, phi[sample.index,
+                                         ] >= 0]
+        if (length(pos.phi) == 0)
+          pos.phi <- 0.5
+        pos.m <- mean(pos.phi)
+        NES.vector[sample.index] <- ES.vector[sample.index]/pos.m
+        s <- sum(pos.phi >= ES.vector[sample.index])/length(pos.phi)
+        p.val.vector[sample.index] <- ifelse(s == 0,
+                                             1/nperm, s)
+      }
+      else {
+        neg.phi <- phi[sample.index, phi[sample.index,
+                                         ] < 0]
+        if (length(neg.phi) == 0)
+          neg.phi <- 0.5
+        neg.m <- mean(neg.phi)
+        NES.vector[sample.index] <- ES.vector[sample.index]/abs(neg.m)
+        s <- sum(neg.phi <= ES.vector[sample.index])/length(neg.phi)
+        p.val.vector[sample.index] <- ifelse(s == 0,
+                                             1/nperm, s)
+      }
+    }
+  }
+  return(list(ES.vector = ES.vector, NES.vector = NES.vector,
+              p.val.vector = p.val.vector))
+}
+
+GSEA.EnrichmentScore5 <- function (gene.list, gene.set, statistic = "Kolmogorov-Smirnov",
+                                   alpha = 1, correl.vector = NULL) {
+  tag.indicator <- sign(match(gene.list, gene.set, nomatch = 0))
+  no.tag.indicator <- 1 - tag.indicator
+  N <- length(gene.list)
+  Nh <- length(gene.set)
+  Nm <- N - Nh
+  orig.correl.vector <- correl.vector
+  if (alpha == 0)
+    correl.vector <- rep(1, N)
+  correl.vector <- abs(correl.vector)^alpha
+  sum.correl <- sum(correl.vector[tag.indicator == 1])
+  P0 <- no.tag.indicator/Nm
+  F0 <- cumsum(P0)
+  Pn <- tag.indicator * correl.vector/sum.correl
+  Fn <- cumsum(Pn)
+  if (statistic == "Kolmogorov-Smirnov") {
+    RES <- Fn - F0
+    max.ES <- max(RES)
+    min.ES <- min(RES)
+    if (max.ES > -min.ES) {
+      ES <- signif(max.ES, digits = 5)
+      arg.ES <- which.max(RES)
+    }
+    else {
+      ES <- signif(min.ES, digits = 5)
+      arg.ES <- which.min(RES)
+    }
+    return(list(ES = ES, arg.ES = arg.ES, RES = RES, indicator = tag.indicator))
+  }
+  else if (statistic == "Cramer-von-Mises") {
+    RES <- Fn - F0
+    X <- RES^2 * P0
+    X_p <- X[RES >= 0]
+    X_n <- X[RES < 0]
+    ES_p <- sqrt(sum(X_p)/N)
+    ES_n <- sqrt(sum(X_n)/N)
+    if (ES_p > ES_n) {
+      ES <- signif(ES_p, digits = 5)
+      arg.ES <- which.min(abs(X - max(X_p)))
+    }
+    else {
+      ES <- -signif(ES_n, digits = 5)
+      arg.ES <- which.min(abs(X - max(X_n)))
+    }
+    return(list(ES = ES, RES = RES, arg.ES = arg.ES, indicator = tag.indicator))
+  }
+  else if (statistic == "Anderson-Darling") {
+    RES <- Fn - F0
+    F0_factor <- ifelse(F0 < 1/Nm | F0 > (Nm - 1)/Nm, rep(1,
+                                                          N), F0 * (1 - F0))
+    X <- RES^2 * P0/F0_factor
+    X_p <- X[RES >= 0]
+    X_n <- X[RES < 0]
+    ES_p <- sqrt(sum(X_p)/N)
+    ES_n <- sqrt(sum(X_n)/N)
+    if (ES_p > ES_n) {
+      ES <- signif(ES_p, digits = 5)
+      arg.ES <- which.min(abs(X - max(X_p)))
+    }
+    else {
+      ES <- -signif(ES_n, digits = 5)
+      arg.ES <- which.min(abs(X - max(X_n)))
+    }
+    return(list(ES = ES, RES = RES, arg.ES = arg.ES, indicator = tag.indicator))
+  }
+  else if (statistic == "Zhang_A") {
+    RES <- Fn - F0
+    Fact1 <- ifelse(F0 < 1/Nm | Fn < 1/sum.correl, 0, Fn *
+                      log(Fn/F0))
+    Fact2 <- ifelse(F0 > (Nm - 1)/Nm | Fn > (sum.correl -
+                                               1)/sum.correl, 0, (1 - Fn) * log((1 - Fn)/(1 - F0)))
+    Fn_factor <- ifelse(Fn < 1/sum.correl | Fn > (sum.correl -
+                                                    1)/sum.correl, rep(1, N), Fn * (1 - Fn))
+    G <- (Fact1 + Fact2) * Pn/Fn_factor
+    G_p <- G[RES >= 0]
+    G_n <- G[RES < 0]
+    ES_p <- sum(G_p)/N
+    ES_n <- sum(G_n)/N
+    if (ES_p > ES_n) {
+      ES <- signif(ES_p, digits = 5)
+      arg.ES <- which.min(abs(G - max(G_p)))
+    }
+    else {
+      ES <- -signif(ES_n, digits = 5)
+      arg.ES <- which.min(abs(G - max(G_n)))
+    }
+    return(list(ES = ES, RES = RES, arg.ES = arg.ES, indicator = tag.indicator))
+  }
+  else if (statistic == "Zhang_C") {
+    RES <- Fn - F0
+    Fact1 <- ifelse(F0 < 1/Nm | Fn < 1/sum.correl, 0, Fn *
+                      log(Fn/F0))
+    Fact2 <- ifelse(F0 > (Nm - 1)/Nm | Fn > (sum.correl -
+                                               1)/sum.correl, 0, (1 - Fn) * log((1 - Fn)/(1 - F0)))
+    F0_factor <- ifelse(F0 < 1/Nm | F0 > (Nm - 1)/Nm, rep(1,
+                                                          N), F0 * (1 - F0))
+    G <- (Fact1 + Fact2) * P0/F0_factor
+    G_p <- G[RES >= 0]
+    G_n <- G[RES < 0]
+    ES_p <- sum(G_p)/N
+    ES_n <- sum(G_n)/N
+    if (ES_p > ES_n) {
+      ES <- signif(ES_p, digits = 5)
+      arg.ES <- which.min(abs(G - max(G_p)))
+    }
+    else {
+      ES <- -signif(ES_n, digits = 5)
+      arg.ES <- which.min(abs(G - max(G_n)))
+    }
+    return(list(ES = ES, RES = RES, arg.ES = arg.ES, indicator = tag.indicator))
+  }
+  else if (statistic == "Zhang_K") {
+    RES <- Fn - F0
+    Fact1 <- ifelse(F0 < 1/Nm | Fn < 1/sum.correl, 0, Fn *
+                      log(Fn/F0))
+    Fact2 <- ifelse(F0 > (Nm - 1)/Nm | Fn > (sum.correl -
+                                               1)/sum.correl, 0, (1 - Fn) * log((1 - Fn)/(1 - F0)))
+    G <- Fact1 + Fact2
+    G_p <- G[RES >= 0]
+    G_n <- G[RES < 0]
+    ES_p <- max(G_p)
+    ES_n <- max(G_n)
+    if (ES_p > ES_n) {
+      ES <- signif(ES_p, digits = 5)
+      arg.ES <- which.min(abs(G - ES_p))
+    }
+    else {
+      ES <- -signif(ES_n, digits = 5)
+      arg.ES <- which.min(abs(G - ES_n))
+    }
+    return(list(ES = ES, RES = RES, arg.ES = arg.ES, indicator = tag.indicator))
+  }
+  else if (statistic == "area.under.RES") {
+    RES <- Fn - F0
+    max.ES <- max(RES)
+    min.ES <- min(RES)
+    if (max.ES > -min.ES) {
+      arg.ES <- which.max(RES)
+    }
+    else {
+      arg.ES <- which.min(RES)
+    }
+    ES <- sum(RES)
+    return(list(ES = ES, arg.ES = arg.ES, RES = RES, indicator = tag.indicator))
+  }
+  else if (statistic == "Wilcoxon") {
+    library(exactRankTests)
+    seq.index <- seq(1, N)
+    gene.set.ranks <- seq.index[tag.indicator == 1]
+    gene.set.comp.ranks <- seq.index[tag.indicator == 0]
+    W <- wilcox.exact(x = gene.set.ranks, y = gene.set.comp.ranks,
+                      alternative = "two.sided", mu = 0, paired = FALSE,
+                      exact = F, conf.int = T, conf.level = 0.95)
+    ES <- log(1/W$p.value)
+    return(list(ES = ES, arg.ES = NULL, RES = NULL, indicator = tag.indicator))
+  }
+}
+
