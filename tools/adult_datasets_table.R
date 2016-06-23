@@ -47,7 +47,7 @@ HTML('<style type="text/css">
 
      <tr>
      <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/18772890" style="color: rgb(0,0,0)">TCGA GBM</a></td>
-     <td class="tg-9fhq-bd"><a href="https://tcga-data.nci.nih.gov/tcga/tcgaCancerDetails.jsp?diseaseType=GBM&diseaseName=Glioblastoma%20multiforme" style="color: rgb(0,0,0)">Microarray</a></td>     
+     <td class="tg-9fhq-bd"><a href="https://tcga-data.nci.nih.gov/tcga/tcgaCancerDetails.jsp?diseaseType=GBM&diseaseName=Glioblastoma%20multiforme" style="color: rgb(0,0,0)">HG-UG133A</a></td>     
      <td class="tg-9fhq">10</td>
      <td class="tg-9fhq">0</td>
      <td class="tg-9fhq-bd">528</td>
@@ -61,6 +61,38 @@ HTML('<style type="text/css">
      <td class="tg-lvt2">✔</td>
      </tr>
      
+     <tr>
+     <td class="tg-0a3w"><a>_______</a><span class="label label-danger">New</span></td>
+     <td class="tg-9fhq-bd"><a href="https://tcga-data.nci.nih.gov/tcga/tcgaCancerDetails.jsp?diseaseType=GBM&diseaseName=Glioblastoma%20multiforme" style="color: rgb(0,0,0)">Agilent-4502A</a></td>     
+     <td class="tg-9fhq">10</td>
+     <td class="tg-9fhq">0</td>
+     <td class="tg-9fhq-bd">489</td>
+     <td class="tg-9fhq"></td>
+     <td class="tg-lvt2"></td>
+     <td class="tg-lvt2"></td>
+     <td class="tg-lvt2"></td>
+     <td class="tg-lvt2"></td>
+     <td class="tg-lvt2"></td>
+     <td class="tg-lvt2"></td>
+     <td class="tg-lvt2"></td>
+     </tr>
+
+     <tr>
+     <td class="tg-0a3w"><a>_______</a><span class="label label-danger">New</span></td>
+     <td class="tg-9fhq-bd"><a href="http://firebrowse.org/?cohort=GBM&download_dialog=true" style="color: rgb(0,0,0)">RNA-seq</a></td>     
+     <td class="tg-9fhq">4</td>
+     <td class="tg-9fhq">0</td>
+     <td class="tg-9fhq-bd">156</td>
+     <td class="tg-9fhq"></td>
+     <td class="tg-lvt2"></td>
+     <td class="tg-lvt2"></td>
+     <td class="tg-lvt2"></td>
+     <td class="tg-lvt2"></td>
+     <td class="tg-lvt2"></td>
+     <td class="tg-lvt2"></td>
+     <td class="tg-lvt2"></td>
+     </tr>
+
      <tr>
      <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/26061751" style="color: rgb(0,0,0)">TCGA LGG</a></td>
      <td class="tg-s6z2-bd"><a href="https://tcga-data.nci.nih.gov/tcga/tcgaCancerDetails.jsp?diseaseType=LGG&diseaseName=Brain%20Lower%20Grade%20Glioma" style="color: rgb(0,0,0)">RNA-seq</td>     
@@ -141,187 +173,218 @@ HTML('<style type="text/css">
      <td class="tg-eoji">-</td>
      </tr>
 
-     <tr>
-     <td class="tg-0a3w"><a href="http://glioblastoma.alleninstitute.org" style="color: rgb(0,0,0)">Ivy GAP</a></td>
-     <td class="tg-9fhq-bd"><a href="http://glioblastoma.alleninstitute.org/static/download.html" style="color: rgb(0,0,0)">RNA-seq</a></td>      
-     <td class="tg-9fhq">0</td>
-     <td class="tg-9fhq">0</td>
-     <td class="tg-9fhq-bd">270**</td>
+<tr>
+     <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/27090007" style="color: rgb(0,0,0)">Kouman </a><span class="label label-danger">New</span></td>
+     <td class="tg-9fhq-bd"><a href="http://www.ebi.ac.uk/arrayexpress/experiments/E-MTAB-3892/" style="color: rgb(0,0,0)">Microarray</a></td>      
+     <td class="tg-9fhq">9</td>
+     <td class="tg-9fhq">154</td>
+     <td class="tg-9fhq-bd">16</td>
      <td class="tg-9fhq"></td>
      <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
-     <td class="tg-lvt2">✔</td>
-     <td class="tg-lvt2">✔</td>
-     <td class="tg-lvt2">-</td>
+     </tr>
+
+     <tr>
+     <td class="tg-bd"><a href="http://glioblastoma.alleninstitute.org" style="color: rgb(0,0,0)">Ivy GAP</a></td>
+     <td class="tg-s6z2-bd"><a href="http://glioblastoma.alleninstitute.org/static/download.html" style="color: rgb(0,0,0)">RNA-seq</a></td>      
+     <td class="tg-s6z2">0</td>
+     <td class="tg-s6z2">0</td>
+     <td class="tg-s6z2-bd">270**</td>
+     <td class="tg-s6z2"></td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
      </tr>
 
       <tr>
-     <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/18940004" style="color: rgb(0,0,0)">Lee Y*</a></td>
-     <td class="tg-s6z2-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE13041" style="color: rgb(0,0,0)">Microarray</a></td>  
-     <td class="tg-s6z2">0</td>
-     <td class="tg-s6z2">0</td>
-     <td class="tg-s6z2-bd">191</td>
-     <td class="tg-s6z2"></td>
-     <td class="tg-eoji">-</td>
-     <td class="tg-eoji">-</td>
-     <td class="tg-eoji">-</td>
-     <td class="tg-eoji">✔</td>
-     <td class="tg-eoji">✔</td>
-     <td class="tg-eoji">-</td>
-     <td class="tg-eoji">✔</td>
-     </tr>
-
-     <tr>
-     <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/25084005" style="color: rgb(0,0,0)">Oh</a></td>
-     <td class="tg-9fhq-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE58399" style="color: rgb(0,0,0)">Microarray</a></td>      
+     <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/18940004" style="color: rgb(0,0,0)">Lee Y*</a></td>
+     <td class="tg-9fhq-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE13041" style="color: rgb(0,0,0)">Microarray</a></td>  
      <td class="tg-9fhq">0</td>
      <td class="tg-9fhq">0</td>
-     <td class="tg-9fhq-bd">105***</td>
+     <td class="tg-9fhq-bd">191</td>
      <td class="tg-9fhq"></td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
-     <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
+     </tr>
+
+     <tr>
+     <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/25084005" style="color: rgb(0,0,0)">Oh</a></td>
+     <td class="tg-s6z2-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE58399" style="color: rgb(0,0,0)">Microarray</a></td>      
+     <td class="tg-s6z2">0</td>
+     <td class="tg-s6z2">0</td>
+     <td class="tg-s6z2-bd">105***</td>
+     <td class="tg-s6z2"></td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
      </tr>
      
      <tr>
-     <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/16530701" style="color: rgb(0,0,0)">Phillips</a></td>
-     <td class="tg-s6z2-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE4271" style="color: rgb(0,0,0)">Microarray</a></td>  
-     <td class="tg-s6z2">0</td>
-     <td class="tg-s6z2">24</td>
-     <td class="tg-s6z2-bd">76</td>
-     <td class="tg-s6z2"></td>
-     <td class="tg-eoji">✔</td>
-     <td class="tg-eoji">✔</td>
-     <td class="tg-eoji">-</td>
-     <td class="tg-eoji">✔</td>
-     <td class="tg-eoji">✔</td>
-     <td class="tg-eoji">✔</td>
-     <td class="tg-eoji">✔</td>
-     </tr>
-
-     <tr>
-     <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/25114226" style="color: rgb(0,0,0)">Gill</a></td>
-     <td class="tg-9fhq-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE59612" style="color: rgb(0,0,0)">RNA-seq</td>     
-     <td class="tg-9fhq">17</td>
+     <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/16530701" style="color: rgb(0,0,0)">Phillips</a></td>
+     <td class="tg-9fhq-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE4271" style="color: rgb(0,0,0)">Microarray</a></td>  
      <td class="tg-9fhq">0</td>
-     <td class="tg-9fhq-bd">75***</td>
+     <td class="tg-9fhq">24</td>
+     <td class="tg-9fhq-bd">76</td>
      <td class="tg-9fhq"></td>
      <td class="tg-lvt2">✔</td>
-     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
-     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
      </tr>
 
      <tr>
-     <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/15374961" style="color: rgb(0,0,0)">Freije</a></td>
-     <td class="tg-s6z2-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE4412" style="color: rgb(0,0,0)">Microarray</a></td>      
+     <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/25114226" style="color: rgb(0,0,0)">Gill</a></td>
+     <td class="tg-s6z2-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE59612" style="color: rgb(0,0,0)">RNA-seq</td>     
+     <td class="tg-s6z2">17</td>
      <td class="tg-s6z2">0</td>
-     <td class="tg-s6z2">26</td>
-     <td class="tg-s6z2-bd">59</td>
+     <td class="tg-s6z2-bd">75***</td>
      <td class="tg-s6z2"></td>
      <td class="tg-eoji">✔</td>
-     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
      <td class="tg-eoji">-</td>
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">✔</td>
-     <td class="tg-eoji">-</td>
      <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
      </tr>
 
-
      <tr>
-     <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/18565887" style="color: rgb(0,0,0)">Murat</a></td>
-<td class="tg-9fhq-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE7696" style="color: rgb(0,0,0)">Microarray</a></td>        
-<td class="tg-9fhq">4</td>
+     <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/15374961" style="color: rgb(0,0,0)">Freije</a></td>
+     <td class="tg-9fhq-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE4412" style="color: rgb(0,0,0)">Microarray</a></td>      
      <td class="tg-9fhq">0</td>
-     <td class="tg-9fhq-bd">80</td>
+     <td class="tg-9fhq">26</td>
+     <td class="tg-9fhq-bd">59</td>
      <td class="tg-9fhq"></td>
      <td class="tg-lvt2">✔</td>
-     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
-<td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
      </tr>
 
+
      <tr>
-     <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/22415316" style="color: rgb(0,0,0)">Gorovets</a></td>
-<td class="tg-s6z2-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE35158" style="color: rgb(0,0,0)">Microarray</a></td>     
-<td class="tg-s6z2">1</td>
-     <td class="tg-s6z2">80</td>
-     <td class="tg-s6z2-bd">0</td>
+     <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/18565887" style="color: rgb(0,0,0)">Murat</a></td>
+    <td class="tg-s6z2-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE7696" style="color: rgb(0,0,0)">Microarray</a></td>        
+    <td class="tg-s6z2">4</td>
+     <td class="tg-s6z2">0</td>
+     <td class="tg-s6z2-bd">80</td>
      <td class="tg-s6z2"></td>
      <td class="tg-eoji">✔</td>
-     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
      <td class="tg-eoji">-</td>
      <td class="tg-eoji">✔</td>
-<td class="tg-eoji">-</td>
-     <td class="tg-eoji">-</td>
+    <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
      <td class="tg-eoji">✔</td>
      </tr>
 
-
      <tr>
-     <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/26068201" style="color: rgb(0,0,0)">POLA Net.</a></td>
-     <td class="tg-9fhq-bd"><a href="http://www.ebi.ac.uk/arrayexpress/experiments/E-MTAB-2768/" style="color: rgb(0,0,0)">Microarray</a></td>      
-     <td class="tg-9fhq">0</td>
-     <td class="tg-9fhq">71</td>
+     <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/22415316" style="color: rgb(0,0,0)">Gorovets</a></td>
+<td class="tg-9fhq-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE35158" style="color: rgb(0,0,0)">Microarray</a></td>     
+<td class="tg-9fhq">1</td>
+     <td class="tg-9fhq">80</td>
      <td class="tg-9fhq-bd">0</td>
      <td class="tg-9fhq"></td>
-     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
-     <td class="tg-lvt2">-</td>
+<td class="tg-lvt2">-</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
+     </tr>
+
+
+     <tr>
+     <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/26068201" style="color: rgb(0,0,0)">POLA Net.</a></td>
+     <td class="tg-s6z2-bd"><a href="http://www.ebi.ac.uk/arrayexpress/experiments/E-MTAB-2768/" style="color: rgb(0,0,0)">Microarray</a></td>      
+     <td class="tg-s6z2">0</td>
+     <td class="tg-s6z2">71</td>
+     <td class="tg-s6z2-bd">0</td>
+     <td class="tg-s6z2"></td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
      </tr>
 
       <tr>
-     <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/24615357" style="color: rgb(0,0,0)">Reifenberger</a></td>
-     <td class="tg-s6z2-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE53733" style="color: rgb(0,0,0)">Microarray</a></td>
-     <td class="tg-s6z2">0</td>
-     <td class="tg-s6z2">0</td>
-     <td class="tg-s6z2-bd">70</td>
-     <td class="tg-s6z2"></td>
-     <td class="tg-eoji">-</td>
-     <td class="tg-eoji">-</td>
-     <td class="tg-eoji">-</td>
-     <td class="tg-eoji">✔</td>
-     <td class="tg-eoji">✔</td>
-     <td class="tg-eoji">-</td>
-     <td class="tg-eoji">-</td>
-     </tr>
-
-     <tr>
-     <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/23333277" style="color: rgb(0,0,0)">Joo</a></td>
-     <td class="tg-9fhq-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc= GSE42669" style="color: rgb(0,0,0)">Microarray</a></td>      
+     <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/24615357" style="color: rgb(0,0,0)">Reifenberger</a></td>
+     <td class="tg-9fhq-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE53733" style="color: rgb(0,0,0)">Microarray</a></td>
      <td class="tg-9fhq">0</td>
      <td class="tg-9fhq">0</td>
-     <td class="tg-9fhq-bd">57</td>
+     <td class="tg-9fhq-bd">70</td>
      <td class="tg-9fhq"></td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">✔</td>
-     <td class="tg-lvt2">✔</td>
-     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">-</td>
+     </tr>
+
+     <tr>
+     <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/23333277" style="color: rgb(0,0,0)">Joo</a></td>
+     <td class="tg-s6z2-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc= GSE42669" style="color: rgb(0,0,0)">Microarray</a></td>      
+     <td class="tg-s6z2">0</td>
+     <td class="tg-s6z2">0</td>
+     <td class="tg-s6z2-bd">57</td>
+     <td class="tg-s6z2"></td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
      </tr>
      
      <tr>
-     <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/20822523" style="color: rgb(0,0,0)">Ducray</a></td>
-     <td class="tg-s6z2-bd"><a href="http://www.ebi.ac.uk/arrayexpress/experiments/E-TABM-898" style="color: rgb(0,0,0)">Microarray</a></td> 
+     <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/20822523" style="color: rgb(0,0,0)">Ducray</a></td>
+     <td class="tg-9fhq-bd"><a href="http://www.ebi.ac.uk/arrayexpress/experiments/E-TABM-898" style="color: rgb(0,0,0)">Microarray</a></td> 
+     <td class="tg-9fhq">0</td>
+     <td class="tg-9fhq">0</td>
+     <td class="tg-9fhq-bd">52</td>
+     <td class="tg-9fhq"></td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
+     </tr>
+
+    <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/25934697" style="color: rgb(0,0,0)">Walsh </a><span class="label label-danger">New</span></td>
+     <td class="tg-s6z2-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE51062" style="color: rgb(0,0,0)">Microarray</a></td>      
      <td class="tg-s6z2">0</td>
      <td class="tg-s6z2">0</td>
      <td class="tg-s6z2-bd">52</td>
@@ -332,102 +395,117 @@ HTML('<style type="text/css">
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">-</td>
-     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
      </tr>
 
-     <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/12670911" style="color: rgb(0,0,0)">Nutt</a></td>
-     <td class="tg-9fhq-bd"><a href="http://www.broadinstitute.org/cgi-bin/cancer/datasets.cgi?utf8=✓&project=32" style="color: rgb(0,0,0)">Microarray</a></td>      
+    <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/26466313" style="color: rgb(0,0,0)">Kwom </a><span class="label label-danger">New</span></td>
+     <td class="tg-9fhq-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE62153" style="color: rgb(0,0,0)">Microarray</a></td>      
      <td class="tg-9fhq">0</td>
-     <td class="tg-9fhq">22</td>
-     <td class="tg-9fhq-bd">28</td>
+     <td class="tg-9fhq">0</td>
+     <td class="tg-9fhq-bd">43</td>
      <td class="tg-9fhq"></td>
-     <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
-<td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
-     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">-</td>
+     </tr>
+
+     <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/12670911" style="color: rgb(0,0,0)">Nutt</a></td>
+     <td class="tg-s6z2-bd"><a href="http://www.broadinstitute.org/cgi-bin/cancer/datasets.cgi?utf8=✓&project=32" style="color: rgb(0,0,0)">Microarray</a></td>      
+     <td class="tg-s6z2">0</td>
+     <td class="tg-s6z2">22</td>
+     <td class="tg-s6z2-bd">28</td>
+     <td class="tg-s6z2"></td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
      </tr>
 
      <tr>
-     <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/20484145" style="color: rgb(0,0,0)">Vital</a></td>
-     <td class="tg-s6z2-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE43289" style="color: rgb(0,0,0)">Microarray</a></td>      
-     <td class="tg-s6z2">0</td>
-     <td class="tg-s6z2">12</td>
-     <td class="tg-s6z2-bd">26</td>
-     <td class="tg-s6z2"></td>
-     <td class="tg-eoji">✔</td>
-     <td class="tg-eoji">✔</td>
-     <td class="tg-eoji">-</td>
-     <td class="tg-eoji">✔</td>
-     <td class="tg-eoji">-</td>
-     <td class="tg-eoji">-</td>
-     <td class="tg-eoji">✔</td>
+     <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/20484145" style="color: rgb(0,0,0)">Vital</a></td>
+     <td class="tg-9fhq-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE43289" style="color: rgb(0,0,0)">Microarray</a></td>      
+     <td class="tg-9fhq">0</td>
+     <td class="tg-9fhq">12</td>
+     <td class="tg-9fhq-bd">26</td>
+     <td class="tg-9fhq"></td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
      </tr>
      
      <tr>
-     <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/21406405" style="color: rgb(0,0,0)">Grzmil</a></td>
-     <td class="tg-9fhq-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE15824" style="color: rgb(0,0,0)">Microarray</a></td> 
-     <td class="tg-9fhq">2</td>
-     <td class="tg-9fhq">15</td>
-     <td class="tg-9fhq-bd">15</td>
-     <td class="tg-9fhq"></td>
-     <td class="tg-lvt2">✔</td>
-     <td class="tg-lvt2">-</td>
-     <td class="tg-lvt2">-</td>
-     <td class="tg-lvt2">✔</td>
-     <td class="tg-lvt2">✔</td>
-     <td class="tg-lvt2">-</td>
-     <td class="tg-lvt2">✔</td>
+     <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/21406405" style="color: rgb(0,0,0)">Grzmil</a></td>
+     <td class="tg-s6z2-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE15824" style="color: rgb(0,0,0)">Microarray</a></td> 
+     <td class="tg-s6z2">2</td>
+     <td class="tg-s6z2">15</td>
+     <td class="tg-s6z2-bd">15</td>
+     <td class="tg-s6z2"></td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
      </tr>
 
          <tr>
-     <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/26017892" style="color: rgb(0,0,0)">Gleize</a></td>
-     <td class="tg-s6z2-bd"><a href="http://www.ebi.ac.uk/arrayexpress/experiments/E-MTAB-2358/" style="color: rgb(0,0,0)">Microarray</a></td>      
-     <td class="tg-s6z2">0</td>
-     <td class="tg-s6z2">30</td>
-     <td class="tg-s6z2-bd">0</td>
-     <td class="tg-s6z2"></td>
-     <td class="tg-eoji">✔</td>
-     <td class="tg-eoji">✔</td>
-     <td class="tg-eoji">-</td>
-     <td class="tg-eoji">-</td>
-     <td class="tg-eoji">-</td>
-     <td class="tg-eoji">-</td>
-     <td class="tg-eoji">-</td>
-     </tr>
-
-     <tr>
-     <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/22802421" style="color: rgb(0,0,0)">Donson</a></td>
-     <td class="tg-9fhq-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE33331" style="color: rgb(0,0,0)">Microarray</a></td> 
+     <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/26017892" style="color: rgb(0,0,0)">Gleize</a></td>
+     <td class="tg-9fhq-bd"><a href="http://www.ebi.ac.uk/arrayexpress/experiments/E-MTAB-2358/" style="color: rgb(0,0,0)">Microarray</a></td>      
      <td class="tg-9fhq">0</td>
-     <td class="tg-9fhq">5</td>
-     <td class="tg-9fhq-bd">21</td>
+     <td class="tg-9fhq">30</td>
+     <td class="tg-9fhq-bd">0</td>
      <td class="tg-9fhq"></td>
      <td class="tg-lvt2">✔</td>
-     <td class="tg-lvt2">-</td>
-     <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">✔</td>
      <td class="tg-lvt2">-</td>
      <td class="tg-lvt2">-</td>
-     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">-</td>
      </tr>
 
      <tr>
-     <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/25277177" style="color: rgb(0,0,0)">Li</a></td>
-     <td class="tg-s6z2-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE60184" style="color: rgb(0,0,0)">Microarray</a></td>      
+     <td class="tg-bd"><a href="http://www.ncbi.nlm.nih.gov/pubmed/22802421" style="color: rgb(0,0,0)">Donson</a></td>
+     <td class="tg-s6z2-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE33331" style="color: rgb(0,0,0)">Microarray</a></td> 
      <td class="tg-s6z2">0</td>
-     <td class="tg-s6z2">0</td>
-     <td class="tg-s6z2-bd">23</td>
+     <td class="tg-s6z2">5</td>
+     <td class="tg-s6z2-bd">21</td>
      <td class="tg-s6z2"></td>
-     <td class="tg-eoji">-</td>
-     <td class="tg-eoji">-</td>
-     <td class="tg-eoji">-</td>
-     <td class="tg-eoji">✔</td>
      <td class="tg-eoji">✔</td>
      <td class="tg-eoji">-</td>
      <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">-</td>
+     <td class="tg-eoji">✔</td>
+     </tr>
+
+     <tr>
+     <td class="tg-0a3w"><a href="http://www.ncbi.nlm.nih.gov/pubmed/25277177" style="color: rgb(0,0,0)">Li</a></td>
+     <td class="tg-9fhq-bd"><a href="http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE60184" style="color: rgb(0,0,0)">Microarray</a></td>      
+     <td class="tg-9fhq">0</td>
+     <td class="tg-9fhq">0</td>
+     <td class="tg-9fhq-bd">23</td>
+     <td class="tg-9fhq"></td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">✔</td>
+     <td class="tg-lvt2">-</td>
+     <td class="tg-lvt2">-</td>
      </tr>
 
     <tfoot>
