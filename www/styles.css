@@ -1,3 +1,47 @@
+.simple-ss {
+  width:900px;
+  height:280px;
+  background-color:white;
+  margin:auto;
+  background-image:url("slider.png");
+  background-position:0;
+  background-repeat:no-repeat;
+  background-size:cover;
+
+/* ANIMATING STUFF */
+  animation-name: slide;
+  animation-duration: 20s;
+  animation-direction: normal;
+  animation-timing-function: ease;
+  animation-iteration-count: infinite;
+}
+
+/* NOTE CODEPEN AUTOGENERATING -PREFIXES */
+@keyframes slide {
+  0% {background-position:0 0;}
+  25.00% {background-position:0 0;}
+  50.00% {background-position:-900px 0;}
+  75.00% {background-position:-900px 0;}
+  100% {background-position:0 0;}
+}
+
+.blink {
+  animation: blink-animation 1s steps(5, start) infinite;
+   color: #FF0000;
+   font-weight: bold;
+  -webkit-animation: blink-animation 1s steps(5, start) infinite;
+}
+@keyframes blink-animation {
+  to {
+    visibility: hidden;
+  }
+}
+@-webkit-keyframes blink-animation {
+  to {
+    visibility: hidden;
+  }
+}
+
 .intro-divider {
     height: 6px;
     background: transparent linear-gradient(to right, #68cbd0 0%, #157BA3 100%) repeat scroll 0% 0%;
