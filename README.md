@@ -1,6 +1,6 @@
-![http://www.gliovis.com](www/GlioVis_logo_trasnparent.gif)
+![http://www.gliovis.com](www/new_logo_transparent.png)
 
-**A shiny app for visualization of glioma datasets**   
+**A shiny app for visualization of brain tumor expression datasets**   
 
 GlioVis is free software: you can redistribute it and/or modify it under the terms of the [GNU Affero General Public License](http://opensource.org/licenses/GPL-3.0), version 3, as published by the Free Software Foundation.
 
