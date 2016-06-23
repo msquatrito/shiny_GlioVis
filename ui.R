@@ -20,11 +20,11 @@ shinyUI(
   navbarPage(title = strong("GlioVis"), windowTitle = "GlioVis - Visualization Tools for Glioma Datasets", 
              fluid = TRUE, footer = includeHTML("tools/footer.html"), id = "nav",
 
-             source("tools/homeTab.R", local = TRUE)$value,
-             source("tools/exploreTab.R", local = TRUE)$value,
-             source("tools/toolsTab.R", local = TRUE)$value,
-             source("tools/aboutTab.R", local = TRUE)$value,
-             source("tools/newsTab.R", local = TRUE)$value
+             source("tabs/homeTab.R", local = TRUE)$value,
+             source("tabs/exploreTab.R", local = TRUE)$value,
+             source("tabs/toolsTab.R", local = TRUE)$value,
+             source("tabs/aboutTab.R", local = TRUE)$value,
+             source("tabs/newsTab.R", local = TRUE)$value
              
   )
 )

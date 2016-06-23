@@ -4,6 +4,6 @@ output: html_document
 ---
 
 In machine learning, support vector machines (SVMs, also support vector networks) are supervised learning models with associated learning algorithms that analyze data and recognize patterns, used for classification and regression analysis. Given a set of training examples, each marked as belonging to one of two categories, an SVM training algorithm builds a model that assigns new examples into one category or the other (Ref:[*Wikipedia*](http://en.wikipedia.org/wiki/Support_vector_machine)).      
-* The Subtype call generated here by **SVM**, is done performing a linear Kernel with 10-fold cross validation, using the `ksvm` function of the [‘kernlab’](http://cran.r-project.org/web/packages/kernlab/kernlab.pdf) package. As training dataset for the GBM we use the TCGA GBM samples described in [Brennan C. et al. 2013](http://www.ncbi.nlm.nih.gov/pubmed/24120142). As training dataset for the LGG we use the TCGA LGG samples described in [NEJM](https://#)  
+* The Subtype call generated here by **SVM**, is done performing a linear Kernel with 10-fold cross validation, using the `ksvm` function of the [‘kernlab’](http://cran.r-project.org/web/packages/kernlab/kernlab.pdf) package. As training dataset for the GBM we use the TCGA GBM samples described in [Wang Q. et al. 2016](http://biorxiv.org/content/early/2016/05/08/052076). As training dataset for the LGG we use the TCGA LGG samples described in [NEJM](http://www.ncbi.nlm.nih.gov/pubmed/26061751)  
 
 **Output format**: Subtype calls with the probability model   

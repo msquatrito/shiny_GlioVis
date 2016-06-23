@@ -13,6 +13,10 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                            # dataset
                            radioButtons(inputId ="datasetType", label = h4("Dataset:"), choices = c("Adult","Pediatric"), selected = "Adult", inline = T),
                            selectizeInput(inputId = "dataset", label ="", choices = NULL, selected = NULL),
+                           conditionalPanel(
+                             condition = "input.dataset == 'TCGA GBM'",
+                             selectInput(inputId = "microarray_platform", label = h4("Platform:"), choices = c("HG-U133A","Agilent-4502A","RNA-Seq"))
+                           ),
                            # genes
                            conditionalPanel(
                              condition = "input.tabCorr != 'corrMany' & input.tab1 != 5 & input.tab1 != 8",
@@ -126,7 +130,6 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                            )
                          ),
                          
-                         
                          # Tab Boxplot plotting options
                          conditionalPanel(
                            condition = "input.tab1 == 1",
@@ -200,6 +203,25 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                            )
                          ),
                          
+                         # Tab Boxplot plotting options
+                         conditionalPanel(
+                           condition = "input.tab1 == 2",
+                           wellPanel( 
+                             h4("Plot options:"),
+                             conditionalPanel(
+                               condition = "!input.allSubSurv",
+                             checkboxInput(inputId = "riskTable", label = "Show risk table", value = FALSE)
+                             ),
+                             checkboxInput(inputId = "censor", label = "Show censored samples", value = FALSE),
+                             checkboxInput(inputId = "confInt", label = "Show confidence interval", value = FALSE),
+                             div(class="row",
+                                 div(class="col-xs-6",
+                                     numericInput(inputId = "surv_legend_size",label = "Legend size (pt)",
+                                                  value = 12, min = 0, max = 20, step = 1)
+                                 )
+                             )
+                           )
+                         ),
                          # Tab correlation plotting options
                          conditionalPanel(
                            condition = "input.tab1 == 3 & input.tabCorr == 'corrTwo'",
@@ -246,7 +268,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                              h4("Oncoprint options:"),
                              checkboxInput(inputId = "add_cna", label = "Show copy number alterations", value = FALSE),
                              checkboxInput(inputId = "hide_cases", label = "Hide unaltered cases", value = FALSE),
-                             checkboxInput(inputId = "column_barplot", label = "Show column bar plot", value = FALSE),
+                             # checkboxInput(inputId = "column_barplot", label = "Show column bar plot", value = FALSE),
                              checkboxInput(inputId = "row_barplot", label = "Show row bar plot", value = TRUE)
                            )
                          ),
@@ -407,7 +429,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                                                                         checkboxInput(inputId = "quantile", label = "Show quantiles", value = TRUE)
                                                                                        ),
                                                                                        plotOutput(outputId = "hazardPlot", click = "hrClick", width = 500 , height = 400)
-                                                                                     ),
+                                                                                     ), br(),
                                                                                      plotOutput(outputId = "kmPlot", width = 500 , height = 400)
                                                                               )
                                                                               
