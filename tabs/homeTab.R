@@ -11,7 +11,7 @@ tabPanel(title = "Home", icon = icon("home"),
            tags$head(
              includeScript("tools/google-analytics.js"),
              tags$script(type="text/javascript", src = "busy.js"),
-             tags$script(type="text/javascript", src = "slider.js"),
+             # tags$script(type="text/javascript", src = "slider.js"),
              tags$link(rel="shortcut icon", href="./GlioVis_logo_bar.bmp"),
              tags$script(type="text/javascript", "var switchTo5x=true"),
              tags$script(type="text/javascript", src="http://w.sharethis.com/button/buttons.js"),
