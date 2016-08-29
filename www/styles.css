@@ -1,3 +1,14 @@
+#adult_table .odd {background-color: #68cbd0;}
+#pediatric_table .odd {background-color: #8ABBD7;color:#333333;}
+
+table.dataTable.display td, table.dataTable.display th {
+    text-align:left;
+}
+
+table.dataTable.display td + td, table.dataTable.display th + th {
+    text-align:center;
+}
+
 .simple-ss {
   width:900px;
   height:280px;
