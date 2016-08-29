@@ -37,9 +37,9 @@ install_gliovis <- function() {
   
   # install needed packages from CRAN
   pkg <- c("shiny", "survival", "weights", "googleVis", "dplyr", "ggplot2","shinydashboard", 
-           "htmlwidgets","kernlab","devtools","markdown","caret","Cairo","broom",
+           "htmlwidgets","kernlab","devtools","markdown","caret","Cairo","broom", "DT","GGally",
            "Cairo","reshape2","heatmap3","RColorBrewer","scales","htmlwidgets","cgdsr",
-           "shinyBS", "gridExtra","survminer")
+           "shinyBS", "gridExtra","survminer","readxl")
   
   new.pkg <- pkg[!(pkg %in% installed.packages())]
   
@@ -54,7 +54,6 @@ install_gliovis <- function() {
   biocLite("GSVA","limma")
   
   # install needed packages from Github
-  devtools::install_github("rstudio/DT")
   devtools::install_github("jokergoo/ComplexHeatmap")
   devtools::install_github(c("GuangchuangYu/DOSE", "GuangchuangYu/clusterProfiler"))
   
