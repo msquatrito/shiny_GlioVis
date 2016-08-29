@@ -12,10 +12,10 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                          wellPanel(                      
                            # dataset
                            radioButtons(inputId ="datasetType", label = h4("Dataset:"), choices = c("Adult","Pediatric"), selected = "Adult", inline = T),
-                           selectizeInput(inputId = "dataset", label ="", choices = NULL, selected = NULL),
+                           selectizeInput(inputId = "dataset", label ="", choices = NULL, selected = 'TCGA_GBM'),
                            conditionalPanel(
-                             condition = "input.dataset == 'TCGA GBM'",
-                             selectInput(inputId = "microarray_platform", label = h4("Platform:"), choices = c("HG-U133A","Agilent-4502A","RNA-Seq"))
+                             condition = "input.dataset == 'TCGA_GBM'",
+                             selectInput(inputId = "microarray_platform", label = h4("Platform:"), choices = c("HG-U133A","Agilent-4502A","RNA-Seq"), selected = "HG-U133A")
                            ),
                            # genes
                            conditionalPanel(
@@ -53,14 +53,14 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                            # Tab Boxplot
                            conditionalPanel(
                              condition = "input.tab1 == 1", 
-                             radioButtons(inputId ="plotType", label = h4("Plot type:"), choices = c("Pre-defined","User-defined"),selected = NULL, inline = T),
+                             radioButtons(inputId ="plotType", label = h4("Plot type:"), choices = c("Pre-defined","User-defined"), selected = NULL, inline = T),
                              conditionalPanel(
                                condition = "input.plotType == 'Pre-defined'",
-                               selectInput(inputId = "plotTypeSel", label = NULL, choices = "", selectize = TRUE)
+                               selectizeInput(inputId = "plotTypeSel", label = NULL, choices = "")
                              ),
                              conditionalPanel(
                                condition = "input.plotType == 'User-defined'",
-                               selectInput(inputId = "plotTypeUserSel", label = NULL, choices = "", selectize = TRUE)
+                               selectizeInput(inputId = "plotTypeUserSel", label = NULL, choices = "")
                              ),
                              conditionalPanel(
                                condition = "input.gene !=''",
@@ -78,7 +78,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                            conditionalPanel(
                              condition = "input.tab1 == 2",
                              conditionalPanel(
-                               condition = "input.datasetType != 'Pediatric' & input.histology == 'GBM' & input.dataset != 'TCGA GBMLGG'",
+                               condition = "input.datasetType != 'Pediatric' & input.histology == 'GBM' & input.dataset != 'TCGA_GBMLGG'",
                                checkboxInput(inputId = "gcimpSurv", label = "Exclude G-CIMP samples", value = FALSE),
                                checkboxInput(inputId = "primarySurv", label = "Exclude Recurrent samples", value = FALSE)
                              ),
@@ -295,7 +295,8 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                              checkboxInput(inputId = "pDataHeatmap", label = "Include annotation to heatmap", value = FALSE),
                              conditionalPanel(
                                condition = "input.pDataHeatmap",
-                               selectInput(inputId = "colorSideHeatmap", label = h4("Select group:"), choices = "")
+                               selectizeInput(inputId = "colorSideHeatmap", label = h4("Select group:"), choices = NULL, multiple = T,
+                                           options = list(plugins = list('remove_button','drag_drop')))
                              )
                            )
                            )
@@ -357,7 +358,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                          
                          tabsetPanel(id = "tab1",  
                                      
-                                     tabPanel(title = "Box plots", icon = icon("bar-chart-o"), value = 1,
+                                     tabPanel(title = "Expression", icon = icon("bar-chart-o"), value = 1,
                                               
                                               tabsetPanel(id = "tabBoxPlot", 
                                                           
@@ -613,6 +614,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                 
                                                 tabPanel(title = "Data", icon = icon("table"),
                                                          br(),
+                                                         # plotOutput(outputId = "annotation"),
                                                          dataTableOutput(outputId = "table")
                                                 ),
                                                 

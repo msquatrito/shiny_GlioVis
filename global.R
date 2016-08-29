@@ -32,17 +32,14 @@ library(caret)
 library(DT)
 library(Cairo)
 library(reshape2)
-library(heatmap3)
 library(RColorBrewer)
 library(scales)
 library(cgdsr)
 library(shinyBS)
 library(limma)
 library(ComplexHeatmap)
-library(clusterProfiler)
 library(survminer)
-
-# library(gliovis)
+library(readxl)
 
 options(shiny.usecairo=TRUE)
 
@@ -52,139 +49,32 @@ options(shiny.usecairo=TRUE)
 #######################################
 ############## Datasets  ##############
 #######################################
-adult_datasets <- c("TCGA GBM", "TCGA LGG","TCGA GBMLGG", "Rembrandt", "Gravendeel","Bao", "Kamoun","Ivy GAP", "Lee Y", "Oh","Phillips",
-                    "Gill", "Freije", "Murat","Gorovets", "POLA Network", "Reifenberger", "Joo","Ducray", "Walsh", "Nutt", "Kwom", "Vital",
-                    "Grzmil", "Gleize", "Donson", "Li")
+datasets <- list(
+  adult_datasets = c("TCGA_GBM", "TCGA_LGG","TCGA_GBMLGG", "Rembrandt", "Gravendeel","Bao", "Kamoun","Ivy_GAP", "LeeY", "Oh","Phillips",
+                     "Gill", "Freije", "Murat","Gorovets", "POLA_Network", "Reifenberger", "Joo","Ducray", "Walsh", "Nutt", "Kwom", "Vital",
+                     "Grzmil", "Gleize", "Donson", "Li"),
+  pediatric_datasets = c("Northcott_2012","Sturm_2016","Bergthold","Griesinger","Gump","Northcott_2011","Pomeroy",
+                         "Johnson","Witt","Henriquez","Hoffman","Kool","Lambert","Paugh", "deBont","Johann",
+                         "Zakrzewski","Sturm_2012","Buczkowicz","Mascelli","Schwartzentruber","Bender"),
+  no_surv_dataset = c("Bao","Reifenberger","Gill","Li", "Oh","Ivy_GAP", "Kwom","Walsh","Gleize",
+                      "Sturm_2016","Henriquez","Bergthold","Buczkowicz","Mascelli","Lambert","Griesinger",
+                      "Zakrzewski","Bender", "deBont","Gump","Johnson","Northcott_2012","Northcott_2011", "Kool",
+                      "Johann"),
+  rnaseq_datasets = c("TCGA_LGG", "TCGA_GBMLGG", "Bao", "Ivy_GAP","Gill")
+)
 
-pediatric_datasets <- c("Northcott_2012","Sturm_2016","Bergthold","Griesinger","Gump","Northcott_2011","Pomeroy",
-                        "Johnson","Witt","Henriquez","Hoffman","Kool","Lambert","Paugh", "deBont","Johann",
-                        "Zakrzewski","Sturm_2012","Buczkowicz","Mascelli","Schwartzentruber","Bender")
+for (i in unlist(datasets[1:2], use.names = F)) {
+  assign(i,readRDS(sprintf("data/datasets/%s.Rds",i))) 
+}
+rm(i)
 
-no_surv_dataset <- c("Bao","Reifenberger","Gill","Li", "Oh","Ivy GAP", "Kwom","Walsh","Gleize",
-                     "Sturm_2016","Henriquez","Bergthold","Buczkowicz","Mascelli","Lambert","Griesinger",
-                     "Zakrzewski","Bender", "deBont","Gump","Johnson","Northcott_2012","Northcott_2011", "Kool",
-                     "Johann")
-rnaseq_datasets <- c("TCGA LGG", "TCGA GBMLGG", "Bao", "Ivy GAP","Gill")
-
-gbm.tcga <- readRDS("data/datasets/TCGA.GBM.Rds")
-lgg.tcga <- readRDS("data/datasets/TCGA.LGG.Rds")
-lgg_gbm.tcga <- readRDS("data/datasets/TCGA.LGG_GBM.Rds")
-rembrandt <- readRDS("data/datasets/Rembrandt.Rds")
-freije <- readRDS("data/datasets/Freije.Rds")
-gravendeel <- readRDS("data/datasets/Gravendeel.Rds")
-murat <- readRDS("data/datasets/Murat.Rds")
-phillips <- readRDS("data/datasets/Phillips.Rds")
-leey <- readRDS("data/datasets/LeeY.Rds")
-reifenberger <- readRDS("data/datasets/Reifenberger.Rds")
-bao <- readRDS("data/datasets/Bao.Rds")
-gill <- readRDS("data/datasets/Gill.Rds")
-gorovets <- readRDS("data/datasets/Gorovets.Rds")
-nutt <- readRDS("data/datasets/Nutt.Rds")
-ducray <- readRDS("data/datasets/Ducray.Rds")
-walsh <- readRDS("data/datasets/Walsh.Rds")
-grzmil <- readRDS("data/datasets/Grzmil.Rds")
-donson <- readRDS("data/datasets/Donson.Rds")
-li <- readRDS("data/datasets/Li.Rds")
-vital <- readRDS("data/datasets/Vital.Rds")
-joo <- readRDS("data/datasets/Joo.Rds")
-oh <- readRDS("data/datasets/Oh.Rds")
-ivy <- readRDS("data/datasets/Ivy.Rds")
-pola <- readRDS("data/datasets/POLA.Rds")
-gleize <- readRDS("data/datasets/Gleize.Rds")
-sturm_2016 <- readRDS("data/datasets/Sturm_2016.Rds")
-paugh <- readRDS("data/datasets/Paugh.Rds")
-mascelli <- readRDS("data/datasets/Mascelli.Rds")
-schwartzentruber <- readRDS("data/datasets/Schwartzentruber.Rds")
-lambert <- readRDS("data/datasets/Lambert.Rds")
-griesinger <- readRDS("data/datasets/Griesinger.Rds")
-zakrzewski <- readRDS("data/datasets/Zakrzewski.Rds")
-sturm_2012<- readRDS("data/datasets/Sturm_2012.Rds")
-bender <- readRDS("data/datasets/Bender.Rds")
-bergthold <- readRDS("data/datasets/Bergthold.Rds")
-henriquez <- readRDS("data/datasets/Henriquez.Rds")
-buczkowicz <- readRDS("data/datasets/Buczkowicz.Rds")
-kamoun <- readRDS("data/datasets/Kamoun.Rds")
-kwom <- readRDS("data/datasets/Kwom.Rds")
-witt <- readRDS("data/datasets/Witt.Rds")
-deBont <- readRDS("data/datasets/deBont.Rds")
-gump <- readRDS("data/datasets/Gump.Rds")
-hoffman <- readRDS("data/datasets/Hoffman.Rds")
-johnson <- readRDS("data/datasets/Johnson.Rds")
-northcott_2012 <- readRDS("data/datasets/Northcott_2012.Rds")
-northcott_2011 <- readRDS("data/datasets/Northcott_2011.Rds")
-pomeroy <- readRDS("data/datasets/Pomeroy.Rds")
-kool <- readRDS("data/datasets/Kool.Rds")
-johann <- readRDS("data/datasets/Johann.Rds")
 
 #######################################
 ########## other variables  ###########
 #######################################
 genes <- readRDS("data/genes.Rds")
-gene_names <- as.character(genes[,"Gene"])
-# gbm.subtype.list <- readRDS("data/subtype_list.Rds")
-# gbm.subtype.list <- readRDS("data/subtype_list_2016.Rds")
-# subtypes_2016_list <- read.delim("data/subtypes_2016_gene_list.txt", stringsAsFactors=FALSE)
-# gbm.core.samples <- readRDS("data/TCGA.core.345samples.Rds")
-# gbm.core.samples <- readRDS("data/TCGA.GBM.core.samples.2016.Rds")
 lgg.core.samples <- readRDS("data/lgg.core.229samples.Rds")
-galon_gene_set_list <- readRDS("data/galon_gene_set_list.Rds")
-engler_gene_set_list <- readRDS("data/engler_gene_set_list.Rds")
-galon_engler <- readRDS("data/galon_engler_gene_set_list.RDS")
-LM22_gene_set_list <- readRDS("data/LM22_gene_set_list.Rds")
-msigdb.v5 <- read.delim("data/msigdb.v5.0.symbols.gmt.txt", header=FALSE, row.names=1, stringsAsFactors=FALSE)
-
-#######################################
-############## plotList  ##############
-#######################################
-plotList <- list("TCGA GBM" = c("Histology", "Copy_number", "Subtype", "CIMP_status", "Recurrence"),
-                 "TCGA LGG" = c("Histology", "Grade", "Copy_number", "Subtype"),
-                 "TCGA GBMLGG" = c("Histology", "Grade", "Copy_number", "Subtype"),
-                 "Rembrandt" = c("Histology", "Grade", "Subtype", "CIMP_status"),
-                 "Gravendeel" = c("Histology", "Grade", "Subtype", "CIMP_status"),
-                 "Kamoun" = c("Histology", "Grade", "Subtype"),
-                 "Phillips" = c("Histology", "Grade", "Subtype", "Recurrence", "CIMP_status"),
-                 "Murat" = c("Histology", "Subtype", "Recurrence", "CIMP_status"),
-                 "Freije" = c("Histology", "Grade", "Subtype", "CIMP_status"),
-                 "Lee Y" = c("Histology","Subtype", "CIMP_status"),
-                 "Reifenberger" = c("Histology","Subtype", "CIMP_status"),
-                 "Bao" = c("Histology", "Subtype", "Recurrence", "CIMP_status"),
-                 "Gill" = c("Histology", "Subtype", "CIMP_status"),
-                 "Walsh" = c("Subtype","CIMP_status"),
-                 "Gorovets" = c("Histology", "Grade", "Subtype"),
-                 "Nutt" = c("Histology", "Subtype", "CIMP_status"),
-                 "Ducray" = c("Histology","Subtype", "CIMP_status"),
-                 "Grzmil"= c("Histology", "Subtype", "CIMP_status"),
-                 "Donson"= c("Histology", "Subtype"),
-                 "Li" = c("Histology","Subtype", "CIMP_status"),
-                 "Vital" = c("Histology", "Grade", "Subtype"),
-                 "Joo" = c("Histology", "Subtype", "Recurrence", "CIMP_status"),
-                 "Oh" = c("Histology","Recurrence", "Subtype", "CIMP_status"),
-                 "Ivy GAP" = c("Histology","Subtype","Recurrence", "CIMP_status"),
-                 "Kwom" = c("Histology","Subtype","Recurrence"),
-                 "POLA Network"= c("Histology","Subtype"),
-                 "Gleize" = c("Histology", "Grade"),
-                 "Sturm_2016" = c("Histology","Subtype"),
-                 "Paugh" = c("Histology", "Grade", "Subtype"),
-                 "Mascelli" = c("Histology", "Grade"),
-                 "Schwartzentruber" = c("Recurrence"),
-                 "Lambert" = c("Histology"),
-                 "Griesinger" = c("Histology"),
-                 "Zakrzewski" = c("Histology"),
-                 "Sturm_2012" = c("Histology","Subtype"),
-                 "Bender" = c("Histology","Subtype"),
-                 "Bergthold" = c("Histology", "Recurrence"),
-                 "Henriquez"= c("Histology","Grade"),
-                 "Buczkowicz" = c("Histology", "Subtype"),
-                 "Witt" = c("Histology","Grade","Recurrence","Subtype"),
-                 "deBont" = c("Histology","Recurrence"),
-                 "Gump" = c("Histology"),
-                 "Hoffman" =c("Histology","Grade","Subtype","Recurrence"),
-                 "Johnson" = c("Histology","Subtype"),
-                 "Northcott_2012" = c("Histology","Subtype"), 
-                 "Northcott_2011" = c("Histology","Subtype"),
-                 "Pomeroy"= c("Histology"), 
-                 "Kool" = c("Histology", "Subtype"),
-                 "Johann" = c("Histology", "Subtype"))
+gene_set_list <- readRDS("data/gene_set_list.Rds")
 
 
 ################################################
@@ -197,7 +87,8 @@ rmNA <- function (df) {
 ##########################################
 ##############  data table  ##############
 ##########################################
-options(DT.options  = list(lengthMenu = list(c(20, 50, 100, -1), c('20','50','100','All')),
+options(DT.options  = list(lengthMenu = list(c(20, 50, 100, -1), c('20','50','100','All')), 
+                           serverSide = FALSE,
                            pagingType = "full",
                            dom = 'lfBrtip',
                            buttons = list('copy', 'print', list(
@@ -207,7 +98,7 @@ options(DT.options  = list(lengthMenu = list(c(20, 50, 100, -1), c('20','50','10
                            ))
 )
 )
-data_table <- function (df,rownames = FALSE, selection = 'none', filter = "none") {
+data_table <- function (df,rownames = FALSE, selection = 'none', filter = "none", options = list()) {
   datatable(df, selection = selection, rownames = rownames, filter = filter, extensions = 'Buttons')
   
 }
@@ -293,12 +184,12 @@ get_cutoff <- function(mRNA, cutoff, numeric) {
   }
   if (cutoff != "quartiles") {
     if (cutoff == "high vs low") {
-      strat <- ifelse(mRNA >= mRNA.q [3], "high", ifelse(mRNA <= mRNA.q [1], "low",NA))
+      strat <- ifelse(mRNA >= mRNA.q[3], "high", ifelse(mRNA <= mRNA.q[1], "low",NA))
     } else {
       cut <- switch(cutoff,
                     "median" = mRNA.q[2],
-                    "lower quartile" = mRNA.q [1],
-                    "upper quartile" = mRNA.q [3],
+                    "lower quartile" = mRNA.q[1],
+                    "upper quartile" = mRNA.q[3],
                     "Use a specific mRNA value" = numeric)
       f <- function(x) ifelse(x >= cut, c("high"),c("low"))
       strat <- f(mRNA)
@@ -347,17 +238,17 @@ survivalPlot <- function (df, gene, group, subtype, cutoff, numeric, censor,risk
   star.log <- starmaker(log.rank.p)
   star.mcox <- starmaker(mantle.cox.p)
   
-  legend.labs = c(sprintf("%s High, (n=%s, events=%s, median=%s)", gene, surv$records[1], surv$events[1], surv$median[1]),
-                  sprintf("%s Low, (n=%s, events=%s, median=%s)", gene, surv$records[2], surv$events[2], surv$median[2]))
-  xlegend <- 0.65
+  legend.labs = c(sprintf("%s High (n=%s, events=%s, median=%s)", gene, surv$records[1], surv$events[1], surv$median[1]),
+                  sprintf("%s Low (n=%s, events=%s, median=%s)", gene, surv$records[2], surv$events[2], surv$median[2]))
+  xlegend <- 0.60
   if (cutoff == "quartiles"){
     legend.labs = c(sprintf("1st (n=%s, median=%s)", surv$records[1], surv$median[1]),
                     sprintf("2nd (n=%s, median=%s)", surv$records[2], surv$median[2]),
                     sprintf("3rd (n=%s, median=%s)", surv$records[3], surv$median[3]),
                     sprintf("4th (n=%s, median=%s)", surv$records[4], surv$median[4]))
-    xlegend <- 0.75
+    xlegend <- 0.70
   }
-  p <- ggsurvplot(expr.surv, censor = censor, conf.int = conf.int, legend = c(xlegend,0.9), surv.scale = "percent", ylab = "% Surviving", xlab = "Survival time (Months)",
+  p <- ggsurvplot(expr.surv, censor = censor, conf.int = conf.int, legend = c(xlegend,0.9), surv.scale = "percent", ylab = "Surviving", xlab = "Survival time (Months)",
                   xlim = c(0,smax),main = main, legend.labs = legend.labs, legend.title = "", font.legend = font.legend, risk.table = risk.table,
                   risk.table.y.text = F, risk.table.y.text.col = T, risk.table.height = 0.4)
   plot <- p$plot
@@ -461,8 +352,8 @@ kmPlot <- function (cutoff,surv,censor,conf.int,risk.table,font.legend){
   xmax <- (90*tmax)/100
   p <- ggsurvplot(sFit, censor = censor, conf.int = conf.int, legend = c(0.65,0.9), surv.scale = "percent", ylab = "% Surviving", xlab = "Survival time (Months)",
                   xlim = c(0,smax), main = "Kaplan Meier Survival Estimates", legend.title = "", font.legend = font.legend, 
-                  legend.labs = c(sprintf("High expr., (n=%s, events=%s, median=%s)", sTable$records[1], sTable$events[1], sTable$median[1]),
-                                  sprintf("Low expr., (n=%s, events=%s, median=%s)", sTable$records[2], sTable$events[2], sTable$median[2])),
+                  legend.labs = c(sprintf("High expr. (n=%s, events=%s, median=%s)", sTable$records[1], sTable$events[1], sTable$median[1]),
+                                  sprintf("Low expr. (n=%s, events=%s, median=%s)", sTable$records[2], sTable$events[2], sTable$median[2])),
                   risk.table = risk.table, risk.table.y.text = F, risk.table.y.text.col = T, risk.table.height = 0.4)
   plot <- p$plot
   plot <- plot + annotate("text", x = xmax, y = c(0.725,0.65,0.575), size = font.legend/3,
@@ -877,5 +768,466 @@ plotPurity <- function (estimate.df, sample, platform = c("affymetrix","agilent"
   points(est, purity, pch = 19, cex = 1.25)
   abline(h = purity, col = "black", lty = 2)
   abline(v = est, col = "black", lty = 2)
+}
+
+############################################
+########## ssgsea with permutations ########
+############################################
+run.ssgsea.GBM <- function (data, number_perms) {
+  data <- data.frame(Description = row.names(data),data)
+  size <- dim(data[-1])
+  num_rows <- size[1]
+  num_cols <- size[2]
+  num_perm <- number_perms
+  random_profile <- data[1]
+  for (i in 1:num_perm) {
+    a <- data[-1][cbind(seq(1:num_rows), sample(1:num_cols,
+                                                num_rows, replace = T))]
+    random_profile <- cbind(random_profile, a)
+    if (i%%100 == 0) {
+      print(i)
+    }
+  }
+  
+  # print("Random profiles was genereated!")
+  selected.models <- c("Proneural", "Classical", "Mesenchymal")
+  random_result <- OPAM.apply.model.2(input.ds = random_profile, models.dir = "www/ssgsea_temp/data/", models = selected.models)
+  original_result <- OPAM.apply.model.2(input.ds = data, models.dir = "www/ssgsea_temp/data/", models = selected.models)
+  random_result <- random_result[-1]
+  random_result <- t(random_result)
+  original_result <- original_result[-1]
+  original_result <- t(original_result)
+  p_result <- original_result
+  for (i in 1:dim(original_result)[1]) {
+    p_result[i, ] <- colSums(sweep(random_result, 2, original_result[i,
+                                                                     ]) >= 0)
+  }
+  
+  colnames(p_result) = paste(colnames(p_result), "pval", sep = "_")
+  p_result = t(apply(p_result, 1, function(x) {
+    (x + 1)/(number_perms + 1)
+  }))
+  
+  results <- data.frame(cbind(round(original_result,2), signif(p_result,3)))
+  results$gsea.subtype.call <- as.factor(names(results[4:6]) [apply(results[,4:6],1,which.min)])
+  results$gsea.subtype.call <- factor(results$gsea.subtype.call,labels = c("Classical","Mesenchymal", "Proneural"))
+  results
+}
+
+OPAM.apply.model.2 <- function (input.ds, input.cls = NA, models.dir, models = "ALL") {
+  erf <- function(x) 2 * pnorm(x * sqrt(2)) - 1
+  m <- data.matrix(input.ds)
+  gene.names <- gene.descs <- row.names(input.ds)
+  sample.names <- names(input.ds)
+  Ns <- length(m[1, ])
+  Ng <- length(m[, 1])
+  
+  class.labels <- rep(1, Ns)
+  class.phen <- "UNDEFINED_PHEN"
+  class.list <- rep("U", Ns)
+  
+  if (models[[1]] == "ALL") {
+    file.list <- list.files(models.dir)
+    models <- file.list[regexpr(pattern = ".mod", file.list) >
+                          1]
+    for (k.model in 1:length(models)) {
+      temp <- strsplit(models[k.model], ".mod")
+      models[k.model] <- temp[[1]]
+    }
+    models <- unique(models)
+  }
+  n.models <- length(models)
+  score.matrix <- matrix(0, nrow = n.models, ncol = Ns)
+  norm.score.matrix <- matrix(0, nrow = n.models, ncol = Ns)
+  model.score.matrix <- matrix(0, nrow = n.models, ncol = Ns)
+  probability.matrix <- matrix(0, nrow = n.models, ncol = Ns)
+  models.descs <- NULL
+  for (model.i in 1:n.models) {
+    # print(paste(model.i, "File:", models[model.i]))
+    m.file <- paste(models.dir, models[model.i], ".mod",
+                    sep = "")
+    con <- file(m.file, "r")
+    file.content <- readLines(con, n = -1)
+    close(con)
+    gc()
+    len <- length(file.content)
+    for (i in 1:len) {
+      temp <- unlist(strsplit(file.content[[i]], "\t"))
+      len.param <- length(temp)
+      if (len.param == 2) {
+        param.vals <- temp[2]
+      }
+      else {
+        param.vals <- paste(noquote(temp[2:len.param]), collapse = ",")
+        param.vals <- paste("c(", param.vals, ")", sep = "")
+      }
+      assignment.string <- paste(noquote(temp[1]), " <- ", param.vals, sep = "")
+      eval(parse(text = assignment.string))
+    }
+    
+    set.seed(12345)
+    if (!exists("sample.norm.type"))
+      sample.norm.type <- "rank"
+    if (sample.norm.type == "rank") {
+      for (j in 1:Ns) {
+        m[, j] <- rank(m[, j], ties.method = "average")
+      }
+      m <- 10000 * m/Ng
+    }
+    else if (sample.norm.type == "log.rank") {
+      for (j in 1:Ns) {
+        m[, j] <- rank(m[, j], ties.method = "average")
+      }
+      m <- log(10000 * m/Ng + exp(1))
+    }
+    else if (sample.norm.type == "log") {
+      m[m < 1] <- 1
+      m <- log(m + exp(1))
+    }
+    
+    if (exists("msig.up.genes3"))
+      msig.up.genes <- msig.up.genes3
+    gene.names.int <- intersect(msig.up.genes, gene.names)
+    if (length(gene.names.int) < 2) {
+      score.matrix[model.i, ] <- norm.score.matrix[model.i,] <- model.score.matrix[model.i, ] <- probability.matrix[model.i,] <- rep(0, Ns)
+      models.descs <- c(models.descs, model.description)
+      rm(model.creation.date, input.ds, input.cls, input2.ds,
+         input2.cls, target.class, target.class2, model.name,
+         model.description, sample.norm.type, marker.disc,
+         top.markers.up, top.markers.dn, top.markers.up2,
+         top.markers.dn2, statistic, weight, random.seed,
+         nperm, link.function, c1, msig.cntrl.genes, msig.up.genes,
+         msig.dn.genes, msig.up.genes2, msig.dn.genes2,
+         msig.up.genes3, msig.dn.genes3, beta.0, beta.1,
+         score, score.up, score.dn)
+      next
+    }
+    
+    locs <- match(gene.names.int, gene.names, nomatch = 0)
+    msig.up.test <- m[locs, ]
+    msig.up.genes.test <- gene.names[locs]
+    msig.up.descs.test <- gene.descs[locs]
+    msig.up.size.test <- length(locs)
+    
+    
+    OPAM <- OPAM.Projection(m, gene.names, Ns, Ng, weight,statistic, msig.up.genes.test, nperm = nperm)
+    
+    score <- OPAM$ES.vector
+    # 
+    #     if (!exists("beta.0"))
+    #       beta.0 <- 0
+    #     if (!exists("beta.1"))
+    #       beta.1 <- 1
+    #     if (!exists("link.function"))
+    #       link.function <- "logit"
+    #     model.formula <- "beta.0 + beta.1 * score[i]"
+    #     model.formula
+    #     prob.i <- matrix(0, nrow = Ns, ncol = 3)
+    #     model.score <- vector(length = Ns, mode = "numeric")
+    #     inv.logit <- function (x, min = 0, max = 1) {
+    #       p <- exp(x)/(1 + exp(x))
+    #       p <- ifelse(is.na(p) & !is.na(x), 1, p)
+    #       p * (max - min) + min
+    #     }
+    #     for (i in 1:Ns) {
+    #       model.score[i] <- eval(parse(text = model.formula))
+    #       if (link.function == "logit") {
+    #         p.vec <- paste("inv.logit(x=", model.formula,
+    #                        ")", sep = "")
+    #       }
+    #       else if (link.function == "probit") {
+    #         p.vec <- paste("(erf(", model.formula, ") + 1)/2",
+    #                        sep = "")
+    #       }
+    #       else {
+    #         stop("Unknown link function")
+    #       }
+    #       val <- eval(parse(text = p.vec))
+    #       prob.i[i, 1] <- quantile(val, probs = 0.5)
+    #       prob.i[i, 2] <- quantile(val, probs = 0.05)
+    #       prob.i[i, 3] <- quantile(val, probs = 0.95)
+    #     }
+    #     probability <- prob.i[, 1]
+    #     xmin <- min(model.score)
+    #     xmax <- max(model.score)
+    #     range.x <- xmax - xmin
+    #     n.points <- 1000
+    #     prob.m <- matrix(0, nrow = n.points, ncol = 3)
+    #     x.m <- vector(length = n.points, mode = "numeric")
+    #     for (k in 1:n.points) {
+    #       x.m[k] <- xmin + k * (range.x/n.points)
+    #       if (link.function == "logit") {
+    #         p.vec <- paste("inv.logit(x=", x.m[k], ")", sep = "")
+    #       }
+    #       else if (link.function == "probit") {
+    #         p.vec <- paste("(erf(", x.m[k], ") + 1)/2", sep = "")
+    #       }
+    #       else {
+    #         stop("Unknown link function")
+    #       }
+    #       val <- eval(parse(text = p.vec))
+    #       prob.m[k, 1] <- quantile(val, probs = 0.5)
+    #       prob.m[k, 2] <- quantile(val, probs = 0.05)
+    #       prob.m[k, 3] <- quantile(val, probs = 0.95)
+    #     }
+    #     istar <- which.min(abs(0.5 - prob.m[, 1]))
+    #     istar <- xmin + istar * (range.x/1000)
+    #     x.index <- order(model.score, decreasing = F)
+    #     x.order <- model.score[x.index]
+    #     prob.i.order <- prob.i[x.index, ]
+    #     
+    #     class.labels.order <- class.labels[x.index]
+    #     boundary <- istar
+    #     pred.class <- ifelse(prob.i.order[, 1] >= 0.5, 2, 1)
+    #     z.range <- range(x.order)
+    # norm.score <- (score - min(score))/(max(score) - min(score))
+    score.matrix[model.i, ] <- score
+    # norm.score.matrix[model.i, ] <- norm.score
+    # model.score.matrix[model.i, ] <- model.score
+    # probability.matrix[model.i, ] <- probability
+    # models.descs <- c(models.descs, model.description)
+    # rm(model.creation.date, input.ds, input.cls, input2.ds,
+    #    input2.cls, target.class, target.class2, model.name,
+    #    model.description, sample.norm.type, marker.disc,
+    #    top.markers.up, top.markers.dn, top.markers.up2,
+    #    top.markers.dn2, statistic, weight, random.seed,
+    #    nperm, link.function, c1, msig.cntrl.genes, msig.up.genes,
+    #    msig.dn.genes, msig.up.genes2, msig.dn.genes2, msig.up.genes3,
+    #    msig.dn.genes3, beta.0, beta.1, score, score.up,
+    #    score.dn)
+  }
+  
+  V.GCT <- data.frame(score.matrix)
+  names(V.GCT) <- sample.names
+  row.names(V.GCT) <- models
+  V.GCT
+  
+}
+
+
+OPAM.Projection <- function (data.array, gene.names, n.cols, n.rows, weight = 0,
+                             statistic = "Kolmogorov-Smirnov", gene.set, nperm = 200) {
+  ES.vector <- vector(length = n.cols)
+  NES.vector <- vector(length = n.cols)
+  p.val.vector <- vector(length = n.cols)
+  correl.vector <- vector(length = n.rows, mode = "numeric")
+  phi <- array(0, c(n.cols, nperm))
+  for (sample.index in 1:n.cols) {
+    gene.list <- order(data.array[, sample.index], decreasing = T)
+    gene.set2 <- match(gene.set, gene.names)
+    if (weight == 0) {
+      correl.vector <- rep(1, n.rows)
+    }
+    else if (weight > 0) {
+      correl.vector <- data.array[gene.list, sample.index]
+    }
+    GSEA.results <- GSEA.EnrichmentScore5(gene.list = gene.list,
+                                          gene.set = gene.set2, statistic = statistic, alpha = weight,
+                                          correl.vector = correl.vector)
+    ES.vector[sample.index] <- GSEA.results$ES
+    if (nperm == 0) {
+      NES.vector[sample.index] <- ES.vector[sample.index]
+      p.val.vector[sample.index] <- 1
+    }
+    else {
+      for (r in 1:nperm) {
+        reshuffled.gene.labels <- sample(1:n.rows)
+        if (weight == 0) {
+          correl.vector <- rep(1, n.rows)
+        }
+        else if (weight > 0) {
+          correl.vector <- data.array[reshuffled.gene.labels,
+                                      sample.index]
+        }
+        GSEA.results <- GSEA.EnrichmentScore5(gene.list = reshuffled.gene.labels,
+                                              gene.set = gene.set2, statistic = statistic,
+                                              alpha = weight, correl.vector = correl.vector)
+        phi[sample.index, r] <- GSEA.results$ES
+      }
+      if (ES.vector[sample.index] >= 0) {
+        pos.phi <- phi[sample.index, phi[sample.index,
+                                         ] >= 0]
+        if (length(pos.phi) == 0)
+          pos.phi <- 0.5
+        pos.m <- mean(pos.phi)
+        NES.vector[sample.index] <- ES.vector[sample.index]/pos.m
+        s <- sum(pos.phi >= ES.vector[sample.index])/length(pos.phi)
+        p.val.vector[sample.index] <- ifelse(s == 0,
+                                             1/nperm, s)
+      }
+      else {
+        neg.phi <- phi[sample.index, phi[sample.index,
+                                         ] < 0]
+        if (length(neg.phi) == 0)
+          neg.phi <- 0.5
+        neg.m <- mean(neg.phi)
+        NES.vector[sample.index] <- ES.vector[sample.index]/abs(neg.m)
+        s <- sum(neg.phi <= ES.vector[sample.index])/length(neg.phi)
+        p.val.vector[sample.index] <- ifelse(s == 0,
+                                             1/nperm, s)
+      }
+    }
+  }
+  return(list(ES.vector = ES.vector, NES.vector = NES.vector,
+              p.val.vector = p.val.vector))
+}
+
+GSEA.EnrichmentScore5 <- function (gene.list, gene.set, statistic = "Kolmogorov-Smirnov",
+                                   alpha = 1, correl.vector = NULL) {
+  tag.indicator <- sign(match(gene.list, gene.set, nomatch = 0))
+  no.tag.indicator <- 1 - tag.indicator
+  N <- length(gene.list)
+  Nh <- length(gene.set)
+  Nm <- N - Nh
+  orig.correl.vector <- correl.vector
+  if (alpha == 0)
+    correl.vector <- rep(1, N)
+  correl.vector <- abs(correl.vector)^alpha
+  sum.correl <- sum(correl.vector[tag.indicator == 1])
+  P0 <- no.tag.indicator/Nm
+  F0 <- cumsum(P0)
+  Pn <- tag.indicator * correl.vector/sum.correl
+  Fn <- cumsum(Pn)
+  if (statistic == "Kolmogorov-Smirnov") {
+    RES <- Fn - F0
+    max.ES <- max(RES)
+    min.ES <- min(RES)
+    if (max.ES > -min.ES) {
+      ES <- signif(max.ES, digits = 5)
+      arg.ES <- which.max(RES)
+    }
+    else {
+      ES <- signif(min.ES, digits = 5)
+      arg.ES <- which.min(RES)
+    }
+    return(list(ES = ES, arg.ES = arg.ES, RES = RES, indicator = tag.indicator))
+  }
+  else if (statistic == "Cramer-von-Mises") {
+    RES <- Fn - F0
+    X <- RES^2 * P0
+    X_p <- X[RES >= 0]
+    X_n <- X[RES < 0]
+    ES_p <- sqrt(sum(X_p)/N)
+    ES_n <- sqrt(sum(X_n)/N)
+    if (ES_p > ES_n) {
+      ES <- signif(ES_p, digits = 5)
+      arg.ES <- which.min(abs(X - max(X_p)))
+    }
+    else {
+      ES <- -signif(ES_n, digits = 5)
+      arg.ES <- which.min(abs(X - max(X_n)))
+    }
+    return(list(ES = ES, RES = RES, arg.ES = arg.ES, indicator = tag.indicator))
+  }
+  else if (statistic == "Anderson-Darling") {
+    RES <- Fn - F0
+    F0_factor <- ifelse(F0 < 1/Nm | F0 > (Nm - 1)/Nm, rep(1,
+                                                          N), F0 * (1 - F0))
+    X <- RES^2 * P0/F0_factor
+    X_p <- X[RES >= 0]
+    X_n <- X[RES < 0]
+    ES_p <- sqrt(sum(X_p)/N)
+    ES_n <- sqrt(sum(X_n)/N)
+    if (ES_p > ES_n) {
+      ES <- signif(ES_p, digits = 5)
+      arg.ES <- which.min(abs(X - max(X_p)))
+    }
+    else {
+      ES <- -signif(ES_n, digits = 5)
+      arg.ES <- which.min(abs(X - max(X_n)))
+    }
+    return(list(ES = ES, RES = RES, arg.ES = arg.ES, indicator = tag.indicator))
+  }
+  else if (statistic == "Zhang_A") {
+    RES <- Fn - F0
+    Fact1 <- ifelse(F0 < 1/Nm | Fn < 1/sum.correl, 0, Fn *
+                      log(Fn/F0))
+    Fact2 <- ifelse(F0 > (Nm - 1)/Nm | Fn > (sum.correl -
+                                               1)/sum.correl, 0, (1 - Fn) * log((1 - Fn)/(1 - F0)))
+    Fn_factor <- ifelse(Fn < 1/sum.correl | Fn > (sum.correl -
+                                                    1)/sum.correl, rep(1, N), Fn * (1 - Fn))
+    G <- (Fact1 + Fact2) * Pn/Fn_factor
+    G_p <- G[RES >= 0]
+    G_n <- G[RES < 0]
+    ES_p <- sum(G_p)/N
+    ES_n <- sum(G_n)/N
+    if (ES_p > ES_n) {
+      ES <- signif(ES_p, digits = 5)
+      arg.ES <- which.min(abs(G - max(G_p)))
+    }
+    else {
+      ES <- -signif(ES_n, digits = 5)
+      arg.ES <- which.min(abs(G - max(G_n)))
+    }
+    return(list(ES = ES, RES = RES, arg.ES = arg.ES, indicator = tag.indicator))
+  }
+  else if (statistic == "Zhang_C") {
+    RES <- Fn - F0
+    Fact1 <- ifelse(F0 < 1/Nm | Fn < 1/sum.correl, 0, Fn *
+                      log(Fn/F0))
+    Fact2 <- ifelse(F0 > (Nm - 1)/Nm | Fn > (sum.correl -
+                                               1)/sum.correl, 0, (1 - Fn) * log((1 - Fn)/(1 - F0)))
+    F0_factor <- ifelse(F0 < 1/Nm | F0 > (Nm - 1)/Nm, rep(1,
+                                                          N), F0 * (1 - F0))
+    G <- (Fact1 + Fact2) * P0/F0_factor
+    G_p <- G[RES >= 0]
+    G_n <- G[RES < 0]
+    ES_p <- sum(G_p)/N
+    ES_n <- sum(G_n)/N
+    if (ES_p > ES_n) {
+      ES <- signif(ES_p, digits = 5)
+      arg.ES <- which.min(abs(G - max(G_p)))
+    }
+    else {
+      ES <- -signif(ES_n, digits = 5)
+      arg.ES <- which.min(abs(G - max(G_n)))
+    }
+    return(list(ES = ES, RES = RES, arg.ES = arg.ES, indicator = tag.indicator))
+  }
+  else if (statistic == "Zhang_K") {
+    RES <- Fn - F0
+    Fact1 <- ifelse(F0 < 1/Nm | Fn < 1/sum.correl, 0, Fn *
+                      log(Fn/F0))
+    Fact2 <- ifelse(F0 > (Nm - 1)/Nm | Fn > (sum.correl -
+                                               1)/sum.correl, 0, (1 - Fn) * log((1 - Fn)/(1 - F0)))
+    G <- Fact1 + Fact2
+    G_p <- G[RES >= 0]
+    G_n <- G[RES < 0]
+    ES_p <- max(G_p)
+    ES_n <- max(G_n)
+    if (ES_p > ES_n) {
+      ES <- signif(ES_p, digits = 5)
+      arg.ES <- which.min(abs(G - ES_p))
+    }
+    else {
+      ES <- -signif(ES_n, digits = 5)
+      arg.ES <- which.min(abs(G - ES_n))
+    }
+    return(list(ES = ES, RES = RES, arg.ES = arg.ES, indicator = tag.indicator))
+  }
+  else if (statistic == "area.under.RES") {
+    RES <- Fn - F0
+    max.ES <- max(RES)
+    min.ES <- min(RES)
+    if (max.ES > -min.ES) {
+      arg.ES <- which.max(RES)
+    }
+    else {
+      arg.ES <- which.min(RES)
+    }
+    ES <- sum(RES)
+    return(list(ES = ES, arg.ES = arg.ES, RES = RES, indicator = tag.indicator))
+  }
+  else if (statistic == "Wilcoxon") {
+    library(exactRankTests)
+    seq.index <- seq(1, N)
+    gene.set.ranks <- seq.index[tag.indicator == 1]
+    gene.set.comp.ranks <- seq.index[tag.indicator == 0]
+    W <- wilcox.exact(x = gene.set.ranks, y = gene.set.comp.ranks,
+                      alternative = "two.sided", mu = 0, paired = FALSE,
+                      exact = F, conf.int = T, conf.level = 0.95)
+    ES <- log(1/W$p.value)
+    return(list(ES = ES, arg.ES = NULL, RES = NULL, indicator = tag.indicator))
+  }
 }
 

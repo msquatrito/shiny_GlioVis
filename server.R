@@ -17,133 +17,137 @@
 `%notin%` <- Negate('%in%')
 shinyServer(
   function(input, output, session) {
-
+    
     options(shiny.maxRequestSize=100*1024^2)
-
+    
+    output$adult_table <- renderDataTable({
+      adult_table <- read_excel("data/adult.xlsx")
+      sketch <-  htmltools::withTags(table(
+        class = 'compact nowrap',
+        style = 'font-size: 13px; line-height: 10px;',
+        thead(
+          tr(
+            th(rowspan = 2, "Dataset"),
+            th(rowspan = 2, "Data type"),
+            th(colspan = 3, style = 'font-style:italic;','Samples'),
+            th(colspan = 7, style = 'font-style:italic;','Plots')
+          ),
+          tr(
+            lapply(c("Non-tumor",	"Low-grade",	"GBM",	"Histology",	"Grade",	
+                     "Copy Number",	"Subtype",	"CIMP",	"Recurrence",	"Survival"),th)
+          )
+        )
+      )
+      )
+      datatable(adult_table,escape = FALSE,container = sketch, rownames = F,
+                selection = "none", options = list(pageLength = 30, dom = 't'))
+    })
+    
+    output$pediatric_table <- renderDataTable({
+      pediatric_table <- read_excel("data/pediatric.xlsx")
+      sketch <-  htmltools::withTags(table(
+        class = 'compact nowrap',
+        style = 'font-size: 13px; line-height: 10px;',
+        thead(
+          tr(
+            th(rowspan = 2, "Dataset"),
+            th(rowspan = 2, "Data type"),
+            th(colspan = 2, style = 'font-style:italic;','Samples'),
+            th(colspan = 5, style = 'font-style:italic;','Plots')
+          ),
+          tr(
+            lapply(c("Non-tumor",	"Tumor","Histology", "Grade","Subtype",	"Recurrence",	"Survival"),th)
+          )
+        )
+      )
+      )
+      datatable(pediatric_table,escape = FALSE, container = sketch, rownames = F,
+                selection = "none", options = list(pageLength = 30, dom = 't'))
+    })
+    
     dataset_type <- reactive({
       switch(input$datasetType,
-             "Adult" = adult_datasets,
-             "Pediatric" = pediatric_datasets)
+             "Adult" = datasets$adult_datasets,
+             "Pediatric" = datasets$pediatric_datasets)
     })
-
+    
     observe({
       updateSelectizeInput(session, inputId = "dataset", choices = dataset_type(), selected = dataset_type()[1], server = TRUE)
     })
-
+    
+    # #' Return the requested dataset
+    # dataset_input <- reactive({
+    #   req(input$dataset)
+    #   file <- paste0("data/datasets/",input$dataset,".Rds")
+    #   data <- readRDS(file)
+    # })
+    
     #' Return the requested dataset
     dataset_input <- reactive({
-      switch(input$dataset,
-             "TCGA GBM" = gbm.tcga,
-             "TCGA LGG" = lgg.tcga,
-             "TCGA GBMLGG" = lgg_gbm.tcga,
-             "Rembrandt" = rembrandt,
-             "Gravendeel" = gravendeel,
-             "Kamoun" = kamoun,
-             "Phillips" = phillips,
-             "Murat" = murat,
-             "Freije" = freije,
-             "Lee Y" = leey,
-             "Reifenberger" = reifenberger,
-             "Bao" = bao,
-             "Gill" = gill,
-             "Gorovets" = gorovets,
-             "Nutt" = nutt,
-             "Ducray" = ducray,
-             "Walsh" = walsh,
-             "Grzmil" = grzmil,
-             "Donson" = donson,
-             "Li" = li,
-             "Vital" = vital,
-             "Joo" = joo,
-             "Oh" = oh,
-             "Ivy GAP" = ivy,
-             "POLA Network" = pola,
-             "Kwom" = kwom,
-             "Gleize" = gleize,
-             "Sturm_2016" = sturm_2016,
-             "Paugh" = paugh,
-             "Mascelli" = mascelli,
-             "Schwartzentruber" = schwartzentruber,
-             "Lambert" = lambert,
-             "Griesinger" = griesinger,
-             "Zakrzewski" = zakrzewski,
-             "Sturm_2012" = sturm_2012,
-             "Bender" = bender,
-             "Bergthold" = bergthold,
-             "Henriquez" = henriquez,
-             "Buczkowicz" = buczkowicz,
-             "Witt" = witt,
-             "deBont" = deBont,
-             "Gump" = gump,
-             "Hoffman" = hoffman,
-             "Johnson" = johnson,
-             "Northcott_2012" = northcott_2012,
-             "Northcott_2011" = northcott_2011,
-             "Pomeroy" = pomeroy,
-             "Kool" = kool,
-             "Johann" = johann)
-             
+      eval(parse(text = input$dataset))
     })
-
+    
+    #' plotType
+    plotList <- reactive({
+      dataset_input()[["plotType"]]
+    })
+    
     #' Expression data
     exprs <- reactive({
-      if(input$dataset == "TCGA GBM") {
+      if(input$dataset == "TCGA_GBM") {
         switch(input$microarray_platform,
-        "HG-U133A" = dataset_input()[["expr"]],
-        "Agilent-4502A" =dataset_input()[["agilent"]],
-        "RNA-Seq" = dataset_input()[["rseq"]]
+               "HG-U133A" = dataset_input()[["expr"]],
+               "Agilent-4502A" =dataset_input()[["agilent"]],
+               "RNA-Seq" = dataset_input()[["rseq"]]
         )
       } else {
         dataset_input()[["expr"]]
       }
     })
-
+    
     #' Phenotype data
     pDatas <- reactive({
       dataset_input()[["pData"]]
     })
-
+    
     #' CNA data
     cnas <- reactive({
       dataset_input()[["cna"]]
     })
-
+    
     #' RPPA data
     rppas <- reactive({
       dataset_input()[["rppa"]]
     })
-
+    
     #' Text matching with the gene names list
-    updateSelectizeInput(session, inputId = "gene", choices = gene_names, server = TRUE)
-    updateSelectizeInput(session, inputId = "gene2", choices = gene_names, server = TRUE)
-    updateSelectizeInput(session, inputId = "corrGene", choices = gene_names, server = TRUE)
-    observe({
-      updateSelectizeInput(session, inputId = "mutGene", choices = gene_names, selected = input$gene, server = TRUE)
+    updateSelectizeInput(session, inputId = "gene", choices = genes$Gene, server = TRUE)
+    updateSelectizeInput(session, inputId = "gene2", choices = genes$Gene, server = TRUE)
+    updateSelectizeInput(session, inputId = "corrGene", choices = genes$Gene, server = TRUE)
+    observeEvent(input$gene,{
+      updateSelectizeInput(session, inputId = "mutGene", choices = genes$Gene, selected = input$gene, server = TRUE)
     })
-
-
+    
     #' Required for the conditional panel 'corrMany' to work correctly
-    observe({
-      if(input$tab1 != 3)
-        updateTabsetPanel(session, inputId = "tabCorr", selected = "corrTwo")
+    observeEvent(input$tab1 != 3,{
+      updateTabsetPanel(session, inputId = "tabCorr", selected = "corrTwo")
     })
-
-    observe({
-      if(input$tabTools != "DeconvoluteMe")
-        updateCheckboxInput(session, inputId = "deconvPData", value = FALSE)
+    
+    observeEvent(input$tabTools != "DeconvoluteMe",{
+      updateCheckboxInput(session, inputId = "deconvPData", value = FALSE)
     })
-
+    
     #' When switching datasets, if the selected plot is not available it will choose the first plot of the list
-    plot_selected <- reactive ({
-      if (input$plotTypeSel %in% plotList[[input$dataset]]){
+    plot_selected <- reactive({
+      if (input$plotTypeSel %in% plotList()){
         input$plotTypeSel
       } else {
         NULL
       }
     })
-
+    
     #' Return the names of the available user-defined plots
-    plot_user_selection <- reactive ({
+    plot_user_selection <- reactive({
       # Exclude the pre-defeined plots and numeric variabe
       dropit <- c("Sample","Histology","Grade","Recurrence","Subtype", "CIMP_status", "survival",
                   "status", "Age", "ID","Patient_ID","Sample_ID", "Matching.sample", "Therapy_Class","title","tumor_name")
@@ -151,7 +155,7 @@ shinyServer(
       n <- names(data)
       n
     })
-
+    
     #' When switching datasets, if the selected plot is not available it will choose the first plot of the list
     plot_user_selected <- reactive({
       if (input$plotTypeUserSel %in% plot_user_selection()){
@@ -160,7 +164,7 @@ shinyServer(
         NULL
       }
     })
-
+    
     plot_type <- reactive({
       if (input$plotType == "Pre-defined"){
         plot_selected()
@@ -168,25 +172,24 @@ shinyServer(
         plot_user_selected()
       }
     })
-
+    
     #' Change the plot type available for a specific dataset
     observe({
-      updateSelectInput(session, inputId = "plotTypeSel", choices = plotList[[input$dataset]], selected = plot_selected())
-      updateSelectInput(session, inputId = "plotTypeUserSel", choices = plot_user_selection(), selected = plot_user_selected())
-    }, priority = 10)
-
+      updateSelectizeInput(session, inputId = "plotTypeSel", choices = plotList(), selected = plot_selected())
+      updateSelectizeInput(session, inputId = "plotTypeUserSel", choices = plot_user_selection(), selected = plot_user_selected())
+    })
+    
     # Caption with gene and dataset
     output$caption <- renderText({
-      if (input$gene == "" )
-        return()
+      req(input$gene)
       title <- paste(input$gene, "in", input$dataset, "dataset")
     })
-
+    
     #' Return the available histology, to be used in the updateSelectInput
     histo <- reactive({
       levels(exprs()[,"Histology"])
     })
-
+    
     #' Return the available subtype, to be used in the updateSelectInput
     subtype <- reactive({
       req(input$dataset)
@@ -199,34 +202,34 @@ shinyServer(
       }
       subtype
     })
-
+    
     #' When switching datasets if the selected histo is not available it will choose "All"
-    histo_selected <- reactive ({
+    histo_selected <- reactive({
       if (input$histology %in% c("All", histo())){
         input$histology
       } else {
         "All"
       }
     })
-
+    
     #' When switching datasets if the selected subtype is not available it will choose "All"
-    subtype_selected <- reactive ({
+    subtype_selected <- reactive({
       if (input$subtype %in% c("All", subtype())){
         input$subtype
       } else {
         "All"
       }
     })
-
+    
     observe({
       updateSelectInput(session, inputId = "histology", choices = c("All", histo()), selected = histo_selected())
       updateSelectInput(session, inputId = "subtype", choices = c("All", subtype()), selected = subtype_selected())
     })
-
+    
     #' Generate a dataframe with the data to plot
     data <- reactive({
       # Trying to avoid an error when switching datasets in case the plotType is not available.
-      req(c(plot_selected(),plot_user_selected()) %in% c(plotList[[input$dataset]],plot_user_selection()))
+      req(c(plot_selected(),plot_user_selected()) %in% c(plotList(),plot_user_selection()))
       # req(plot_user_selected() %in% plot_user_selection())
       validate(
         need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
@@ -239,7 +242,7 @@ shinyServer(
       }
       data <- cbind(mRNA, exprs()[,2:6]) # To combine with pData
       data <- cbind(data, pDatas()[,!names(pDatas()) %in% names(data)]) # To combine with more pData for the report
-      if (input$dataset %in% c("TCGA GBM", "TCGA LGG", "TCGA GBMLGG")) {
+      if (input$dataset %in% c("TCGA_GBM", "TCGA_LGG", "TCGA_GBMLGG")) {
         if(input$gene %in% names(cnas())){
           Copy_number <- cnas()[ ,input$gene]
           Copy_number <- factor(Copy_number, levels = c(-2:2), labels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp"))
@@ -249,10 +252,10 @@ shinyServer(
         }
         data <- cbind(Copy_number,data)
       }
-      data <- data[complete.cases(data[,"mRNA"]),] # Aiglent TCGA GBM data doesn't have all the observations
+      data <- data[complete.cases(data[,"mRNA"]),] # Aiglent TCGA_GBM data doesn't have all the observations
       data
     })
-
+    
     #' Data for the box plot
     plot_data <- reactive({
       validate(
@@ -261,7 +264,7 @@ shinyServer(
       data <- data()
       data <- subset(data, !is.na(data[ ,plot_type()]))
     })
-
+    
     #' Filtered data for the box plot
     filter_plot_data <- reactive({
       if (input$removeMe) {
@@ -274,31 +277,31 @@ shinyServer(
       }
       data
     })
-
+    
     #' Select input for groups to add/exclude
     output$removeGp <- renderUI({
       groups <- levels(plot_data()[ ,plot_type()])
       selectizeInput(inputId = "removeGp", label = "", choices = groups, selected = groups, multiple = TRUE,
                      options = list(plugins = list('remove_button','drag_drop')))
     })
-
+    
     #' Reset input$removeMe when plot_data() changes
     observeEvent(plot_data(), {
       updateCheckboxInput(session, inputId = "removeMe", value = FALSE)
     })
-
+    
     #' Populate Xaxis labels
     observe({
       updateTextInput(session, inputId = "myXlab",value = paste0("\n",plot_type()))
     })
-
+    
     # Tukey plot active only when tukey stat data are shown
     observeEvent(!input$tukeyHSD, {
       updateCheckboxInput(session, inputId = "tukeyPlot", value = FALSE)
     })
-
+    
     #' Reactive function to generate the box plots
-    box_Plot <- reactive ({
+    box_Plot <- reactive({
       data <- filter_plot_data()
       xlabel <- paste("\n", input$myXlab)
       ylabel <- paste(input$myYlab,"\n")
@@ -309,18 +312,18 @@ shinyServer(
                      axis.text.y = element_text(size = input$axis_text_size),
                      axis.title.x = element_text(size = input$axis_title_size),
                      axis.title.y = element_text(size = input$axis_title_size))
-
+      
       if (input$colBox) fillBox <- plot_type()
       if(input$colorP == "None") col <-  NULL
       if(input$shapeP == "None") shape <-  NULL
       if (input$bw) theme <- theme_bw () + theme
-
+      
       p <- ggplot(data, mapping=aes_string(x=plot_type(), y = "mRNA")) +
         geom_boxplot(aes_string(fill = fillBox), outlier.size = 0, outlier.stroke = 0) +
         geom_jitter(position = position_jitter(width = .5), mapping = aes_string(colour = col, shape = shape),
                     size = input$point_size, alpha = input$alpha) +
         ylab(ylabel) + xlab(xlabel) + theme
-
+      
       if (input$tukeyPlot) {
         t <- tukey() %>%
           mutate(comparison = row.names(.)) %>%
@@ -329,17 +332,18 @@ shinyServer(
           geom_hline(yintercept = 0, colour="darkgray", linetype = "longdash") + coord_flip() + theme
         p <- grid.arrange(p, t, ncol=2, widths = c(3,2))
       }
-
+      
       return(p)
-
+      
     })
-
+    
     #' Table with the data used for the plot
     output$filterDataTable <- renderDataTable({
-      data <- filter_plot_data()[,c("Sample", plot_type(), "mRNA")]
+      columns <- intersect(c("Sample", plot_type(),input$colorP,input$shapeP,"mRNA"),names(filter_plot_data()))
+      data <- filter_plot_data()[,columns]
       data_table(data)
-    })
-
+    },server = FALSE)
+    
     observe({
       data <- rmNA(filter_plot_data())
       colnames <- names(data)[!sapply(data, is.numeric)] # remove muneric categories
@@ -348,13 +352,13 @@ shinyServer(
       updateSelectInput(session, "colorP", "Color by:", choices = c("None",colnames), selected = "None")
       updateSelectInput(session, "shapeP", "Shape by:", choices = c("None",colnames), selected = "None")
     })
-
+    
     box_width <- reactive({
       if(input$tukeyPlot)
         input$plot_width* 2 else
           input$plot_width
     })
-
+    
     #' Create the selected plot
     output$plot <- renderPlot({
       # To avoid an error when switching datasets in case the colStrip is not available.
@@ -363,7 +367,7 @@ shinyServer(
       req(input$colorP %in% c("None", colnames) & input$shapeP %in% c("None", colnames))
       box_Plot()
     }, width = box_width, height = function()input$plot_height)
-
+    
     #' Data for the statistic
     observe({filter_plot_data()})
     stat_data <- reactive({
@@ -372,7 +376,7 @@ shinyServer(
       data <- data.frame(mRNA, group)
       data
     })
-
+    
     #' Summary statistic
     output$summary <- renderTable({
       data <- stat_data()
@@ -390,7 +394,7 @@ shinyServer(
       stat <- rbind(stat,TOTAL = tot)
       stat
     }, align='rrrrrr')
-
+    
     #' Tukey post-hoc test, to combine it with the boxplot and to render in a table
     tukey <- reactive({
       validate(
@@ -402,12 +406,12 @@ shinyServer(
       tukey <- tukey[order(tukey$diff, decreasing = TRUE), ]
       tukey
     })
-
+    
     #' Render tukey
     output$tukeyTest <- renderTable({
       tukey()
     }, digits = c(2,2,2,2,-1,2))
-
+    
     #' Pairwise t test
     output$pairwiseTtest <- renderTable({
       validate(
@@ -417,7 +421,7 @@ shinyServer(
       pttest <- pairwise.t.test(data$mRNA, data$group, na.rm= TRUE, p.adj = "bonferroni", paired = FALSE)
       pttest$p.value
     }, digits = -1)
-
+    
     #' Get the selected download file type.
     download_plot_file_type <- reactive({
       input$downloadPlotFileType
@@ -430,20 +434,20 @@ shinyServer(
       plotUnitMin <- ifelse(plotFileTypePDF, 1, 100)
       plotUnitMax <- ifelse(plotFileTypePDF, 12, 2000)
       plotUnitStep <- ifelse(plotFileTypePDF, 0.1, 50)
-
+      
       updateNumericInput(
         session,
         inputId = "downloadPlotHeight",
         label = sprintf("Height (%s)", plotUnit),
         value = plotUnitDef, min = plotUnitMin, max = plotUnitMax, step = plotUnitStep)
-
+      
       updateNumericInput(
         session,
         inputId = "downloadPlotWidth",
         label = sprintf("Width (%s)", plotUnit),
         value = plotUnitDef, min = plotUnitMin, max = plotUnitMax, step = plotUnitStep)
     })
-
+    
     #' Get the download dimensions.
     download_plot_height <- reactive({
       input$downloadPlotHeight
@@ -451,7 +455,7 @@ shinyServer(
     download_plot_width <- reactive({
       input$downloadPlotWidth
     })
-
+    
     #' Download the Plot
     output$downloadPlot <- downloadHandler(
       filename = function() {
@@ -471,19 +475,19 @@ shinyServer(
         dev.off()
       }
     )
-
+    
     #' Observers for the conditonal panels to work in the proper way
     observeEvent(input$histology != "GBM", {
       updateCheckboxInput(session, "primarySurv", value = FALSE)
       updateCheckboxInput(session, "gcimpSurv", value = FALSE)
     })
-    observeEvent(input$dataset =="TCGA GBMLGG", {
+    observeEvent(input$dataset =="TCGA_GBMLGG", {
       updateCheckboxInput(session, "gcimpSurv", value = FALSE)
     })
     observeEvent(input$subtype != "All", {
       updateCheckboxInput(session, "allSubSurv", value = FALSE)
     })
-
+    
     #' Extract the survival data.
     surv_data <- reactive({
       df <- data()
@@ -506,7 +510,7 @@ shinyServer(
       names(data)[7:8] <- c("survival_month", "survival_status")
       data <- rmNA(data)
     })
-
+    
     #' Create a slider for the manual cutoff of the Kaplan Meier plot
     mRNA_surv <- reactive({
       surv_need()
@@ -516,7 +520,7 @@ shinyServer(
       # Generate a vector of continuos values, excluding the first an last value
       mRNA.values <- sort(mRNA.values[mRNA.values != min(mRNA.values) & mRNA.values != max(mRNA.values)])
     })
-
+    
     #' Create a rug plot with the mRNA expression value for the manual cutoff
     output$boxmRNA <- renderPlot({
       req(input$mInput)
@@ -530,30 +534,30 @@ shinyServer(
       points(x = input$mInput, y = 0, pch = "|", col="red", cex = 2.5)
       points(x = q[2:4], y = rep(0,3), pch = "|", col="blue", cex = 2)
     }, bg = "transparent")
-
+    
     #' Generate the slider for the manual cutoff
     output$numericCutoff <- renderUI({
       sliderInput(inputId = "mInput",label = NULL, min = min(mRNA_surv()), max = max(mRNA_surv()),
                   value = median(mRNA_surv()), step = 0.05, round = -2)
     })
-
+    
     #' Requirements for all the survival plots
     surv_need <- reactive({
       validate(
-        need(input$dataset %notin% no_surv_dataset, "Sorry, no survival data are available for this dataset")%then%
+        need(input$dataset %notin% datasets$no_surv_dataset, "Sorry, no survival data are available for this dataset")%then%
           need(input$histology != "Non-tumor","Sorry, no survival data are available for this group")%then%
           need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
           need(input$gene %in% names(exprs()),"Gene not available for this dataset")
       )
     })
-
+    
     #' busy indicator when switching surv tab
     #' http://stackoverflow.com/questions/18237987/show-that-shiny-is-busy-or-loading-when-changing-tab-panels
     output$activeTabSurv <- reactive({
       return(input$tabSurv)
     })
     outputOptions(output, 'activeTabSurv', suspendWhenHidden=FALSE)
-
+    
     #' Set survival plot height
     surv_plot_height <- reactive({
       if(input$allSubSurv){
@@ -562,11 +566,11 @@ shinyServer(
         ifelse(input$riskTable, 500,325)
       }
     })
-
+    
     observeEvent(input$allSubSurv, {
       updateCheckboxInput(session, inputId = "riskTable", value = FALSE)
     })
-
+    
     #' Create a Kaplan Meier plot with cutoff based on quantiles or manual selection
     output$survPlot <- renderPlot({
       surv_need ()
@@ -587,8 +591,8 @@ shinyServer(
                          input$riskTable, cutoff = input$cutoff, numeric = input$mInput, censor = input$censor, conf.int = input$confInt), silent = TRUE)
       }
     }, height = surv_plot_height, width = function(){if(!input$allSubSurv) {500} else {900}})
-
-
+    
+    
     #' Create a table with the data used in Kaplan Meier plot
     output$survDataTable <- renderDataTable({
       data <- surv_data()
@@ -598,8 +602,8 @@ shinyServer(
       }
       data <- data.frame(data, cutoff_group = strat)
       data_table(data)
-    })
-
+    },server = FALSE)
+    
     #' Download the survPlot
     output$downloadsurvPlot <- downloadHandler(
       filename = function() {
@@ -610,45 +614,45 @@ shinyServer(
         plotFunction(file, width = download_plot_width(), height =  download_plot_height())
         if(input$allSubSurv) {
           nrow <- ceiling(length(subtype())/2)
-            p <- list()
-            for (i in subtype()) {
-              p[[i]] <- survivalPlot(surv_data(), input$gene, group = input$histology, subtype = i, font.legend = input$surv_legend_size,
-                                     input$riskTable, cutoff = input$cutoff, numeric = input$mInput, censor = input$censor, conf.int = input$confInt)$plot
-            }
-            do.call(grid.arrange,args = list(grobs = p, nrow = nrow, ncol=2))
+          p <- list()
+          for (i in subtype()) {
+            p[[i]] <- survivalPlot(surv_data(), input$gene, group = input$histology, subtype = i, font.legend = input$surv_legend_size,
+                                   input$riskTable, cutoff = input$cutoff, numeric = input$mInput, censor = input$censor, conf.int = input$confInt)$plot
+          }
+          do.call(grid.arrange,args = list(grobs = p, nrow = nrow, ncol=2))
         } else {
           survivalPlot(surv_data(), input$gene, group = input$histology, subtype = input$subtype, font.legend = input$surv_legend_size,
-                        input$riskTable, cutoff = input$cutoff, numeric = input$mInput, censor = input$censor, conf.int = input$confInt)
+                       input$riskTable, cutoff = input$cutoff, numeric = input$mInput, censor = input$censor, conf.int = input$confInt)
         }
         dev.off()
       }
     )
-
+    
     #' Subset to GBM samples for the interactive HR plot.
     surv_GBM <- reactive({
       df <- filter(surv_data(), Histology == "GBM")
     })
-
+    
     #' Extract the GBM expression values for the interactive HR plot.
     gene_exp <- reactive({
       geneExp <- surv_GBM()[ ,"mRNA"]
       currentClick$stale <<- TRUE
       geneExp
     })
-
+    
     # Need a wrapper around the hrClick input so we can manage whether or
     # not the click occured on the current Gene. If it occured on a previous
     # gene, we'll want to mark that click as 'stale' so we don't try to use it
     # later. https://gist.github.com/trestletech/5929598
     currentClick <- list(click = NULL, stale = FALSE)
-
+    
     handleClick <- observe({
       if (!is.null(input$hrClick) && !is.null(input$hrClick$x)){
         currentClick$click <<- input$hrClick
         currentClick$stale <<- FALSE
       }
     }, priority=100)
-
+    
     #' Generate the cutoff value for the interactive HR plot.
     get_Cutoff <- reactive({
       input$hrClick
@@ -659,15 +663,15 @@ shinyServer(
       }
       median(gene_exp())
     })
-
+    
     #' Extract the Hazard ratios for the input gene.
     HR <- reactive ({
       HR <- getHR(surv_GBM())
     })
-
+    
     #' Render a plot to show the the Hazard ratio for the gene's expression values
     output$hazardPlot <- renderPlot({
-      validate(need(input$dataset %notin% c("TCGA LGG","Gorovets","POLA Network"), "Interactive HR plot currently available only for GBM samples") %then%
+      validate(need(input$dataset %notin% c("TCGA_LGG","Gorovets","POLA Network"), "Interactive HR plot currently available only for GBM samples") %then%
                  need(histo_selected() == "GBM","Please select GBM samples in the 'Histology' dropdown menu") %then%
                  need(input$dataset %notin% c("Grzmil","Vital"), "Sorry, too few samples to properly render the HR plot"))
       surv_need()
@@ -677,18 +681,18 @@ shinyServer(
       # Add a vertical line to show where the current cutoff is.
       abline(v = get_Cutoff(), col = 4)
     }, bg = "transparent")
-
+    
     #' Data used to generate the HR plot
     output$hazardDataTable <- renderDataTable({
-      validate(need(input$dataset %notin% c("TCGA LGG","Gorovets","POLA Network"), "Interactive HR plot currently available only for GBM samples") %then%
+      validate(need(input$dataset %notin% c("TCGA_LGG","Gorovets","POLA Network"), "Interactive HR plot currently available only for GBM samples") %then%
                  need(histo_selected() == "GBM","Please select GBM samples in the 'Histology' dropdown menu") %then%
                  need(input$dataset %notin% c("Grzmil","Vital"), "Sorry, too few samples to properly render the HR plot"))
       surv_need()
       data <- round(HR(),3)
       names(data) <- c("mRNA", "HR", "HR.lower", "HR.upper", "n.obs.1", "n.obs.2")
       data_table(data)
-    })
-
+    },server = FALSE)
+    
     #' A reactive survival formula
     survival_Fml <- reactive({
       # Create the groups based on which samples are above/below the cutoff
@@ -697,14 +701,14 @@ shinyServer(
       surv <- with(surv_GBM(), Surv(survival_month, survival_status == 1))
       return(surv ~ expressionGrp)
     })
-
+    
     #' Create a Kaplan Meier plot on the HR cutoff
     output$kmPlot <- renderPlot({
       req(histo_selected() == "GBM")
       surv_need()
       kmPlot(cutoff = get_Cutoff(), surv = survival_Fml(), censor = input$censor, conf.int = input$confInt, font.legend = input$surv_legend_size, input$riskTable)
     }, height = surv_plot_height)
-
+    
     #' Download the kmPlot
     output$downloadkmPlot <- downloadHandler(
       filename = function() {
@@ -717,7 +721,7 @@ shinyServer(
         dev.off()
       }
     )
-
+    
     #' Generate reactive Inputs for the corrPlot to be used also to download the complete plot
     color_by <- reactive({
       switch(input$colorBy,
@@ -725,14 +729,14 @@ shinyServer(
              Histology = "Histology",
              Subtype = "Subtype")
     })
-
+    
     separate_by <- reactive({
       switch(input$separateBy,
              none = "none",
              Histology = "Histology",
              Subtype = "Subtype")
     })
-
+    
     corr_data <- reactive({
       df <- exprs()
       if (input$histology != "All") {
@@ -743,7 +747,7 @@ shinyServer(
       }
       df
     })
-
+    
     #' Data for the correlation plot
     corr_two_data <- reactive({
       validate(
@@ -757,12 +761,12 @@ shinyServer(
       data <- corr_data()[,c("Sample", "Histology", "Subtype", input$gene, input$gene2)]
       data <- data[complete.cases(data[,input$gene]),]
     })
-
+    
     #' Generate the correlation plot
     output$corrPlot <- renderPlot({
       myCorggPlot(corr_two_data(), input$gene, input$gene2, colorBy = color_by(), separateBy = separate_by())
     }, width = function()input$cor_plot_width, height = function()input$cor_plot_height)
-
+    
     #' Generate a summary of the correlation test
     output$corrTest <- renderTable({
       req(input$gene != input$gene2)
@@ -776,13 +780,13 @@ shinyServer(
       }
       cor <- df %>% do(tidy(cor.test(~ gene1 + gene2, data =., use = "complete.obs", method = tolower(input$statCorr))))
     }, digits = ifelse(input$statCorr == "Pearson",c(2,2,2,-1,2,2,2),c(2,2,2,-1)))
-
+    
     #' Table with the data used for the correlation plot
     output$corrDataTable <- renderDataTable({
       data <- corr_two_data()
       data_table(data)
-    })
-
+    },server = FALSE)
+    
     #' Download the corrPlot
     output$downloadcorrPlot <- downloadHandler(
       filename = function() {
@@ -795,7 +799,7 @@ shinyServer(
         dev.off()
       }
     )
-
+    
     #' Genes for multiple genes correlation
     corr_genes <- reactive({
       if(input$genelist_corr != "") {
@@ -805,7 +809,7 @@ shinyServer(
       }
       corr_genes
     })
-
+    
     #' Multiple genes correlation
     corr_many_data <- reactive({
       validate(
@@ -820,22 +824,23 @@ shinyServer(
       data <- data[complete.cases(data[,corr_genes]),]
       data
     })
-
+    
     corr_many_genes <- reactive({
       corr_many_data()[,4:length(corr_many_data())]
     })
-
+    
     #' Generate the pairs plot
     output$pairsPlot <- renderPlot({
       ggpairs(corr_many_genes(), mapping = aes(alpha=0.5),lower=list(continuous="smooth"))
     }, height = function(){150*length(corr_many_genes())}, width = function(){200*length(corr_many_genes())})
-
+    
+    
     #' Table with the data used for the pairs plot
     output$corrPairsDataTable <- renderDataTable({
       data <- corr_many_data()
       data_table(data)
-    })
-
+    },server = FALSE)
+    
     output$missingGene <- renderText({
       missing <- setdiff(corr_genes(),names(exprs()))
       if(length(missing)>0) {
@@ -844,7 +849,7 @@ shinyServer(
         return()
       }
     })
-
+    
     #' Download the pairs plot
     output$downloadpairsPlot <- downloadHandler(
       filename = function() {
@@ -857,14 +862,14 @@ shinyServer(
         dev.off()
       }
     )
-
+    
     #' Generate the correlation table
-    corr_all_data <- reactive ({
+    corr_all_data <- reactive({
       corr <- getCorr(corr_data(), input$gene, tolower(input$corrMethod))
       corr  <- merge(genes, corr, by="Gene")
       corr <- arrange(corr, desc(abs(r)))
     })
-
+    
     #' Generate a reactive element of the the correlation data
     corr_filter_data <- reactive({
       corr.table <- suppressWarnings(corr_all_data())  # suppressWarnings  is used to prevent the warning messages in the LGG dataset
@@ -883,7 +888,7 @@ shinyServer(
       row.names(corr.table) <- corr.table$Gene
       corr.table
     })
-
+    
     #' Generate an HTML table view of the correlation table
     output$corrAllTable <- renderDataTable({
       validate(
@@ -892,8 +897,8 @@ shinyServer(
           need(input$gene %in% names(corr_data()),"Gene not available for this dataset")
       )
       data_table(corr_filter_data(), selection = 'single')
-    })
-
+    },server = FALSE)
+    
     #' Generate a reactive value for the input$rows to set to NULL when the dataset change
     v <- reactiveValues(rows = NULL)
     observeEvent(input$corrAllTable_rows_selected, {
@@ -902,7 +907,7 @@ shinyServer(
     observeEvent(c(dataset_input(),input$histology,input$gene,input$cor), {
       v$rows <- NULL
     })
-
+    
     #' Generate the correlation plot
     output$corrAllPlot <- renderPlot({
       validate(
@@ -916,10 +921,10 @@ shinyServer(
       ggplot(data, mapping = aes_scatter) + theme(legend.position=c(1,1),legend.justification=c(1,1)) +
         geom_point(alpha=0.5) + geom_smooth(method = "lm", se = TRUE) + geom_rug(alpha = 0.1) + theme_linedraw()
     })
-
+    
     #' RPPA data analysis
     rppa_data <- reactive({
-      req(input$dataset %in% c("TCGA GBM","TCGA LGG","TCGA GBMLGG"))
+      req(input$dataset %in% c("TCGA_GBM","TCGA_LGG","TCGA_GBMLGG"))
       req(input$gene != "")
       req(input$gene %in% names(exprs()))
       samples <- intersect(row.names(rppas()),data()[,"Sample"])
@@ -927,7 +932,7 @@ shinyServer(
       mRNA <- round(data()[samples,"mRNA"],2)
       rppa_data <- list(data = data, mRNA = mRNA)
     })
-
+    
     #' Create a rug plot with the mRNA expression value for the manual cutoff
     output$boxRppaRNA <- renderPlot({
       req(input$rppaCut)
@@ -942,16 +947,16 @@ shinyServer(
       points(x = q[2:4], y = rep(0,3), pch = "|", col="blue", cex = 2)
       #       abline(v= q[2:4], col="blue")
     }, bg = "transparent")
-
+    
     output$rppaCutoff <- renderUI({
       sliderInput(inputId = "rppaCut",label = "mRNA cutoff", min = min( rppa_data()[["mRNA"]]), max = max( rppa_data()[["mRNA"]]),
                   value = median(rppa_data()[["mRNA"]]), step = 0.05, round = -2)
     })
-
-
+    
+    
     rrppa_data_table <- reactive({
       validate(
-        need(input$dataset %in% c("TCGA GBM","TCGA LGG","TCGA GBMLGG"), "RPPA data available only for TCGA datasets")%then%
+        need(input$dataset %in% c("TCGA_GBM","TCGA_LGG","TCGA_GBMLGG"), "RPPA data available only for TCGA datasets")%then%
           need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
           need(input$gene %in% names(exprs()),"Gene not available for this dataset")%then%
           need(input$rppaCut != "", FALSE)%then%
@@ -977,11 +982,11 @@ shinyServer(
       d <- d[order(d$p.value),]
       d
     })
-
+    
     output$rppaTable <- renderDataTable({
       data_table(rrppa_data_table(), selection = 'single')
-    })
-
+    },server = FALSE)
+    
     #' Generate a reactive value for the input$rows that set to NULL when the dataset change
     rp <- reactiveValues(rppa.rows = NULL)
     observeEvent(input$rppaTable_rows_selected, {
@@ -990,12 +995,12 @@ shinyServer(
     observeEvent(c(dataset_input(),input$histology,input$gene,input$rppaCut), {
       rp$rppa.rows <- NULL
     })
-
+    
     #' Generate the RPPA box plot
     output$rppaPlot <- renderPlot({
       protein <- as.character(rrppa_data_table()[rp$rppa.rows,"Protein"])
       validate(
-        need(input$dataset %in% c("TCGA GBM","TCGA LGG", "TCGA GBMLGG"), FALSE)%then%
+        need(input$dataset %in% c("TCGA_GBM","TCGA_LGG", "TCGA_GBMLGG"), FALSE)%then%
           need(input$gene != "", FALSE)%then%
           need(protein!= "","Click on a row to see the corresponding plots.")%then%
           need(protein %in% names(rppa_data()[["data"]]), FALSE)
@@ -1016,7 +1021,7 @@ shinyServer(
         ylab(paste(protein,"RPPA score")) + theme(legend.position = "none")
       grid.arrange(p1, p2, ncol=1)
     },height = 600)
-
+    
     #' Genes for mutation analysis
     mut_genes <- reactive({
       if(input$genelist_mut != "") {
@@ -1026,15 +1031,15 @@ shinyServer(
       }
       mut_genes
     })
-
+    
     #' Mutation call using cgdsr
     mut_data <- reactive ({
       closeAlert(session, "mutAlertId")
       mycgds = CGDS("http://www.cbioportal.org/")
       cohort <- switch(input$dataset,
-                       "TCGA GBM" = "gbm_tcga_",
-                       "TCGA LGG" = "lgg_tcga_",
-                       "TCGA GBMLGG" = "lgggbm_tcga_pub_"
+                       "TCGA_GBM" = "gbm_tcga_",
+                       "TCGA_LGG" = "lgg_tcga_",
+                       "TCGA_GBMLGG" = "lgggbm_tcga_pub_"
       )
       caseList <- ifelse(cohort %in% c("gbm_tcga_","lgg_tcga_"), "sequenced","all")
       ann <- getMutationData(mycgds, caseList = paste0(cohort, caseList), geneticProfile = paste0(cohort,"mutations"), genes = mut_genes())
@@ -1065,23 +1070,23 @@ shinyServer(
       }
       mut_list <- list(ann = ann, mat = mat)
     })
-
+    
     output$mut <- renderDataTable({
-      req(input$dataset %in% c("TCGA GBM","TCGA LGG","TCGA GBMLGG"))
+      req(input$dataset %in% c("TCGA_GBM","TCGA_LGG","TCGA_GBMLGG"))
       req(mut_genes() != "")
       req(any(mut_genes() %in% names(exprs())))
       mut <- mut_data()[["ann"]]
       datatable(mut, rownames = FALSE, extensions = c("FixedColumns", 'Buttons'), filter="top",
                 options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE))
-    })
-
+    },server = FALSE)
+    
     #' Oncoprint
     oncoprint_height <- reactive({
       if(length(mut_genes()) <= 1) {
         # if(input$column_barplot) {
         #   h <- 120
         # } else {
-          h <- 65
+        h <- 65
         # }
       } else {
         h <- length(mut_genes())*55
@@ -1090,7 +1095,7 @@ shinyServer(
     })
     output$oncoprint <- renderPlot({
       validate(
-        need(input$dataset %in% c("TCGA GBM","TCGA LGG","TCGA GBMLGG"), "Mutations data available only for TCGA datasets")%then%
+        need(input$dataset %in% c("TCGA_GBM","TCGA_LGG","TCGA_GBMLGG"), "Mutations data available only for TCGA datasets")%then%
           need(mut_genes() != "", "Please, enter a gene or a list of genes in the panel on the left")%then%
           need(any(mut_genes() %in% names(exprs())),"Gene(s) not available for this dataset")%then%
           need(nrow(mut_data()[["ann"]])>1,FALSE)
@@ -1107,24 +1112,26 @@ shinyServer(
       oncoPrint(mat = mat, alter_fun = alt_fun_list,
                 get_type = function(x) strsplit(x, ";")[[1]],
                 col = col, remove_empty_columns = input$hide_cases, column_title = " ",
-                top_annotation_height = unit(0, "points"),
-      # top_annotation_height = unit(ifelse(input$column_barplot,55,0), "points"),          
-      show_row_barplot = input$row_barplot, barplot_ignore = "NA")
+                top_annotation = HeatmapAnnotation(column_bar = anno_oncoprint_barplot(), 
+                                                   annotation_height = unit(0, "points")),
+                # top_annotation_height = unit(0, "points"),
+                # top_annotation_height = unit(ifelse(input$column_barplot,55,0), "points"),          
+                show_row_barplot = input$row_barplot, barplot_ignore = "NA")
     }, height = oncoprint_height)
-
+    
     #' Differential Expression
     observe({
       req(input$dataset)
       pData <- rmNA(pDatas())
       colnames <- names(pData)[!sapply(pData, is.numeric)] # remove muneric categories
       colnames <- colnames[colnames %notin% c("Sample","ID","Patient_ID","Sample_ID", "Matching.sample", "Therapy_Class","title")]
-      updateSelectInput(session, inputId = "colorSideHeatmap", choices = colnames)
+      updateSelectizeInput(session, inputId = "colorSideHeatmap", choices = colnames, selected = colnames[1])
     })
-
+    
     de_data <- reactive({
       req(input$tab1 ==7)
       validate(
-        need(input$dataset %notin% rnaseq_datasets, "Differential gene expression analysis currently available only for Microarray data")%then%
+        need(input$dataset %notin% datasets$rnaseq_datasets, "Differential gene expression analysis currently available only for Microarray data")%then%
           need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
           need(input$gene %in% names(exprs()),"Gene not available for this dataset") # Not all genes are available for all the dataset
       )
@@ -1145,21 +1152,10 @@ shinyServer(
         closeAlert(session, "DEAlertId")
       }
       esetSel <- eset[row.names(topT), ]
-      if (input$pDataHeatmap) {
-        req(input$colorSideHeatmap %in% names(pDatas()))
-        pData <- pDatas()[pDatas()$Sample %in% strat$Sample, ]
-        n <- nlevels(pData[,input$colorSideHeatmap])
-        colors <- data.frame(levels(as.factor(pData[,input$colorSideHeatmap])), color = brewer_pal(palette = "Dark2")(n))
-        names(colors)[1] <- paste0(input$colorSideHeatmap)
-        dataColor <- merge(pData, colors, all=T)
-        dataColor <- dataColor[order(dataColor$Sample),]
-        heat_data <- list(eset= esetSel, topTable = topT, sideColors=dataColor, colors = colors)
-      } else {
-        heat_data <- list(eset= esetSel, topTable = topT)
-      }
-      heat_data
+      esetSel <- scale(t(esetSel))
+      heat_data <- list(eset= esetSel, topTable = topT)
     })
-
+    
     output$DEheatmap <- renderPlot({
       if(dim(de_data()[["topTable"]])[1]==0){
         return()
@@ -1168,18 +1164,20 @@ shinyServer(
         need(dim(de_data()[["topTable"]])[1]>1, message = "Only one gene was differentially expressed with the current settings, heatmap will not be rendered"),
         errorClass = "dangerous" # errorClass does not work
       )
+      eset <- de_data()[["eset"]]
       if(input$pDataHeatmap) {
         req(input$colorSideHeatmap %in% names(pDatas()))
-        dataColor <-de_data()[["sideColors"]]
-        colors <- de_data()[["colors"]]
-        col <- as.character(dataColor$color)
-        heatMap <-heatmap3(de_data()[["eset"]], Rowv = NA, scale = "row", col = colorRampPalette(c("green","black", "red"))(1024), margins = c(0.5,11),
-                           labCol=NA, cexRow = 1.25, ColSideColors = col, ColSideLabs = paste0(input$colorSideHeatmap))
-        legend(0.85, 1, legend = colors[,input$colorSideHeatmap], fill = as.character(colors[,"color"]),
-               border = FALSE, bty = "n", y.intersp = 1, cex = 1, title = paste0(input$colorSideHeatmap))
+        pData <- pDatas()[pDatas()$Sample %in% row.names(eset), ]
+        an <- pData[,input$colorSideHeatmap, drop = FALSE]
+        # n <- nlevels(pData[,input$colorSideHeatmap])
+        # colors <- brewer_pal(palette = "Set1")(n) #Dark2
+        # names(colors) <- levels(pData[,input$colorSideHeatmap])
+        ha <- HeatmapAnnotation(an,show_annotation_name = TRUE)
       } else {
-        heatmap3(de_data()[["eset"]], Rowv = NA, scale = "row", col = colorRampPalette(c("green","black", "red"))(1024), margins = c(0,11),labCol=NA, cexRow = 1.25)
+        ha <- NULL
       }
+      Heatmap(t(eset), col = colorRampPalette(c("green","black", "red"))(1024),
+              name = "",show_column_names = FALSE,cluster_rows = FALSE, top_annotation = ha)
     })
 
     output$DETable <- renderDataTable({
@@ -1188,9 +1186,9 @@ shinyServer(
              Consider to change either the cutoff, the Log2 fold change filter or the p value")
       )
       data <- de_data()[["topTable"]]
-      data_table(data)
-    })
-
+      data_table(data,rownames = TRUE)
+    },server = FALSE)
+    
     #' Gene Onthology
     entrez <- eventReactive(input$goGO | input$goKegg ,{
       validate(
@@ -1201,8 +1199,8 @@ shinyServer(
       entrez <- merge(entrez,de_data()[["topTable"]], by.x="SYMBOL",by.y="row.names",all.x=T)
       entrez
     })
-
-
+    
+    
     go <- reactiveValues(GO = NULL, KEGG = NULL)
     observeEvent(input$goGO, {
       go$GO <- input$goGO
@@ -1216,8 +1214,9 @@ shinyServer(
     observeEvent(c(de_data(), input$gene, input$pvalueCutoffKegg, input$qvalueCutoffKegg), {
       go$KEGG <-  NULL
     })
-
+    
     enrich_GO <- eventReactive(go$GO ,{
+      require(clusterProfiler)
       ego <- enrichGO(gene = entrez()$ENTREZID, OrgDb = 'org.Hs.eg.db', ont = input$ont, pAdjustMethod = "BH",
                       pvalueCutoff  = input$pvalueCutoff, qvalueCutoff  = input$qvalueCutoff, readable=TRUE)
       if(length(ego@geneInCategory)==0) {
@@ -1229,13 +1228,13 @@ shinyServer(
       }
       ego
     })
-
+    
     observe({
       l <- length(enrich_GO()@geneInCategory)
       if(l>50) l <- 50
       updateSliderInput(session,inputId = "showCategory", max = l, value = 10)
     })
-
+    
     output$enrichGOPlot <- renderPlot({
       validate(
         need(!is.null(go$GO), message = "Please press the Submit button to initiate the analysis")%then%
@@ -1243,20 +1242,21 @@ shinyServer(
       )
       dotplot(enrich_GO(), showCategory= input$showCategory)
     })
-
+    
     output$enrichGOMap <- renderPlot({
       req(length(enrich_GO()@geneInCategory)>0)
       # cnetplot(enrich_GO(), foldChange=entrez()$logFC,showCategory= input$showCategory)
       enrichMap(enrich_GO(), n=input$showCategory)
     })
-
+    
     output$enrichGOTable <- renderDataTable({
       req(length(enrich_GO()@geneInCategory)>0)
       data_table(summary(enrich_GO()))
-    })
-
+    },server = FALSE)
+    
     #' KEGG
     enrich_Kegg <- eventReactive(go$KEGG,{
+      require(clusterProfiler)
       eKegg <- enrichKEGG(gene = entrez()$ENTREZID, organism = "hsa", pAdjustMethod = "BH", pvalueCutoff  = input$pvalueCutoffKegg,
                           qvalueCutoff  = input$qvalueCutoffKegg)
       if(length(eKegg@geneInCategory)==0) {
@@ -1268,12 +1268,12 @@ shinyServer(
       }
       eKegg
     })
-
+    
     observe({
       l <- length(enrich_Kegg()@geneInCategory)
       updateSliderInput(session,inputId = "showCategoryKegg", max = l, value = 10)
     })
-
+    
     output$enrichKeggPlot <- renderPlot({
       validate(
         need(!is.null(go$KEGG), message = "Please press the Submit button to initiate the analysis")%then%
@@ -1281,25 +1281,25 @@ shinyServer(
       )
       dotplot(enrich_Kegg(), showCategory= input$showCategoryKegg)
     })
-
+    
     output$enrichKeggMap <- renderPlot({
       req(length(enrich_Kegg()@geneInCategory)>0)
       enrichMap(enrich_Kegg(),n=input$showCategoryKegg)
     })
-
+    
     output$enrichKeggTable <- renderDataTable({
       req(length(enrich_Kegg()@geneInCategory)>0)
       eKegg <- setReadable(enrich_Kegg(), OrgDb = "org.Hs.eg.db", keytype = "ENTREZID")
       data_table(summary(eKegg))
-    })
-
+    },server = FALSE)
+    
     #' Generate reports
     output$reportPlots <- renderUI({
       validate(
         need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
           need(input$gene %in% names(exprs()), "Gene not available for this dataset")
       )
-      groups <- c(plotList[[input$dataset]], plot_user_selection())
+      groups <- c(plotList(), plot_user_selection())
       plot_output_list <- lapply(groups, function(i) {
         plot_report <- paste("plotReport", i, sep = "")
         shinydashboard::box(height = 355, title = paste0(i), width = NULL, solidHeader = TRUE, status = "primary",
@@ -1309,10 +1309,10 @@ shinyServer(
       })
       do.call(tagList, plot_output_list)
     })
-
+    
     observe({
       data <- data()
-      groups <- c(plotList[[input$dataset]], plot_user_selection())
+      groups <- c(plotList(), plot_user_selection())
       for (i in groups) {
         local({
           my_i <- i
@@ -1346,15 +1346,15 @@ shinyServer(
           })
         })
       }
-
+      
     })
-
+    
     #' Reactive function for an HTML table view of the data
     summary_data <- reactive({
       mRNA <- exprs()[ , input$gene, drop = FALSE]
       names(mRNA) <- paste0(input$gene,"_mRNA")
       data <- cbind(pDatas(),mRNA)
-      if (input$dataset %in% c("TCGA GBM", "TCGA LGG", "TCGA GBMLGG")) {
+      if (input$dataset %in% c("TCGA_GBM", "TCGA_LGG", "TCGA_GBMLGG")) {
         CN_status <- cnas()[,input$gene, drop = FALSE]
         CN_status[,1] <- factor(CN_status[,1], levels = c(-2:2), labels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp"))
         names(CN_status) <- paste0(input$gene,"_CN_status")
@@ -1363,7 +1363,7 @@ shinyServer(
       data <- rmNA(data)
       data
     })
-
+    
     #' Generate an HTML table view of the data
     output$table <- renderDataTable({
       # If a gene is not specified show the pData only
@@ -1374,8 +1374,20 @@ shinyServer(
       }
       datatable(data, rownames = FALSE, extensions = c("FixedColumns", 'Buttons'),
                 options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE))
-    })
-
+    },server = FALSE)
+    
+    # output$annotation <- renderPlot({
+    #   if (input$gene == "") {
+    #     data <- rmNA(pDatas())
+    #   } else {
+    #     data <- summary_data()
+    #   }
+    #   data <- data[,-1]
+    #   ha <- HeatmapAnnotation(data,show_annotation_name = TRUE,show_legend = FALSE)
+    #   zero_row_mat = matrix(nrow = 0, ncol = nrow(data))
+    #   Heatmap(zero_row_mat, top_annotation = ha)
+    # })
+    
     #' Generate a graphic summary of the dataset, using googleVis
     output$piePlots <- renderUI({
       data <- exprs()[ ,c("Histology", "Grade", "Recurrence", "Subtype", "CIMP_status")]
@@ -1387,33 +1399,11 @@ shinyServer(
       # Convert the list to a tagList - this is necessary for the list of items to display properly.
       do.call(tagList, plot_output_list)
     })
-
-    # observe ({
-    #   req(input$dataset)
-    #   data <- exprs()[ ,c("Histology", "Grade", "Recurrence", "Subtype", "CIMP_status")]
-    #   data <- rmNA(data)
-    #   data <- subset(data, Histology != "Non-tumor")
-    #   data$Histology <- droplevels(data$Histology)
-    #   # Call renderChart for each one.
-    #   for (i in names(data)) {
-    #     local({
-    #       my_i <-i
-    #       plotname <- paste("plot", my_i, sep="")
-    #       output[[plotname]] <- renderGvis({
-    #         plotData <- data.frame(table(data[, my_i]))
-    #         pie <-gvisPieChart(labelvar = "Var1", numvar = "Freq", data = plotData,
-    #                            options = list(width=400, height=300, pieSliceText='label', chartArea.left = 1,
-    #                                           colors = "['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628']"), chartid= plotname) # title = my_i,
-    #         return(pie)
-    #       })
-    #     })
-    #   }
-    # })
-
+    
     #' Generate survival groups stratified by Histology, etc.
     output$survPlots <- renderUI({
       validate(
-        need(input$dataset %notin% no_surv_dataset, "Sorry, no survival data are available for this dataset")
+        need(input$dataset %notin% datasets$no_surv_dataset, "Sorry, no survival data are available for this dataset")
       )
       df <- exprs()[ ,c("Histology", "Grade", "Recurrence", "Subtype", "CIMP_status","survival", "status")]
       df <-  rmNA(df) # Removing unavailable (all NA) groups
@@ -1424,7 +1414,7 @@ shinyServer(
       })
       do.call(tagList, plot_output_list)
     })
-
+    
     observe({
       req(input$dataset)
       df <- exprs()[ ,c("Histology", "Grade", "Recurrence", "Subtype", "CIMP_status","survival", "status")]
@@ -1439,31 +1429,31 @@ shinyServer(
           my_Survi <- i
           plot_surv_name <- paste0("plotSurv", my_Survi)
           output[[plot_surv_name]] <- renderPlot({
-            req(input$dataset %notin% no_surv_dataset)
+            req(input$dataset %notin% datasets$no_surv_dataset)
             df1 <- na.omit(data.frame(status = df[ ,"status"], time = df[ ,"survival"], strata = df[ ,my_Survi]))
             df1$strata <- droplevels(df1$strata)
             fit <- survfit(Surv(time, status == 1) ~ strata, data = df1)
-            ggsurvplot(fit, legend = c(0.75,0.75), surv.scale = "percent", ylab = "% Surviving", legend.labs = levels(df1$strata), color = "red",
+            ggsurvplot(fit, legend = c(0.75,0.75), surv.scale = "percent", ylab = "Surviving", legend.labs = levels(df1$strata), color = "red",
                        xlab = "Survival time (Months)", main = paste0("\n",my_Survi), legend.title = "", font.legend = 12, palette = "Set1")
           })
           plotname <- paste("plot", my_Survi, sep="")
           output[[plotname]] <- renderGvis({
             plotData <- data.frame(table(df[, my_Survi]))
             pie <- gvisPieChart(labelvar = "Var1", numvar = "Freq", data = plotData, chartid= plotname, options = list(width = 400, height = 300, pieSliceText = 'label', chartArea.left = 1,
-                                colors = "['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999','#a6cee3','#006d2c','#810f7c','#02818a']")) # title = my_i,
+                                                                                                                       colors = "['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999','#a6cee3','#006d2c','#810f7c','#02818a']")) # title = my_i,
             return(pie)
           })
         })
       }
     },priority = 100)
-
+    
     #' Reactivity required to display download button after file upload
     output$finishedUploading <- reactive({
       if (is.null(input$upFile))
       { 0 } else { 1 }
     })
     outputOptions(output, 'finishedUploading', suspendWhenHidden=FALSE)
-
+    
     #' Reactive function to generate SVM subtype call to pass to data table and download handler
     #' IMPORTANT #http://stackoverflow.com/questions/15503027/why-are-probabilities-and-response-in-ksvm-in-r-not-consistent
     svm_call <- eventReactive (input$goSvm | input$goSub3,{
@@ -1475,7 +1465,7 @@ shinyServer(
       inFile <- input$upFile
       upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote,stringsAsFactors=FALSE)
       if (input$tumorType == "gbm") {
-        train <- gbm.tcga[["expr"]]
+        train <- TCGA_GBM[["expr"]]
         train <- subset(train,Histology=="GBM")
         Training <- train$Subtype # Expression subtype
         subtypes <- c("Classical","Mesenchymal","Proneural")
@@ -1511,7 +1501,7 @@ shinyServer(
       svm_call <- data.frame(Sample = rownames(upData), svm.subtype.call, round(prob,3))
       svm_call
     })
-
+    
     #' Rerndering the subtype call as a data table
     output$svm <- renderDataTable({
       validate(
@@ -1519,14 +1509,14 @@ shinyServer(
           need(input$goSvm != 0,'Please press "Submit SVM"')
       )
       data_table(svm_call())
-    })
-
+    },server = FALSE)
+    
     #' Reactive function to generate k-nearest neighbour subtype call to pass to data table and download handler
     knn_call <- eventReactive(input$goKnn | input$goSub3, {
       inFile <- input$upFile
       upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote, stringsAsFactors=FALSE)
       if (input$tumorType == "gbm") {
-        train <- gbm.tcga[["expr"]]
+        train <- TCGA_GBM[["expr"]]
         train <- subset(train,Histology=="GBM")
         Training <- train$Subtype # Expression subtype
         subtypes <- c("Classical","Mesenchymal","Proneural")
@@ -1554,7 +1544,7 @@ shinyServer(
       names(kn)[3:5] <- subtypes
       kn
     })
-
+    
     #' Rerndering the knn subtype call as a data table
     output$knn <- renderDataTable({
       validate(
@@ -1562,8 +1552,8 @@ shinyServer(
           need(input$goKnn != 0,'Please press "Submit K-NN"')
       )
       data_table(knn_call())
-    })
-
+    },server = FALSE)
+    
     #' Reactive function to generate ssGSEA call to pass to data table and download handler
     gsva_call <- eventReactive(input$goGsva | input$goSub3, {
       validate(
@@ -1576,7 +1566,7 @@ shinyServer(
       set.seed(12345)
       suppressWarnings(run.ssgsea.GBM(exprs, number_perms = 100))
     })
-
+    
     #' Rerndering the subtype call as a data table
     output$gsva <- renderDataTable({
       validate(
@@ -1584,8 +1574,8 @@ shinyServer(
           need(input$goGsva != 0,'Please press "Submit ssGSEA"')
       )
       data_table(gsva_call(), rownames = T)
-    })
-
+    },server = FALSE)
+    
     #' Reactive function to generate the 3 subtype calls to pass to data table and download handler
     sub3_call <- eventReactive (input$goSub3, {
       validate(
@@ -1599,7 +1589,7 @@ shinyServer(
       sub3$majority.call <- apply(sub3[,2:4],1,maj) # compare calls
       sub3 <- data.frame(sub3) # the dataframe generated with dplyr gives issue when sorting the html table
     })
-
+    
     #' Rerndering the subtype call as a data table
     output$sub3 <- renderDataTable({
       validate(
@@ -1607,8 +1597,8 @@ shinyServer(
           need(input$goSub3 != 0, 'Please press "Submit 3-Way"')
       )
       data_table(sub3_call())
-    })
-
+    },server = FALSE)
+    
     output$sub3Plot <- renderPlot({
       data <- sub3_call()[,1:4]
       data$Sample <- factor(data$Sample, levels=(data$Sample)[order(data$svm_call)]) # sort the sample on the svm_call
@@ -1618,9 +1608,9 @@ shinyServer(
         scale_x_discrete(expand = c(0, 0)) + theme_minimal() + scale_fill_brewer(palette = "Set1") + # scale_fill_manual(values = terrain.colors(4)) +
         theme(axis.ticks = element_blank(), axis.text.x = element_blank()) + theme(legend.position="bottom")
     }, height = 200)
-
+    
     #' Reactive function to generate Estimate call to pass to data table
-    est_call <- eventReactive (input$goEst,{
+    est_call <- eventReactive(input$goEst, {
       inFile <- input$upFile
       upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote, stringsAsFactors=FALSE)
       row.names(upData) <- upData[,"Sample"]
@@ -1628,18 +1618,19 @@ shinyServer(
       est <- myEstimateScore(ds, platform = input$platformEst)
       est <- cbind(Sample = upData$Sample, round(est,2))
     })
-
+    
     #' Rerndering the subtype call as a data table
     output$estScore <- renderDataTable({
       validate(
         need(!is.null(input$upFile),"Please upload the dataset to be analyzed")%then%
           need(input$goEst != 0,'Please press "Submit ESTIMATE"')
       )
-      est_call()
-    }, selection = 'single', extensions = 'Buttons',
-    options = list(orderClasses = TRUE, columnDefs = list(list(visible = FALSE, targets = 0)), autoWidth = TRUE)
-    )
-
+      data_table(est_call(), selection = 'single', options = list(orderClasses = TRUE, 
+                                                                  columnDefs = list(list(visible = FALSE, targets = 0)), 
+                                                                  autoWidth = TRUE))
+      
+    },server = FALSE)
+    
     #' Generate the Purity plot
     output$purityPlot <- renderPlot({
       validate(
@@ -1649,10 +1640,10 @@ shinyServer(
       )
       plotPurity(est_call(), est_call()[input$estScore_rows_selected,"Sample"], platform = input$platformEst)
     })
-
+    
     #' Gene sets in msigdb.v5
-    updateSelectizeInput(session, inputId = "genesets_msigdb", choices = row.names(msigdb.v5), server = TRUE)
-
+    updateSelectizeInput(session, inputId = "genesets_msigdb", choices = row.names(gene_set_list$msigdb), server = TRUE)
+    
     goDec <- reactiveValues(Submit = NULL)
     observeEvent(input$goDec, {
       goDec$Submit <- input$goDec
@@ -1660,23 +1651,23 @@ shinyServer(
     observeEvent(c(input$upFile, input$genesets_msigdb, input$geneListDec,input$min.sz,input$max.sz), {
       goDec$Submit <-  NULL
     })
-
+    
     #' Reactive function to generate Deconvolute scores to pass to data table
-    deconv_call <- eventReactive(goDec$Submit,{
+    deconv_call <- eventReactive(goDec$Submit, {
       inFile <- input$upFile
       upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote, stringsAsFactors=FALSE)
       row.names(upData) <- upData[,"Sample"]
       exprs <- data.frame(t(upData[,-1]),check.names=FALSE)
       platformDec <- ifelse(input$platformDec == "rnaseq",TRUE, FALSE)
       if(input$geneListDec == "MSigDB gene sets"){
-        gene_list <- msigdb.v5[input$genesets_msigdb,-1]
+        gene_list <- gene_set_list$msigdb[input$genesets_msigdb,-1]
         gene_list <- as.list(data.frame(t(gene_list),stringsAsFactors = FALSE))
         # gene_list <- getBroadSets(asBroadUri(input$genesets_msigdb))
       } else {
         gene_list <- switch(input$geneListDec,
-                            "Newman et al. 2015" = LM22_gene_set_list,
-                            "Engler et al. 2012" = engler_gene_set_list,
-                            "Bindea et al. 2013" = galon_gene_set_list)
+                            "Newman et al. 2015" = gene_set_list$LM22,
+                            "Engler et al. 2012" = gene_set_list$engler,
+                            "Bindea et al. 2013" = gene_set_list$galon)
       }
       set.seed(1234)
       gsva_results <- gsva(expr=as.matrix(exprs), gset.idx.list = gene_list, method="ssgsea", rnaseq = platformDec, parallel.sz = 0,
@@ -1684,7 +1675,7 @@ shinyServer(
       deconv_scores <- data.frame(Sample = rownames(upData),t(gsva_results))
       deconv <- list(results = gsva_results, scores = deconv_scores)
     })
-
+    
     output$pDataDec <- renderUI({
       validate(
         need(!is.null(input$pDataFile),"Please upload the pData to be included")
@@ -1695,16 +1686,17 @@ shinyServer(
       pData_group <- names(pData)
       pData_group <- pData_group[pData_group!="Sample"]
       # Create the selectInput for the different pData categories
-      selectInput(inputId = "pDataDec", label = "Select pData group", choices = pData_group, selectize = TRUE)
+      selectizeInput(inputId = "pDataDec", label = "Select pData group", choices = pData_group, multiple = TRUE,  
+                     options = list(placeholder = "Select one ore more annotations", plugins = list('remove_button','drag_drop')))
     })
-
+    
     #' Required for the conditional panel 'deconvPData' to work correctly
     observe({
       if(input$tabTools != "DeconvoluteMe")
         updateCheckboxInput(session, inputId = "deconvPData", value = FALSE)
     })
-
-
+    
+    
     #' Rerndering the Deconvolute scores as a heatmap
     output$deconvHeatmap <- renderPlot({
       if(input$geneListDec == "MSigDB gene sets"){
@@ -1718,7 +1710,6 @@ shinyServer(
           need(!is.null(goDec$Submit),'Please press "Submit Deconvolute"')
       )
       data <- deconv_call()[["results"]]
-      heatmap3(data,margins = c(0,11),labCol=NA,cexRow = 1.25)
       if(input$deconvPData){
         validate(
           need(!is.null(input$pDataFile),"Please upload the pData to be included")
@@ -1730,18 +1721,14 @@ shinyServer(
           need(all.equal(pData$Sample,names(data)),"ERROR: Samples don't match")
         )
         pData <- rmNA(pData)
-        n <- nlevels(pData[,input$pDataDec])
-        colors <- data.frame(levels(pData[,input$pDataDec]), color = brewer_pal(palette = "Dark2")(n))
-        names(colors)[1] <- paste0(input$pDataDec)
-        dataColor <- merge(pData, colors, all=T)
-        dataColor <- dataColor[order(dataColor$Sample),]
-        col <- as.character(dataColor$color)
-        heatmap3(data,margins = c(0,11),labCol=NA,cexRow = 1.25,ColSideColors = col,ColSideLabs = paste0(input$pDataDec))
-        legend(0.925, 1, legend = colors[,input$pDataDec], fill = as.character(colors[,"color"]),
-               border = FALSE, bty = "n", y.intersp = 1, cex = 0.8, title = paste0(input$pDataDec))
+        an <- pData[,input$pDataDec, drop = FALSE]
+        ha <- HeatmapAnnotation(an,show_annotation_name = TRUE)
+      } else {
+        ha <- NULL
       }
+      Heatmap(data, name = "",show_column_names = FALSE, top_annotation = ha)
     })
-
+    
     #' Rerndering the Deconvolute scores as boxplot
     output$deconvBoxPlot <- renderPlot({
       validate(
@@ -1779,8 +1766,8 @@ shinyServer(
       datatable(deconv_call()[["scores"]], rownames = FALSE, extensions = c("FixedColumns", 'Buttons'),
                 options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE)
       )
-    })
-
+    },server = FALSE)
+    
     #' Download expression data
     output$downloadExpressionData <- downloadHandler(
       filename = function() {
@@ -1790,14 +1777,14 @@ shinyServer(
         write.table(exprs()[,-c(2:8)], file, sep = "\t", row.names = FALSE)
       }
     )
-
+    
     #' Download pData
     output$downloadpData <- downloadHandler(
       filename = function() {
         paste(Sys.Date(), input$dataset, "pheno.txt", sep = "_")
       },
       content = function(file) {
-        write.table(pDatas(), file, sep = "\t", row.names = FALSE)
+        write.table(rmNA(pDatas()), file, sep = "\t", row.names = FALSE)
       }
     )
   })
