@@ -38,7 +38,7 @@ install_gliovis <- function() {
   # install needed packages from CRAN
   pkg <- c("shiny", "survival", "weights", "googleVis", "dplyr", "ggplot2","shinydashboard", 
            "htmlwidgets","kernlab","devtools","markdown","caret","Cairo","broom", "DT","GGally",
-           "Cairo","reshape2","heatmap3","RColorBrewer","scales","htmlwidgets","cgdsr",
+           "Cairo","reshape2", "RColorBrewer","scales","htmlwidgets","cgdsr",
            "shinyBS", "gridExtra","survminer","readxl")
   
   new.pkg <- pkg[!(pkg %in% installed.packages())]
