@@ -12,7 +12,13 @@ tabPanel(title = "Tools", icon = icon("gear"),
                           conditionalPanel(
                             condition = "input.tabTools == 'SubtypeME'",
                             radioButtons(inputId = "tumorType", label = strong("Training set:"), 
-                                         choices = c("GBM" = "gbm", "LGG" = "lgg"))
+                                         choices = c("GBM" = "gbm", "LGG" = "lgg")),
+                            conditionalPanel(
+                              condition = "input.tabClassify == 'ssGSEA' | input.tabClassify == '3-Way'",
+                              sliderInput(inputId = 'number_perms',label = "Number of permutations:",min = 100, max = 1000, value = 100, step = 100),
+                              helpText("Resampling permutation procedure is used to calculate an empirical p-value for each enrichment score"),
+                              br()
+                            )
                           ),
                           conditionalPanel(
                             condition = "input.tabTools == 'EstimateME'",

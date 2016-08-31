@@ -1561,10 +1561,8 @@ shinyServer(
       inFile <- input$upFile
       upData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote, stringsAsFactors=FALSE, row.names = 1)
       exprs <- data.frame(t(upData))
-      # make.gct(exprs) # generate .gct
-      # suppressWarnings(run.ssgsea.GBM(profile_data_file = "www/ssgsea_temp/exprs.gct", number_perms = 10))
       set.seed(12345)
-      suppressWarnings(run.ssgsea.GBM(exprs, number_perms = 100))
+      suppressWarnings(run.ssgsea.GBM(exprs, number_perms = input$number_perms))
     })
     
     #' Rerndering the subtype call as a data table
