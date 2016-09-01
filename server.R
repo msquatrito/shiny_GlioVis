@@ -18,7 +18,7 @@
 shinyServer(
   function(input, output, session) {
     
-    options(shiny.maxRequestSize=100*1024^2)
+    options(shiny.maxRequestSize=200*1024^2)
     
     output$adult_table <- renderDataTable({
       adult_table <- read_excel("data/adult.xlsx")
@@ -1470,11 +1470,11 @@ shinyServer(
         Training <- train$Subtype # Expression subtype
         subtypes <- c("Classical","Mesenchymal","Proneural")
       } else if (input$tumorType == "lgg") {
-        train <- lgg.tcga[["expr"]]
+        train <- TCGA_LGG[["expr"]]
         train <- train[train$Sample %in% lgg.core.samples,]
-        pData <- lgg.tcga[["pData"]]
-        pData.core <- pData[row.names(train),]
-        Training <- pData.core$Subtype
+        # pData <- TCGA_LGG[["pData"]]
+        # pData.core <- pData[row.names(train),]
+        Training <- train$Subtype
         subtypes <- c("IDHmut-codel","IDHmut-non-codel","IDHwt")
         #         Training <- pData.core$RNASeqCluster # Expression subtype (not the molecular subtype)
         #         subtypes <- c("R1","R2","R3","R4")
@@ -1522,9 +1522,9 @@ shinyServer(
         subtypes <- c("Classical","Mesenchymal","Proneural")
         k <- 15
       } else if (input$tumorType == "lgg") {
-        train <- lgg.tcga[["expr"]]
+        train <- TCGA_LGG[["expr"]]
         train <- train[train$Sample %in% lgg.core.samples,]
-        pData <- lgg.tcga[["pData"]]
+        pData <- TCGA_LGG[["pData"]]
         pData.core <- pData[row.names(train),]
         Training <- pData.core$Subtype
         subtypes <- c("IDHmut-codel","IDHmut-non-codel","IDHwt")
