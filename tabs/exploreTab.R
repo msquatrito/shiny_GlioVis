@@ -198,7 +198,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                              p(style = "background-color: #8ABBD7; padding-left:10px; border: 1px solid #E3E3E3;",
                                strong("Miscellaneous")),
                              checkboxInput(inputId = "scale", label = "Scale y axis", value = FALSE),
-                             checkboxInput(inputId = "bw", label = "White background", value = FALSE),
+                             checkboxInput(inputId = "bw", label = "White background", value = TRUE),
                              checkboxInput(inputId = "colBox", label = "Color box", value = FALSE)
                            )
                          ),

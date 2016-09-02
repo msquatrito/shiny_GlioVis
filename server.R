@@ -327,9 +327,10 @@ shinyServer(
       if (input$tukeyPlot) {
         t <- tukey() %>%
           mutate(comparison = row.names(.)) %>%
-          ggplot(aes(reorder(comparison, diff), diff, ymin = lwr, ymax= upr, colour = Significance)) +
+          ggplot(aes(reorder(comparison, diff), diff, ymin = lwr, ymax= upr, colour = Significance)) + 
           geom_point() + geom_errorbar(width = 0.25) + ylab("\nDifferences in mean levels") + xlab("") +
-          geom_hline(yintercept = 0, colour="darkgray", linetype = "longdash") + coord_flip() + theme
+          geom_hline(yintercept = 0, colour="darkgray", linetype = "longdash") + coord_flip() +
+          scale_x_discrete(labels = abbreviate) + theme
         p <- grid.arrange(p, t, ncol=2, widths = c(3,2))
       }
       
