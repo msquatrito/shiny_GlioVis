@@ -286,15 +286,21 @@ getCorr <- function (data, gene, corrMethod) {
 ############## 2 genes correlation plot ##############
 ######################################################
 myCorggPlot <- function (df, gene1, gene2, colorBy = "none", separateBy = "none",...) {
+  if (separateBy!= "none") {
+    df <- df[!is.na(df[,separateBy]), ]
+  }
+  if (colorBy != "none") {
+    df <- df[!is.na(df[,colorBy]), ]
+  }
   # empy plot to used in grid.arrange
   empty <- ggplot() + geom_point(aes(1,1), colour="white") + theme_void()
   # scatterplot of x and y variables
-  scatter <- ggplot(df,mapping = aes_string(x = gene1, y = gene2))
+  scatter <- ggplot(df,mapping = aes_string(x = gene1, y = gene2)) + theme_bw()
   # marginal density of x - plot on top
-  plot_top <- ggplot(df, mapping = aes_string(x = gene1)) +
+  plot_top <- ggplot(df, mapping = aes_string(x = gene1)) + theme_bw() +
     theme(legend.position = "none", axis.text.x=element_blank(), axis.ticks=element_blank(), axis.title.x = element_blank())
   # marginal density of y - plot on the right
-  plot_right <- ggplot(df, mapping = aes_string(x = gene2)) + coord_flip() +
+  plot_right <- ggplot(df, mapping = aes_string(x = gene2)) + coord_flip() + theme_bw() +
     theme(legend.position = "none",axis.title.y = element_blank(), axis.ticks=element_blank(),axis.text.y=element_blank())
   
   if (colorBy != "none") {

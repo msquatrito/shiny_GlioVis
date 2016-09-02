@@ -773,14 +773,14 @@ shinyServer(
       req(input$gene != input$gene2)
       df <- corr_two_data()
       if (separate_by() != "none") {
-        df <- df %>% select_(group = separate_by(), gene1 = input$gene, gene2 = input$gene2)
+        df <- df %>% select_(group = separate_by(), gene1 = input$gene, gene2 = input$gene2) 
         more_than_three <- df %>% group_by(group) %>% count(group) %>% filter(n>3)  # to drop levels with less than 3 elements
-        df <- df %>% filter(group %in% more_than_three$group) %>% group_by(group)
+        df <- df %>% filter(group %in% more_than_three$group & group != "") %>% group_by(group) 
       } else {
         df <- df %>% select_(gene1 = input$gene, gene2 = input$gene2)
       }
       cor <- df %>% do(tidy(cor.test(~ gene1 + gene2, data =., use = "complete.obs", method = tolower(input$statCorr))))
-    }, digits = ifelse(input$statCorr == "Pearson",c(2,2,2,-1,2,2,2),c(2,2,2,-1)))
+    })
     
     #' Table with the data used for the correlation plot
     output$corrDataTable <- renderDataTable({
