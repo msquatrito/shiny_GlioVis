@@ -14,10 +14,14 @@
 
 ***
 ### Classification     
-**- GBM**   
+**CIMP status**    
+CIMP status has been determined  by **Support Vector Machine (SVM)**, using TCGA GBM as training dataset.    
+
+**Subtypes**   
+*- GBM*   
 For the GBM subtype classification we use the 3 TCGA expression subtypes (Classical, Mesenchymal,Proneural) as defined in [Wang Q. et al. 2016](http://biorxiv.org/content/early/2016/08/13/052076).   
    
-**- LGG**  
+*- LGG*  
 For the LGG subtype classification we use the 3 TCGA molecular subtypes (IDH mutant with 1p/19q codeletion, IDH mutant without 1p/19q codeletion, IDH wild-type) as defined in [NEJM, 2015](http://www.ncbi.nlm.nih.gov/pubmed/26061751). **Important note:** the GlioVis LGG classification identifies "molecular subtypes" using expression data. Such approach has to be considered very preliminary untill further validation.        
    
 Classification algorithms:      
