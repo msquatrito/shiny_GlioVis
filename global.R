@@ -355,7 +355,7 @@ kmPlot <- function (cutoff,surv,censor,conf.int,risk.table,font.legend){
   smax <- max(sFit$time,na.rm=TRUE)
   tmax <- smax-(25*smax)/100
   xmax <- (90*tmax)/100
-  p <- ggsurvplot(sFit, censor = censor, conf.int = conf.int, legend = c(0.65,0.9), surv.scale = "percent", ylab = "% Surviving", xlab = "Survival time (Months)",
+  p <- ggsurvplot(sFit, censor = censor, conf.int = conf.int, legend = c(0.65,0.9), surv.scale = "percent", ylab = "Surviving", xlab = "Survival time (Months)",
                   xlim = c(0,smax), main = "Kaplan Meier Survival Estimates", legend.title = "", font.legend = font.legend, 
                   legend.labs = c(sprintf("High expr. (n=%s, events=%s, median=%s)", sTable$records[1], sTable$events[1], sTable$median[1]),
                                   sprintf("Low expr. (n=%s, events=%s, median=%s)", sTable$records[2], sTable$events[2], sTable$median[2])),
@@ -786,15 +786,13 @@ run.ssgsea.GBM <- function (data, number_perms) {
   num_perm <- number_perms
   random_profile <- data[1]
   for (i in 1:num_perm) {
-    a <- data[-1][cbind(seq(1:num_rows), sample(1:num_cols,
-                                                num_rows, replace = T))]
+    a <- data[-1][cbind(seq(1:num_rows), sample(1:num_cols, num_rows, replace = T))]
     random_profile <- cbind(random_profile, a)
     if (i%%100 == 0) {
       print(i)
     }
   }
-  
-  # print("Random profiles was genereated!")
+
   selected.models <- c("Proneural", "Classical", "Mesenchymal")
   random_result <- OPAM.apply.model.2(input.ds = random_profile, models.dir = "www/ssgsea_temp/data/", models = selected.models)
   original_result <- OPAM.apply.model.2(input.ds = data, models.dir = "www/ssgsea_temp/data/", models = selected.models)
@@ -804,8 +802,7 @@ run.ssgsea.GBM <- function (data, number_perms) {
   original_result <- t(original_result)
   p_result <- original_result
   for (i in 1:dim(original_result)[1]) {
-    p_result[i, ] <- colSums(sweep(random_result, 2, original_result[i,
-                                                                     ]) >= 0)
+    p_result[i, ] <- colSums(sweep(random_result, 2, original_result[i,]) >= 0)
   }
   
   colnames(p_result) = paste(colnames(p_result), "pval", sep = "_")
@@ -833,8 +830,7 @@ OPAM.apply.model.2 <- function (input.ds, input.cls = NA, models.dir, models = "
   
   if (models[[1]] == "ALL") {
     file.list <- list.files(models.dir)
-    models <- file.list[regexpr(pattern = ".mod", file.list) >
-                          1]
+    models <- file.list[regexpr(pattern = ".mod", file.list) > 1]
     for (k.model in 1:length(models)) {
       temp <- strsplit(models[k.model], ".mod")
       models[k.model] <- temp[[1]]
@@ -849,8 +845,7 @@ OPAM.apply.model.2 <- function (input.ds, input.cls = NA, models.dir, models = "
   models.descs <- NULL
   for (model.i in 1:n.models) {
     # print(paste(model.i, "File:", models[model.i]))
-    m.file <- paste(models.dir, models[model.i], ".mod",
-                    sep = "")
+    m.file <- paste(models.dir, models[model.i], ".mod", sep = "")
     con <- file(m.file, "r")
     file.content <- readLines(con, n = -1)
     close(con)
@@ -914,92 +909,10 @@ OPAM.apply.model.2 <- function (input.ds, input.cls = NA, models.dir, models = "
     msig.up.descs.test <- gene.descs[locs]
     msig.up.size.test <- length(locs)
     
-    
     OPAM <- OPAM.Projection(m, gene.names, Ns, Ng, weight,statistic, msig.up.genes.test, nperm = nperm)
     
     score <- OPAM$ES.vector
-    # 
-    #     if (!exists("beta.0"))
-    #       beta.0 <- 0
-    #     if (!exists("beta.1"))
-    #       beta.1 <- 1
-    #     if (!exists("link.function"))
-    #       link.function <- "logit"
-    #     model.formula <- "beta.0 + beta.1 * score[i]"
-    #     model.formula
-    #     prob.i <- matrix(0, nrow = Ns, ncol = 3)
-    #     model.score <- vector(length = Ns, mode = "numeric")
-    #     inv.logit <- function (x, min = 0, max = 1) {
-    #       p <- exp(x)/(1 + exp(x))
-    #       p <- ifelse(is.na(p) & !is.na(x), 1, p)
-    #       p * (max - min) + min
-    #     }
-    #     for (i in 1:Ns) {
-    #       model.score[i] <- eval(parse(text = model.formula))
-    #       if (link.function == "logit") {
-    #         p.vec <- paste("inv.logit(x=", model.formula,
-    #                        ")", sep = "")
-    #       }
-    #       else if (link.function == "probit") {
-    #         p.vec <- paste("(erf(", model.formula, ") + 1)/2",
-    #                        sep = "")
-    #       }
-    #       else {
-    #         stop("Unknown link function")
-    #       }
-    #       val <- eval(parse(text = p.vec))
-    #       prob.i[i, 1] <- quantile(val, probs = 0.5)
-    #       prob.i[i, 2] <- quantile(val, probs = 0.05)
-    #       prob.i[i, 3] <- quantile(val, probs = 0.95)
-    #     }
-    #     probability <- prob.i[, 1]
-    #     xmin <- min(model.score)
-    #     xmax <- max(model.score)
-    #     range.x <- xmax - xmin
-    #     n.points <- 1000
-    #     prob.m <- matrix(0, nrow = n.points, ncol = 3)
-    #     x.m <- vector(length = n.points, mode = "numeric")
-    #     for (k in 1:n.points) {
-    #       x.m[k] <- xmin + k * (range.x/n.points)
-    #       if (link.function == "logit") {
-    #         p.vec <- paste("inv.logit(x=", x.m[k], ")", sep = "")
-    #       }
-    #       else if (link.function == "probit") {
-    #         p.vec <- paste("(erf(", x.m[k], ") + 1)/2", sep = "")
-    #       }
-    #       else {
-    #         stop("Unknown link function")
-    #       }
-    #       val <- eval(parse(text = p.vec))
-    #       prob.m[k, 1] <- quantile(val, probs = 0.5)
-    #       prob.m[k, 2] <- quantile(val, probs = 0.05)
-    #       prob.m[k, 3] <- quantile(val, probs = 0.95)
-    #     }
-    #     istar <- which.min(abs(0.5 - prob.m[, 1]))
-    #     istar <- xmin + istar * (range.x/1000)
-    #     x.index <- order(model.score, decreasing = F)
-    #     x.order <- model.score[x.index]
-    #     prob.i.order <- prob.i[x.index, ]
-    #     
-    #     class.labels.order <- class.labels[x.index]
-    #     boundary <- istar
-    #     pred.class <- ifelse(prob.i.order[, 1] >= 0.5, 2, 1)
-    #     z.range <- range(x.order)
-    # norm.score <- (score - min(score))/(max(score) - min(score))
     score.matrix[model.i, ] <- score
-    # norm.score.matrix[model.i, ] <- norm.score
-    # model.score.matrix[model.i, ] <- model.score
-    # probability.matrix[model.i, ] <- probability
-    # models.descs <- c(models.descs, model.description)
-    # rm(model.creation.date, input.ds, input.cls, input2.ds,
-    #    input2.cls, target.class, target.class2, model.name,
-    #    model.description, sample.norm.type, marker.disc,
-    #    top.markers.up, top.markers.dn, top.markers.up2,
-    #    top.markers.dn2, statistic, weight, random.seed,
-    #    nperm, link.function, c1, msig.cntrl.genes, msig.up.genes,
-    #    msig.dn.genes, msig.up.genes2, msig.dn.genes2, msig.up.genes3,
-    #    msig.dn.genes3, beta.0, beta.1, score, score.up,
-    #    score.dn)
   }
   
   V.GCT <- data.frame(score.matrix)
@@ -1030,19 +943,18 @@ OPAM.Projection <- function (data.array, gene.names, n.cols, n.rows, weight = 0,
                                           gene.set = gene.set2, statistic = statistic, alpha = weight,
                                           correl.vector = correl.vector)
     ES.vector[sample.index] <- GSEA.results$ES
-    if (nperm == 0) {
-      NES.vector[sample.index] <- ES.vector[sample.index]
-      p.val.vector[sample.index] <- 1
-    }
-    else {
+    # if (nperm == 0) {
+    #   NES.vector[sample.index] <- ES.vector[sample.index]
+    #   p.val.vector[sample.index] <- 1
+    # }
+    # else {
       for (r in 1:nperm) {
         reshuffled.gene.labels <- sample(1:n.rows)
         if (weight == 0) {
           correl.vector <- rep(1, n.rows)
         }
         else if (weight > 0) {
-          correl.vector <- data.array[reshuffled.gene.labels,
-                                      sample.index]
+          correl.vector <- data.array[reshuffled.gene.labels, sample.index]
         }
         GSEA.results <- GSEA.EnrichmentScore5(gene.list = reshuffled.gene.labels,
                                               gene.set = gene.set2, statistic = statistic,
@@ -1050,19 +962,16 @@ OPAM.Projection <- function (data.array, gene.names, n.cols, n.rows, weight = 0,
         phi[sample.index, r] <- GSEA.results$ES
       }
       if (ES.vector[sample.index] >= 0) {
-        pos.phi <- phi[sample.index, phi[sample.index,
-                                         ] >= 0]
+        pos.phi <- phi[sample.index, phi[sample.index, ] >= 0]
         if (length(pos.phi) == 0)
           pos.phi <- 0.5
         pos.m <- mean(pos.phi)
         NES.vector[sample.index] <- ES.vector[sample.index]/pos.m
         s <- sum(pos.phi >= ES.vector[sample.index])/length(pos.phi)
-        p.val.vector[sample.index] <- ifelse(s == 0,
-                                             1/nperm, s)
+        p.val.vector[sample.index] <- ifelse(s == 0, 1/nperm, s)
       }
       else {
-        neg.phi <- phi[sample.index, phi[sample.index,
-                                         ] < 0]
+        neg.phi <- phi[sample.index, phi[sample.index, ] < 0]
         if (length(neg.phi) == 0)
           neg.phi <- 0.5
         neg.m <- mean(neg.phi)
@@ -1071,7 +980,7 @@ OPAM.Projection <- function (data.array, gene.names, n.cols, n.rows, weight = 0,
         p.val.vector[sample.index] <- ifelse(s == 0,
                                              1/nperm, s)
       }
-    }
+    # }
   }
   return(list(ES.vector = ES.vector, NES.vector = NES.vector,
               p.val.vector = p.val.vector))
@@ -1107,132 +1016,132 @@ GSEA.EnrichmentScore5 <- function (gene.list, gene.set, statistic = "Kolmogorov-
     }
     return(list(ES = ES, arg.ES = arg.ES, RES = RES, indicator = tag.indicator))
   }
-  else if (statistic == "Cramer-von-Mises") {
-    RES <- Fn - F0
-    X <- RES^2 * P0
-    X_p <- X[RES >= 0]
-    X_n <- X[RES < 0]
-    ES_p <- sqrt(sum(X_p)/N)
-    ES_n <- sqrt(sum(X_n)/N)
-    if (ES_p > ES_n) {
-      ES <- signif(ES_p, digits = 5)
-      arg.ES <- which.min(abs(X - max(X_p)))
-    }
-    else {
-      ES <- -signif(ES_n, digits = 5)
-      arg.ES <- which.min(abs(X - max(X_n)))
-    }
-    return(list(ES = ES, RES = RES, arg.ES = arg.ES, indicator = tag.indicator))
-  }
-  else if (statistic == "Anderson-Darling") {
-    RES <- Fn - F0
-    F0_factor <- ifelse(F0 < 1/Nm | F0 > (Nm - 1)/Nm, rep(1,
-                                                          N), F0 * (1 - F0))
-    X <- RES^2 * P0/F0_factor
-    X_p <- X[RES >= 0]
-    X_n <- X[RES < 0]
-    ES_p <- sqrt(sum(X_p)/N)
-    ES_n <- sqrt(sum(X_n)/N)
-    if (ES_p > ES_n) {
-      ES <- signif(ES_p, digits = 5)
-      arg.ES <- which.min(abs(X - max(X_p)))
-    }
-    else {
-      ES <- -signif(ES_n, digits = 5)
-      arg.ES <- which.min(abs(X - max(X_n)))
-    }
-    return(list(ES = ES, RES = RES, arg.ES = arg.ES, indicator = tag.indicator))
-  }
-  else if (statistic == "Zhang_A") {
-    RES <- Fn - F0
-    Fact1 <- ifelse(F0 < 1/Nm | Fn < 1/sum.correl, 0, Fn *
-                      log(Fn/F0))
-    Fact2 <- ifelse(F0 > (Nm - 1)/Nm | Fn > (sum.correl -
-                                               1)/sum.correl, 0, (1 - Fn) * log((1 - Fn)/(1 - F0)))
-    Fn_factor <- ifelse(Fn < 1/sum.correl | Fn > (sum.correl -
-                                                    1)/sum.correl, rep(1, N), Fn * (1 - Fn))
-    G <- (Fact1 + Fact2) * Pn/Fn_factor
-    G_p <- G[RES >= 0]
-    G_n <- G[RES < 0]
-    ES_p <- sum(G_p)/N
-    ES_n <- sum(G_n)/N
-    if (ES_p > ES_n) {
-      ES <- signif(ES_p, digits = 5)
-      arg.ES <- which.min(abs(G - max(G_p)))
-    }
-    else {
-      ES <- -signif(ES_n, digits = 5)
-      arg.ES <- which.min(abs(G - max(G_n)))
-    }
-    return(list(ES = ES, RES = RES, arg.ES = arg.ES, indicator = tag.indicator))
-  }
-  else if (statistic == "Zhang_C") {
-    RES <- Fn - F0
-    Fact1 <- ifelse(F0 < 1/Nm | Fn < 1/sum.correl, 0, Fn *
-                      log(Fn/F0))
-    Fact2 <- ifelse(F0 > (Nm - 1)/Nm | Fn > (sum.correl -
-                                               1)/sum.correl, 0, (1 - Fn) * log((1 - Fn)/(1 - F0)))
-    F0_factor <- ifelse(F0 < 1/Nm | F0 > (Nm - 1)/Nm, rep(1,
-                                                          N), F0 * (1 - F0))
-    G <- (Fact1 + Fact2) * P0/F0_factor
-    G_p <- G[RES >= 0]
-    G_n <- G[RES < 0]
-    ES_p <- sum(G_p)/N
-    ES_n <- sum(G_n)/N
-    if (ES_p > ES_n) {
-      ES <- signif(ES_p, digits = 5)
-      arg.ES <- which.min(abs(G - max(G_p)))
-    }
-    else {
-      ES <- -signif(ES_n, digits = 5)
-      arg.ES <- which.min(abs(G - max(G_n)))
-    }
-    return(list(ES = ES, RES = RES, arg.ES = arg.ES, indicator = tag.indicator))
-  }
-  else if (statistic == "Zhang_K") {
-    RES <- Fn - F0
-    Fact1 <- ifelse(F0 < 1/Nm | Fn < 1/sum.correl, 0, Fn *
-                      log(Fn/F0))
-    Fact2 <- ifelse(F0 > (Nm - 1)/Nm | Fn > (sum.correl -
-                                               1)/sum.correl, 0, (1 - Fn) * log((1 - Fn)/(1 - F0)))
-    G <- Fact1 + Fact2
-    G_p <- G[RES >= 0]
-    G_n <- G[RES < 0]
-    ES_p <- max(G_p)
-    ES_n <- max(G_n)
-    if (ES_p > ES_n) {
-      ES <- signif(ES_p, digits = 5)
-      arg.ES <- which.min(abs(G - ES_p))
-    }
-    else {
-      ES <- -signif(ES_n, digits = 5)
-      arg.ES <- which.min(abs(G - ES_n))
-    }
-    return(list(ES = ES, RES = RES, arg.ES = arg.ES, indicator = tag.indicator))
-  }
-  else if (statistic == "area.under.RES") {
-    RES <- Fn - F0
-    max.ES <- max(RES)
-    min.ES <- min(RES)
-    if (max.ES > -min.ES) {
-      arg.ES <- which.max(RES)
-    }
-    else {
-      arg.ES <- which.min(RES)
-    }
-    ES <- sum(RES)
-    return(list(ES = ES, arg.ES = arg.ES, RES = RES, indicator = tag.indicator))
-  }
-  else if (statistic == "Wilcoxon") {
-    library(exactRankTests)
-    seq.index <- seq(1, N)
-    gene.set.ranks <- seq.index[tag.indicator == 1]
-    gene.set.comp.ranks <- seq.index[tag.indicator == 0]
-    W <- wilcox.exact(x = gene.set.ranks, y = gene.set.comp.ranks,
-                      alternative = "two.sided", mu = 0, paired = FALSE,
-                      exact = F, conf.int = T, conf.level = 0.95)
-    ES <- log(1/W$p.value)
-    return(list(ES = ES, arg.ES = NULL, RES = NULL, indicator = tag.indicator))
-  }
+  # else if (statistic == "Cramer-von-Mises") {
+  #   RES <- Fn - F0
+  #   X <- RES^2 * P0
+  #   X_p <- X[RES >= 0]
+  #   X_n <- X[RES < 0]
+  #   ES_p <- sqrt(sum(X_p)/N)
+  #   ES_n <- sqrt(sum(X_n)/N)
+  #   if (ES_p > ES_n) {
+  #     ES <- signif(ES_p, digits = 5)
+  #     arg.ES <- which.min(abs(X - max(X_p)))
+  #   }
+  #   else {
+  #     ES <- -signif(ES_n, digits = 5)
+  #     arg.ES <- which.min(abs(X - max(X_n)))
+  #   }
+  #   return(list(ES = ES, RES = RES, arg.ES = arg.ES, indicator = tag.indicator))
+  # }
+  # else if (statistic == "Anderson-Darling") {
+  #   RES <- Fn - F0
+  #   F0_factor <- ifelse(F0 < 1/Nm | F0 > (Nm - 1)/Nm, rep(1,
+  #                                                         N), F0 * (1 - F0))
+  #   X <- RES^2 * P0/F0_factor
+  #   X_p <- X[RES >= 0]
+  #   X_n <- X[RES < 0]
+  #   ES_p <- sqrt(sum(X_p)/N)
+  #   ES_n <- sqrt(sum(X_n)/N)
+  #   if (ES_p > ES_n) {
+  #     ES <- signif(ES_p, digits = 5)
+  #     arg.ES <- which.min(abs(X - max(X_p)))
+  #   }
+  #   else {
+  #     ES <- -signif(ES_n, digits = 5)
+  #     arg.ES <- which.min(abs(X - max(X_n)))
+  #   }
+  #   return(list(ES = ES, RES = RES, arg.ES = arg.ES, indicator = tag.indicator))
+  # }
+  # else if (statistic == "Zhang_A") {
+  #   RES <- Fn - F0
+  #   Fact1 <- ifelse(F0 < 1/Nm | Fn < 1/sum.correl, 0, Fn *
+  #                     log(Fn/F0))
+  #   Fact2 <- ifelse(F0 > (Nm - 1)/Nm | Fn > (sum.correl -
+  #                                              1)/sum.correl, 0, (1 - Fn) * log((1 - Fn)/(1 - F0)))
+  #   Fn_factor <- ifelse(Fn < 1/sum.correl | Fn > (sum.correl -
+  #                                                   1)/sum.correl, rep(1, N), Fn * (1 - Fn))
+  #   G <- (Fact1 + Fact2) * Pn/Fn_factor
+  #   G_p <- G[RES >= 0]
+  #   G_n <- G[RES < 0]
+  #   ES_p <- sum(G_p)/N
+  #   ES_n <- sum(G_n)/N
+  #   if (ES_p > ES_n) {
+  #     ES <- signif(ES_p, digits = 5)
+  #     arg.ES <- which.min(abs(G - max(G_p)))
+  #   }
+  #   else {
+  #     ES <- -signif(ES_n, digits = 5)
+  #     arg.ES <- which.min(abs(G - max(G_n)))
+  #   }
+  #   return(list(ES = ES, RES = RES, arg.ES = arg.ES, indicator = tag.indicator))
+  # }
+  # else if (statistic == "Zhang_C") {
+  #   RES <- Fn - F0
+  #   Fact1 <- ifelse(F0 < 1/Nm | Fn < 1/sum.correl, 0, Fn *
+  #                     log(Fn/F0))
+  #   Fact2 <- ifelse(F0 > (Nm - 1)/Nm | Fn > (sum.correl -
+  #                                              1)/sum.correl, 0, (1 - Fn) * log((1 - Fn)/(1 - F0)))
+  #   F0_factor <- ifelse(F0 < 1/Nm | F0 > (Nm - 1)/Nm, rep(1,
+  #                                                         N), F0 * (1 - F0))
+  #   G <- (Fact1 + Fact2) * P0/F0_factor
+  #   G_p <- G[RES >= 0]
+  #   G_n <- G[RES < 0]
+  #   ES_p <- sum(G_p)/N
+  #   ES_n <- sum(G_n)/N
+  #   if (ES_p > ES_n) {
+  #     ES <- signif(ES_p, digits = 5)
+  #     arg.ES <- which.min(abs(G - max(G_p)))
+  #   }
+  #   else {
+  #     ES <- -signif(ES_n, digits = 5)
+  #     arg.ES <- which.min(abs(G - max(G_n)))
+  #   }
+  #   return(list(ES = ES, RES = RES, arg.ES = arg.ES, indicator = tag.indicator))
+  # }
+  # else if (statistic == "Zhang_K") {
+  #   RES <- Fn - F0
+  #   Fact1 <- ifelse(F0 < 1/Nm | Fn < 1/sum.correl, 0, Fn *
+  #                     log(Fn/F0))
+  #   Fact2 <- ifelse(F0 > (Nm - 1)/Nm | Fn > (sum.correl -
+  #                                              1)/sum.correl, 0, (1 - Fn) * log((1 - Fn)/(1 - F0)))
+  #   G <- Fact1 + Fact2
+  #   G_p <- G[RES >= 0]
+  #   G_n <- G[RES < 0]
+  #   ES_p <- max(G_p)
+  #   ES_n <- max(G_n)
+  #   if (ES_p > ES_n) {
+  #     ES <- signif(ES_p, digits = 5)
+  #     arg.ES <- which.min(abs(G - ES_p))
+  #   }
+  #   else {
+  #     ES <- -signif(ES_n, digits = 5)
+  #     arg.ES <- which.min(abs(G - ES_n))
+  #   }
+  #   return(list(ES = ES, RES = RES, arg.ES = arg.ES, indicator = tag.indicator))
+  # }
+  # else if (statistic == "area.under.RES") {
+  #   RES <- Fn - F0
+  #   max.ES <- max(RES)
+  #   min.ES <- min(RES)
+  #   if (max.ES > -min.ES) {
+  #     arg.ES <- which.max(RES)
+  #   }
+  #   else {
+  #     arg.ES <- which.min(RES)
+  #   }
+  #   ES <- sum(RES)
+  #   return(list(ES = ES, arg.ES = arg.ES, RES = RES, indicator = tag.indicator))
+  # }
+  # else if (statistic == "Wilcoxon") {
+  #   library(exactRankTests)
+  #   seq.index <- seq(1, N)
+  #   gene.set.ranks <- seq.index[tag.indicator == 1]
+  #   gene.set.comp.ranks <- seq.index[tag.indicator == 0]
+  #   W <- wilcox.exact(x = gene.set.ranks, y = gene.set.comp.ranks,
+  #                     alternative = "two.sided", mu = 0, paired = FALSE,
+  #                     exact = F, conf.int = T, conf.level = 0.95)
+  #   ES <- log(1/W$p.value)
+  #   return(list(ES = ES, arg.ES = NULL, RES = NULL, indicator = tag.indicator))
+  # }
 }
 
