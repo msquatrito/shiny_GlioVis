@@ -394,7 +394,7 @@ shinyServer(
       stat <- stat[,-1]
       stat <- rbind(stat,TOTAL = tot)
       stat
-    }, align='rrrrrr')
+    }, align='rrrrrr',rownames =TRUE, striped = TRUE) 
     
     #' Tukey post-hoc test, to combine it with the boxplot and to render in a table
     tukey <- reactive({
@@ -411,7 +411,7 @@ shinyServer(
     #' Render tukey
     output$tukeyTest <- renderTable({
       tukey()
-    }, digits = c(2,2,2,2,-1,2))
+    }, digits = c(2,2,2,-1,2),rownames =TRUE, striped = TRUE)
     
     #' Pairwise t test
     output$pairwiseTtest <- renderTable({
@@ -421,7 +421,7 @@ shinyServer(
       data <-  stat_data()
       pttest <- pairwise.t.test(data$mRNA, data$group, na.rm= TRUE, p.adj = "bonferroni", paired = FALSE)
       pttest$p.value
-    }, digits = -1)
+    }, digits = -1,rownames =TRUE)
     
     #' Get the selected download file type.
     download_plot_file_type <- reactive({
@@ -780,7 +780,7 @@ shinyServer(
         df <- df %>% select_(gene1 = input$gene, gene2 = input$gene2)
       }
       cor <- df %>% do(tidy(cor.test(~ gene1 + gene2, data =., use = "complete.obs", method = tolower(input$statCorr))))
-    })
+    }, striped = TRUE)
     
     #' Table with the data used for the correlation plot
     output$corrDataTable <- renderDataTable({
