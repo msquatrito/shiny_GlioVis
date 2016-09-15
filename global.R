@@ -53,12 +53,12 @@ datasets <- list(
                      "Gill", "Freije", "Murat","Gorovets", "POLA_Network", "Reifenberger", "Joo","Ducray", "Walsh", "Nutt", "Kwom", "Vital",
                      "Grzmil", "Gleize", "Donson", "Li"),
   pediatric_datasets = c("Northcott_2012","Sturm_2016","Bergthold","Griesinger","Gump","Northcott_2011","Pomeroy",
-                         "Johnson","Witt","Henriquez","Hoffman","Kool","Lambert","Paugh", "deBont","Johann",
+                         "Johnson","Robinson","Witt", "Kool_2014","Henriquez","Hoffman","Kool_2011","Lambert","Paugh", "deBont","Johann",
                          "Zakrzewski","Sturm_2012","Buczkowicz","Mascelli","Schwartzentruber","Bender"),
   no_surv_dataset = c("Bao","Reifenberger","Gill","Li", "Oh","Ivy_GAP", "Kwom","Walsh","Gleize",
                       "Sturm_2016","Henriquez","Bergthold","Buczkowicz","Mascelli","Lambert","Griesinger",
-                      "Zakrzewski","Bender", "deBont","Gump","Johnson","Northcott_2012","Northcott_2011", "Kool",
-                      "Johann"),
+                      "Zakrzewski","Bender", "deBont","Gump","Johnson","Northcott_2012","Northcott_2011", "Kool_2011",
+                      "Johann","Robinson","Kool_2014"),
   rnaseq_datasets = c("TCGA_LGG", "TCGA_GBMLGG", "Bao", "Ivy_GAP","Gill")
 )
 
