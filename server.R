@@ -21,7 +21,7 @@ shinyServer(
     options(shiny.maxRequestSize=200*1024^2)
     
     output$adult_table <- renderDataTable({
-      adult_table <- read_excel("data/adult.xlsx")
+      adult_table <- readxl::read_excel("data/adult.xlsx")
       sketch <-  htmltools::withTags(table(
         class = 'compact nowrap',
         style = 'font-size: 13px; line-height: 10px;',
@@ -44,7 +44,7 @@ shinyServer(
     })
     
     output$pediatric_table <- renderDataTable({
-      pediatric_table <- read_excel("data/pediatric.xlsx")
+      pediatric_table <- readxl::read_excel("data/pediatric.xlsx")
       sketch <-  htmltools::withTags(table(
         class = 'compact nowrap',
         style = 'font-size: 13px; line-height: 10px;',
@@ -403,7 +403,7 @@ shinyServer(
       )
       data <-  stat_data()
       tukey <- data.frame(TukeyHSD(aov(mRNA ~ group, data = data))[[1]])
-      tukey$Significance <- as.factor(starmaker(tukey$p.adj, p.levels = c(.001, .01, .05, 1), symbols=c("***", "**", "*", "ns")))
+      tukey$Significance <- as.factor(weights::starmaker(tukey$p.adj, p.levels = c(.001, .01, .05, 1), symbols=c("***", "**", "*", "ns")))
       tukey <- tukey[order(tukey$diff, decreasing = TRUE), ]
       tukey
     })
@@ -779,7 +779,7 @@ shinyServer(
       } else {
         df <- df %>% select_(gene1 = input$gene, gene2 = input$gene2)
       }
-      cor <- df %>% do(tidy(cor.test(~ gene1 + gene2, data =., use = "complete.obs", method = tolower(input$statCorr))))
+      cor <- df %>% do(broom::tidy(cor.test(~ gene1 + gene2, data =., use = "complete.obs", method = tolower(input$statCorr))))
     }, striped = TRUE)
     
     #' Table with the data used for the correlation plot
@@ -1218,7 +1218,7 @@ shinyServer(
     
     enrich_GO <- eventReactive(go$GO ,{
       require(clusterProfiler)
-      ego <- enrichGO(gene = entrez()$ENTREZID, OrgDb = 'org.Hs.eg.db', ont = input$ont, pAdjustMethod = "BH",
+      ego <- clusterProfiler::enrichGO(gene = entrez()$ENTREZID, OrgDb = 'org.Hs.eg.db', ont = input$ont, pAdjustMethod = "BH",
                       pvalueCutoff  = input$pvalueCutoff, qvalueCutoff  = input$qvalueCutoff, readable=TRUE)
       if(length(ego@geneInCategory)==0) {
         createAlert(session, anchorId = "goAlert", alertId = "goAlertId", title = "Sorry...",
@@ -1241,13 +1241,13 @@ shinyServer(
         need(!is.null(go$GO), message = "Please press the Submit button to initiate the analysis")%then%
           need(length(enrich_GO()@geneInCategory)>0, FALSE)
       )
-      dotplot(enrich_GO(), showCategory= input$showCategory)
+      clusterProfiler::dotplot(enrich_GO(), showCategory= input$showCategory)
     })
     
     output$enrichGOMap <- renderPlot({
       req(length(enrich_GO()@geneInCategory)>0)
-      # cnetplot(enrich_GO(), foldChange=entrez()$logFC,showCategory= input$showCategory)
-      enrichMap(enrich_GO(), n=input$showCategory)
+      # clusterProfiler::cnetplot(enrich_GO(), foldChange=entrez()$logFC,showCategory= input$showCategory)
+      clusterProfiler::enrichMap(enrich_GO(), n=input$showCategory)
     })
     
     output$enrichGOTable <- renderDataTable({
@@ -1257,8 +1257,7 @@ shinyServer(
     
     #' KEGG
     enrich_Kegg <- eventReactive(go$KEGG,{
-      require(clusterProfiler)
-      eKegg <- enrichKEGG(gene = entrez()$ENTREZID, organism = "hsa", pAdjustMethod = "BH", pvalueCutoff  = input$pvalueCutoffKegg,
+      eKegg <- clusterProfiler::enrichKEGG(gene = entrez()$ENTREZID, organism = "hsa", pAdjustMethod = "BH", pvalueCutoff  = input$pvalueCutoffKegg,
                           qvalueCutoff  = input$qvalueCutoffKegg)
       if(length(eKegg@geneInCategory)==0) {
         createAlert(session, anchorId = "keggAlert", alertId = "keggAlertId", title = "Sorry...",
@@ -1280,17 +1279,17 @@ shinyServer(
         need(!is.null(go$KEGG), message = "Please press the Submit button to initiate the analysis")%then%
           need(length(enrich_Kegg()@geneInCategory)>0, FALSE)
       )
-      dotplot(enrich_Kegg(), showCategory= input$showCategoryKegg)
+      clusterProfiler::dotplot(enrich_Kegg(), showCategory= input$showCategoryKegg)
     })
     
     output$enrichKeggMap <- renderPlot({
       req(length(enrich_Kegg()@geneInCategory)>0)
-      enrichMap(enrich_Kegg(),n=input$showCategoryKegg)
+      clusterProfiler::enrichMap(enrich_Kegg(),n=input$showCategoryKegg)
     })
     
     output$enrichKeggTable <- renderDataTable({
       req(length(enrich_Kegg()@geneInCategory)>0)
-      eKegg <- setReadable(enrich_Kegg(), OrgDb = "org.Hs.eg.db", keytype = "ENTREZID")
+      eKegg <- DOSE::setReadable(enrich_Kegg(), OrgDb = "org.Hs.eg.db", keytype = "ENTREZID")
       data_table(summary(eKegg))
     },server = FALSE)
     
@@ -1434,13 +1433,13 @@ shinyServer(
             df1 <- na.omit(data.frame(status = df[ ,"status"], time = df[ ,"survival"], strata = df[ ,my_Survi]))
             df1$strata <- droplevels(df1$strata)
             fit <- survfit(Surv(time, status == 1) ~ strata, data = df1)
-            ggsurvplot(fit, legend = c(0.75,0.75), surv.scale = "percent", ylab = "Surviving", legend.labs = levels(df1$strata), color = "red",
+            survminer::ggsurvplot(fit, legend = c(0.75,0.75), surv.scale = "percent", ylab = "Surviving", legend.labs = levels(df1$strata), color = "red",
                        xlab = "Survival time (Months)", main = paste0("\n",my_Survi), legend.title = "", font.legend = 12, palette = "Set1")
           })
           plotname <- paste("plot", my_Survi, sep="")
-          output[[plotname]] <- renderGvis({
+          output[[plotname]] <- googleVis::renderGvis({
             plotData <- data.frame(table(df[, my_Survi]))
-            pie <- gvisPieChart(labelvar = "Var1", numvar = "Freq", data = plotData, chartid= plotname, options = list(width = 400, height = 300, pieSliceText = 'label', chartArea.left = 1,
+            pie <- googleVis::gvisPieChart(labelvar = "Var1", numvar = "Freq", data = plotData, chartid= plotname, options = list(width = 400, height = 300, pieSliceText = 'label', chartArea.left = 1,
                                                                                                                        colors = "['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999','#a6cee3','#006d2c','#810f7c','#02818a']")) # title = my_i,
             return(pie)
           })
@@ -1496,9 +1495,9 @@ shinyServer(
       learn.1 <- learn.1[!is.na(learn.1[,1]),]
       df.learn <- learn.1- rowMeans(learn.1)
       set.seed(12345)
-      svm <- ksvm(t(df.train), Training, cross=10, kernel="vanilladot", family="multinomial", prob.model=TRUE, scale=FALSE)
-      svm.subtype.call <- as.matrix(predict(svm, t(df.learn)))
-      prob <- as.matrix(predict(svm, t(df.learn), type="probabilities"))
+      svm <- kernlab::ksvm(t(df.train), Training, cross=10, kernel="vanilladot", family="multinomial", prob.model=TRUE, scale=FALSE)
+      svm.subtype.call <- as.matrix(kernlab::predict(svm, t(df.learn)))
+      prob <- as.matrix(kernlab::predict(svm, t(df.learn), type="probabilities"))
       svm_call <- data.frame(Sample = rownames(upData), svm.subtype.call, round(prob,3))
       svm_call
     })
@@ -1540,7 +1539,7 @@ shinyServer(
       # Common genes of the two datasets
       genes <- intersect(colnames(train.exp), colnames(learn.exp))
       set.seed(12345)
-      pred <- knn3Train(train = train.exp[,genes], test = learn.exp[,genes], cl = Training, k = k, prob=TRUE)
+      pred <- caret::knn3Train(train = train.exp[,genes], test = learn.exp[,genes], cl = Training, k = k, prob=TRUE)
       kn <- data.frame(Sample = rownames(upData), knn.subtype.call = pred, prob = round(attr(pred,"prob"),2))
       names(kn)[3:5] <- subtypes
       kn
@@ -1601,7 +1600,7 @@ shinyServer(
     output$sub3Plot <- renderPlot({
       data <- sub3_call()[,1:4]
       data$Sample <- factor(data$Sample, levels=(data$Sample)[order(data$svm_call)]) # sort the sample on the svm_call
-      data <- melt(data, id.var = "Sample")
+      data <- reshape2::melt(data, id.var = "Sample")
       names(data) <- c("Sample","Call","Subtype")
       ggplot(data, aes(Sample, Call)) + geom_tile(aes(fill = Subtype), colour = "white") + ylab("") + xlab("") +
         scale_x_discrete(expand = c(0, 0)) + theme_minimal() + scale_fill_brewer(palette = "Set1") + # scale_fill_manual(values = terrain.colors(4)) +
@@ -1669,7 +1668,7 @@ shinyServer(
                             "Bindea et al. 2013" = gene_set_list$galon)
       }
       set.seed(1234)
-      gsva_results <- gsva(expr=as.matrix(exprs), gset.idx.list = gene_list, method="ssgsea", rnaseq = platformDec, parallel.sz = 0,
+      gsva_results <- GSVA::gsva(expr=as.matrix(exprs), gset.idx.list = gene_list, method="ssgsea", rnaseq = platformDec, parallel.sz = 0,
                            min.sz = input$min.sz, max.sz= input$max.sz, verbose= FALSE)
       deconv_scores <- data.frame(Sample = rownames(upData),t(gsva_results))
       deconv <- list(results = gsva_results, scores = deconv_scores)
@@ -1735,7 +1734,7 @@ shinyServer(
           need(!is.null(goDec$Submit),'Please press "Submit Deconvolute"')
       )
       data <- deconv_call()[["results"]]
-      melted <- melt(data)
+      melted <- reshape2::melt(data)
       p <- ggplot(melted,aes(x=Var1,y=value,fill=Var1)) + geom_boxplot() + xlab("") + ylab("score") +
         theme(axis.text.x = element_text(angle = 90, hjust = 1),legend.title = element_blank())
       if(input$deconvPData){
@@ -1748,7 +1747,7 @@ shinyServer(
         validate(
           need(all.equal(pData$Sample,names(data)),"ERROR: Samples don't match")
         )
-        melted <- melt(merge(t(data),pData[,c("Sample",input$pDataDec)],
+        melted <- reshape2::melt(merge(t(data),pData[,c("Sample",input$pDataDec)],
                              by.x="row.names",by.y="Sample"))
         p <- ggplot(melted,aes_string(x=input$pDataDec,y="value",fill=input$pDataDec)) + geom_boxplot() + xlab("") + ylab("score") +
           facet_wrap(~variable)
