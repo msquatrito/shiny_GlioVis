@@ -376,7 +376,8 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                                      condition = "input.tukeyHSD",
                                                                      p(style = "background-color: #F5F5F5; padding-left:10px; border: 1px solid #E3E3E3;",
                                                                        strong("Tukey's Honest Significant Difference (HSD)")),
-                                                                     helpText("The table shows the difference between pairs, the 95% confidence interval and the p-value of the pairwise comparisons:"),
+                                                                     helpText("The table shows the difference between pairs, the 95% confidence interval and the p-value of the pairwise comparisons.
+                                                                              ***p<0.001; **p<0.01; *p<0.05; ns, not significant."),
                                                                      checkboxInput(inputId = "tukeyPlot", label = "Show the results in the plot", value = FALSE),
                                                                      tableOutput(outputId = "tukeyTest"),
                                                                      hr()
@@ -385,7 +386,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                                      condition = "input.tTest",
                                                                      p(style = "background-color: #F5F5F5; padding-left:10px; border: 1px solid #E3E3E3;",
                                                                        strong("Pairwise t tests")),
-                                                                     helpText("Pairwise comparisons between group levels with corrections for multiple testing (p-values with Bonferroni correction):"),
+                                                                     helpText("Pairwise comparisons between group levels with corrections for multiple testing (p-values with Bonferroni correction)."),
                                                                      tableOutput(outputId = "pairwiseTtest")
                                                                    )
                                                           ),
