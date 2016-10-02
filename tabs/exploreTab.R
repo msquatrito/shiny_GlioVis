@@ -392,7 +392,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                           ),
                                                           
                                                           tabPanel(title = "Data",
-                                                                   dataTableOutput(outputId = "filterDataTable", width = 500)
+                                                                   DT::dataTableOutput(outputId = "filterDataTable", width = 500)
                                                           )
                                               )
                                      ),
@@ -408,7 +408,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                                               plotOutput(outputId = "survPlot", height = "100%")
                                                                      ),
                                                                      tabPanel(title = "Data",
-                                                                              dataTableOutput(outputId = "survDataTable", width = 800)
+                                                                              DT::dataTableOutput(outputId = "survDataTable", width = 800)
                                                                      )
                                                                    )
                                                           ),  
@@ -438,7 +438,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                                      ),
                                                                      
                                                                      tabPanel(title = "Data",
-                                                                              dataTableOutput(outputId = "hazardDataTable", width = 600)
+                                                                              DT::dataTableOutput(outputId = "hazardDataTable", width = 600)
                                                                      )
                                                                    )
                                                           )
@@ -463,7 +463,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                                               )
                                                                      ),
                                                                      tabPanel(title = "Data",
-                                                                              dataTableOutput(outputId = "corrDataTable", width = 600)
+                                                                              DT::dataTableOutput(outputId = "corrDataTable", width = 600)
                                                                      )
                                                                      
                                                                    )
@@ -476,7 +476,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                                               plotOutput(outputId = "pairsPlot", height = "100%")
                                                                      ),
                                                                      tabPanel(title = "Data",
-                                                                              dataTableOutput(outputId = "corrPairsDataTable", width = 600)
+                                                                              DT::dataTableOutput(outputId = "corrPairsDataTable", width = 600)
                                                                      )
                                                                    )
                                                           ),
@@ -485,7 +485,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                                    p(class = "lead","Correlate expression of a gene with all the genes in the dataset"),
                                                                    busy(),
                                                                    splitLayout(cellWidths = c("60%", "40%"),
-                                                                               dataTableOutput(outputId = "corrAllTable"),
+                                                                               DT::dataTableOutput(outputId = "corrAllTable"),
                                                                                plotOutput(outputId = "corrAllPlot")
                                                                    )
                                                           )
@@ -498,7 +498,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                   div(style = "margin-left: 550x;", helpModal(modal_title ="RPPA", link = "helpRppa", help_file = includeMarkdown("tools/help/help_rppa.Rmd")))
                                               ),
                                               splitLayout(cellWidths = c("60%", "40%"),
-                                                          dataTableOutput(outputId = "rppaTable"),
+                                                          DT::dataTableOutput(outputId = "rppaTable"),
                                                           plotOutput(outputId = "rppaPlot", height = 700)
                                               )
                                      ),
@@ -512,7 +512,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                               plotOutput(outputId = "oncoprint", height = "100%"),
                                               br(),hr(),br(),
                                               busy("Retrieving mutation data"),
-                                              dataTableOutput(outputId = "mut")
+                                              DT::dataTableOutput(outputId = "mut")
                                               
                                      ),
                                      
@@ -528,7 +528,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                           
                                                           tabPanel(title = "DE Data",
                                                                    busy(),
-                                                                   dataTableOutput(outputId = "DETable")        
+                                                                   DT::dataTableOutput(outputId = "DETable")        
                                                           ),
                                                           
                                                           tabPanel(title = "Gene Ontology", 
@@ -562,7 +562,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                                                                ),
                                                                                                tabPanel(title = "Data",
                                                                                                         busy(),
-                                                                                                        dataTableOutput(outputId = "enrichGOTable")        
+                                                                                                        DT::dataTableOutput(outputId = "enrichGOTable")        
                                                                                                )
                                                                                    )
                                                                                  )
@@ -596,7 +596,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                                                                ),
                                                                                                tabPanel(title = "Data",
                                                                                                         busy(),
-                                                                                                        dataTableOutput(outputId = "enrichKeggTable")        
+                                                                                                        DT::dataTableOutput(outputId = "enrichKeggTable")        
                                                                                                )
                                                                                    )
                                                                                  )
@@ -616,7 +616,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                 tabPanel(title = "Data", icon = icon("table"),
                                                          br(),
                                                          # plotOutput(outputId = "annotation"),
-                                                         dataTableOutput(outputId = "table")
+                                                         DT::dataTableOutput(outputId = "table")
                                                 ),
                                                 
                                                 tabPanel(title = "Dataset summary plots",

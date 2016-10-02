@@ -20,7 +20,7 @@ shinyServer(
     
     options(shiny.maxRequestSize=200*1024^2)
     
-    output$adult_table <- renderDataTable({
+    output$adult_table <- DT::renderDataTable({
       adult_table <- readxl::read_excel("data/adult.xlsx")
       sketch <-  htmltools::withTags(table(
         class = 'compact nowrap',
@@ -43,7 +43,7 @@ shinyServer(
                 selection = "none", options = list(pageLength = 30, dom = 't'))
     })
     
-    output$pediatric_table <- renderDataTable({
+    output$pediatric_table <- DT::renderDataTable({
       pediatric_table <- readxl::read_excel("data/pediatric.xlsx")
       sketch <-  htmltools::withTags(table(
         class = 'compact nowrap',
@@ -339,7 +339,7 @@ shinyServer(
     })
     
     #' Table with the data used for the plot
-    output$filterDataTable <- renderDataTable({
+    output$filterDataTable <- DT::renderDataTable({
       columns <- intersect(c("Sample", plot_type(),input$colorP,input$shapeP,"mRNA"),names(filter_plot_data()))
       data <- filter_plot_data()[,columns]
       data_table(data)
@@ -595,7 +595,7 @@ shinyServer(
     
     
     #' Create a table with the data used in Kaplan Meier plot
-    output$survDataTable <- renderDataTable({
+    output$survDataTable <- DT::renderDataTable({
       data <- surv_data()
       strat <- get_cutoff(data$mRNA,input$cutoff,input$mInput)
       if (input$cutoff == "quartiles"){
@@ -684,7 +684,7 @@ shinyServer(
     }, bg = "transparent")
     
     #' Data used to generate the HR plot
-    output$hazardDataTable <- renderDataTable({
+    output$hazardDataTable <- DT::renderDataTable({
       validate(need(input$dataset %notin% c("TCGA_LGG","Gorovets","POLA Network"), "Interactive HR plot currently available only for GBM samples") %then%
                  need(histo_selected() == "GBM","Please select GBM samples in the 'Histology' dropdown menu") %then%
                  need(input$dataset %notin% c("Grzmil","Vital"), "Sorry, too few samples to properly render the HR plot"))
@@ -783,7 +783,7 @@ shinyServer(
     }, striped = TRUE)
     
     #' Table with the data used for the correlation plot
-    output$corrDataTable <- renderDataTable({
+    output$corrDataTable <- DT::renderDataTable({
       data <- corr_two_data()
       data_table(data)
     },server = FALSE)
@@ -837,7 +837,7 @@ shinyServer(
     
     
     #' Table with the data used for the pairs plot
-    output$corrPairsDataTable <- renderDataTable({
+    output$corrPairsDataTable <- DT::renderDataTable({
       data <- corr_many_data()
       data_table(data)
     },server = FALSE)
@@ -891,7 +891,7 @@ shinyServer(
     })
     
     #' Generate an HTML table view of the correlation table
-    output$corrAllTable <- renderDataTable({
+    output$corrAllTable <- DT::renderDataTable({
       validate(
         need(input$gene != "", "Please, enter a gene name in the panel on the left")%then%
           # Not all genes are available for all the dataset
@@ -984,7 +984,7 @@ shinyServer(
       d
     })
     
-    output$rppaTable <- renderDataTable({
+    output$rppaTable <- DT::renderDataTable({
       data_table(rrppa_data_table(), selection = 'single')
     },server = FALSE)
     
@@ -1072,7 +1072,7 @@ shinyServer(
       mut_list <- list(ann = ann, mat = mat)
     })
     
-    output$mut <- renderDataTable({
+    output$mut <- DT::renderDataTable({
       req(input$dataset %in% c("TCGA_GBM","TCGA_LGG","TCGA_GBMLGG"))
       req(mut_genes() != "")
       req(any(mut_genes() %in% names(exprs())))
@@ -1181,7 +1181,7 @@ shinyServer(
               name = "",show_column_names = FALSE,cluster_rows = FALSE, top_annotation = ha)
     })
 
-    output$DETable <- renderDataTable({
+    output$DETable <- DT::renderDataTable({
       validate(
         need(dim(de_data()[["topTable"]])[1]>0, message = "No differentially regulated genes were identified using the current setting.
              Consider to change either the cutoff, the Log2 fold change filter or the p value")
@@ -1250,7 +1250,7 @@ shinyServer(
       clusterProfiler::enrichMap(enrich_GO(), n=input$showCategory)
     })
     
-    output$enrichGOTable <- renderDataTable({
+    output$enrichGOTable <- DT::renderDataTable({
       req(length(enrich_GO()@geneInCategory)>0)
       data_table(summary(enrich_GO()))
     },server = FALSE)
@@ -1287,7 +1287,7 @@ shinyServer(
       clusterProfiler::enrichMap(enrich_Kegg(),n=input$showCategoryKegg)
     })
     
-    output$enrichKeggTable <- renderDataTable({
+    output$enrichKeggTable <- DT::renderDataTable({
       req(length(enrich_Kegg()@geneInCategory)>0)
       eKegg <- DOSE::setReadable(enrich_Kegg(), OrgDb = "org.Hs.eg.db", keytype = "ENTREZID")
       data_table(summary(eKegg))
@@ -1365,7 +1365,7 @@ shinyServer(
     })
     
     #' Generate an HTML table view of the data
-    output$table <- renderDataTable({
+    output$table <- DT::renderDataTable({
       # If a gene is not specified show the pData only
       if (input$gene == "") {
         data <- rmNA(pDatas())
@@ -1503,7 +1503,7 @@ shinyServer(
     })
     
     #' Rerndering the subtype call as a data table
-    output$svm <- renderDataTable({
+    output$svm <- DT::renderDataTable({
       validate(
         need(!is.null(input$upFile),"Please upload the dataset to be analyzed")%then%
           need(input$goSvm != 0,'Please press "Submit SVM"')
@@ -1546,7 +1546,7 @@ shinyServer(
     })
     
     #' Rerndering the knn subtype call as a data table
-    output$knn <- renderDataTable({
+    output$knn <- DT::renderDataTable({
       validate(
         need(!is.null(input$upFile),"Please upload the dataset to be analyzed")%then%
           need(input$goKnn != 0,'Please press "Submit K-NN"')
@@ -1566,7 +1566,7 @@ shinyServer(
     })
     
     #' Rerndering the subtype call as a data table
-    output$gsva <- renderDataTable({
+    output$gsva <- DT::renderDataTable({
       validate(
         need(!is.null(input$upFile),"Please upload the dataset to be analyzed")%then%
           need(input$goGsva != 0,'Please press "Submit ssGSEA"')
@@ -1589,7 +1589,7 @@ shinyServer(
     })
     
     #' Rerndering the subtype call as a data table
-    output$sub3 <- renderDataTable({
+    output$sub3 <- DT::renderDataTable({
       validate(
         need(!is.null(input$upFile),"Please upload the dataset to be analyzed")%then%
           need(input$goSub3 != 0, 'Please press "Submit 3-Way"')
@@ -1618,7 +1618,7 @@ shinyServer(
     })
     
     #' Rerndering the subtype call as a data table
-    output$estScore <- renderDataTable({
+    output$estScore <- DT::renderDataTable({
       validate(
         need(!is.null(input$upFile),"Please upload the dataset to be analyzed")%then%
           need(input$goEst != 0,'Please press "Submit ESTIMATE"')
@@ -1756,7 +1756,7 @@ shinyServer(
     },height = 800)
 
     #' Rerndering the Deconvolute scores as a data table
-    output$deconvScore <- renderDataTable({
+    output$deconvScore <- DT::renderDataTable({
       validate(
         need(!is.null(input$upFile),"Please upload the dataset to be analyzed")%then%
           need(!is.null(goDec$Submit),'Please press "Submit Deconvolute"')

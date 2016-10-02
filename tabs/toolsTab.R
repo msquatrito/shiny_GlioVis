@@ -136,7 +136,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                                        ),
                                                        column(width = 9,
                                                               busy("Be patients, switching to another tab will crash GlioVis ..."),
-                                                              dataTableOutput(outputId = "svm")
+                                                              DT::dataTableOutput(outputId = "svm")
                                                        )
                                               ),
                                               
@@ -147,7 +147,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                                        ),
                                                        column(width = 8,
                                                               busy("Be patients, switching to another tab will crash GlioVis ..."),
-                                                              dataTableOutput(outputId = "knn")
+                                                              DT::dataTableOutput(outputId = "knn")
                                                        )
                                               ),
                                               
@@ -158,7 +158,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                                        ),
                                                        column(width = 9,
                                                               busy("Be patients, switching to another tab will crash GlioVis ..."),
-                                                              dataTableOutput(outputId = "gsva")
+                                                              DT::dataTableOutput(outputId = "gsva")
                                                        )
                                               ),
                                               
@@ -171,7 +171,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                                                   plotOutput(outputId = "sub3Plot",height = "100%")
                                                                 ),
                                                                 busy("Be patients, switching to another tab will crash GlioVis ..."),
-                                                                dataTableOutput(outputId = "sub3")
+                                                                DT::dataTableOutput(outputId = "sub3")
                                                          )
                                                        )
                                               )
@@ -185,7 +185,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                   ),
                                   busy(),
                                   splitLayout(cellWidths = c("65%", "35%"),
-                                              dataTableOutput(outputId = "estScore"),
+                                              DT::dataTableOutput(outputId = "estScore"),
                                               plotOutput(outputId = "purityPlot")
                                   )
                          ),
@@ -206,7 +206,7 @@ tabPanel(title = "Tools", icon = icon("gear"),
                                     ),
                                     tabPanel(title = "Scores", id = "deconvScores",
                                              busy(),
-                                             dataTableOutput(outputId = "deconvScore")
+                                             DT::dataTableOutput(outputId = "deconvScore")
                                     )
                                     
                                   )
