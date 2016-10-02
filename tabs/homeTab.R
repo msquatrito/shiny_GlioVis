@@ -65,7 +65,7 @@ tabPanel(title = "Home", icon = icon("home"),
              p(class = "outer",'DeconvoluteME: Deconvolute gene expression profiles from heterogeneous tissue samples into cell-type-specific subprofiles.'),
              h4(class = "outer", "Can I use GlioVis results for my publication?"),
              p(class = "outer", strong("Of course!"), 'If you do so, please include references for the dataset(s) you used and cite: Bowman R, Wang Q, Carro A, Verhaak R. and Squatrito M. 
-                GlioVis data portal for visualization and analysis of brain tumor expression datasets. 2016, Neuro-Oncology ', a("(in press)", href="#addRef", target="_blank")),
+                GlioVis data portal for visualization and analysis of brain tumor expression datasets. 2016, Neuro-Oncology ', a("(in press, DOI: 10.1093/neuonc/now247)", href="#addRef", target="_blank")),
              p(class = "outer","Please adhere to the",  a("TCGA publication guidelines", href="http://cancergenome.nih.gov/publications/publicationguidelines"),
                "when using TCGA data in your publications."),
              h4(class = "outer", "I have more questions, how can I reach you?"),
