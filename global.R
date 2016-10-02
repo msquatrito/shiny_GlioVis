@@ -95,7 +95,7 @@ options(DT.options  = list(lengthMenu = list(c(20, 50, 100, -1), c('20','50','10
 )
 )
 data_table <- function (df,rownames = FALSE, selection = 'none', filter = "none", options = list()) {
-  datatable(df, selection = selection, rownames = rownames, filter = filter, extensions = 'Buttons')
+  DT::datatable(df, selection = selection, rownames = rownames, filter = filter, extensions = 'Buttons')
   
 }
 
