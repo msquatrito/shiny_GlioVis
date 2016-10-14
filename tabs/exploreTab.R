@@ -76,17 +76,25 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                            
                            # Tab Survival
                            conditionalPanel(
-                             condition = "input.tab1 == 2",
-                             conditionalPanel(
-                               condition = "input.datasetType != 'Pediatric' & input.histology == 'GBM' & input.dataset != 'TCGA_GBMLGG'",
-                               checkboxInput(inputId = "gcimpSurv", label = "Exclude G-CIMP samples", value = FALSE),
-                               checkboxInput(inputId = "primarySurv", label = "Exclude Recurrent samples", value = FALSE)
-                             ),
+                             condition = "input.tab1 == 2 & input.tabSurv == 'km'",
                              conditionalPanel(
                                condition = "input.subtype == 'All'",
                                checkboxInput(inputId = "allSubSurv", label = "Separate by subtype", value = FALSE)
                                
                              ),
+                             br(),
+                             conditionalPanel(
+                               condition = "input.datasetType != 'Pediatric' & input.histology == 'GBM' & input.dataset != 'TCGA_GBMLGG'",
+                               radioButtons(inputId ="gcimpSurv", label = strong("CIMP stauts:"), choices = c("All","G-CIMP","NON G-CIMP"), selected = NULL, inline = T),
+                               conditionalPanel(
+                                 condition = "input.dataset =='TCGA_GBM' | input.dataset =='Murat'",
+                               radioButtons(inputId ="primarySurv", label = strong("Recurrence:"), choices = c("All","Primary","Recurrent"), selected = NULL, inline = T),
+                               radioButtons(inputId ="mgmtSurv", label = strong("MGMT status:"), choices = c("All","Methylated","Unmethylated"), selected = NULL, inline = T)
+                               )
+                               # checkboxInput(inputId = "gcimpSurv", label = "Exclude G-CIMP samples", value = FALSE),
+                               # checkboxInput(inputId = "primarySurv", label = "Exclude Recurrent samples", value = FALSE)
+                             ),
+
                              conditionalPanel(
                                condition = "input.tabSurv == 'km'",
                                selectInput(inputId = "cutoff", label = h4("Cutoff:"), 

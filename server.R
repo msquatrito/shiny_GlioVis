@@ -205,16 +205,19 @@ shinyServer(
     
     #' When switching datasets if the selected histo is not available it will choose "All"
     histo_selected <- reactive({
-      if (input$histology %in% c("All", histo())){
-        input$histology
+      if(input$dataset == "TCGA_GBM" & input$tab1 == 2){
+        histo <- "GBM"
+      } else if(input$histology %in% c("All", histo())){
+        histo <- input$histology
       } else {
-        "All"
+        histo <- "All"
       }
+      histo
     })
     
     #' When switching datasets if the selected subtype is not available it will choose "All"
     subtype_selected <- reactive({
-      if (input$subtype %in% c("All", subtype())){
+      if(input$subtype %in% c("All", subtype())){
         input$subtype
       } else {
         "All"
@@ -478,14 +481,23 @@ shinyServer(
     )
     
     #' Observers for the conditonal panels to work in the proper way
+    # observeEvent(input$histology != "GBM", {
+    #   updateCheckboxInput(session, "primarySurv", value = FALSE)
+    #   updateCheckboxInput(session, "gcimpSurv", value = FALSE)
+    # })
+    # observeEvent(input$dataset =="TCGA_GBMLGG", {
+    #   updateCheckboxInput(session, "gcimpSurv", value = FALSE)
+    # })
     observeEvent(input$histology != "GBM", {
-      updateCheckboxInput(session, "primarySurv", value = FALSE)
-      updateCheckboxInput(session, "gcimpSurv", value = FALSE)
+      updateRadioButtons(session, "primarySurv", selected = "All")
+      updateRadioButtons(session, "gcimpSurv",  selected = "All")
+      updateRadioButtons(session, "mgmtSurv",  selected = "All")
     })
     observeEvent(input$dataset =="TCGA_GBMLGG", {
       updateCheckboxInput(session, "gcimpSurv", value = FALSE)
     })
-    observeEvent(input$subtype != "All", {
+    
+    observeEvent(c(input$subtype != "All", input$tabSurv != 'km'), {
       updateCheckboxInput(session, "allSubSurv", value = FALSE)
     })
     
@@ -499,13 +511,17 @@ shinyServer(
       if (input$subtype != "All") {
         df <- subset(df, Subtype == input$subtype)
       }
-      # exclude G-CIMP is selected
-      if (input$gcimpSurv){
-        df <- subset(df, CIMP_status != "G-CIMP")
+      # select G-CIMP status
+      if (input$gcimpSurv != "All"){
+        df <- subset(df, CIMP_status == input$gcimpSurv)
+      }
+      # select MGMT status
+      if (input$mgmtSurv != "All"){
+        df <- subset(df, MGMT_status == input$mgmtSurv)
       }
       # select primary sample
-      if (input$primarySurv & any(!is.na(df$Recurrence))) {
-        df <- subset(df, Recurrence == "Primary")
+      if (input$primarySurv != "All" & any(!is.na(df$Recurrence))) {
+        df <- subset(df, Recurrence == input$primarySurv)
       }
       data <- df[,c("Sample", "Histology", "Recurrence", "Subtype", "CIMP_status", "mRNA",  "survival", "status")]
       names(data)[7:8] <- c("survival_month", "survival_status")
