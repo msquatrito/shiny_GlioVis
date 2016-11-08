@@ -1156,7 +1156,7 @@ shinyServer(
     
     #' Differential Expression
     observe({
-      req(input$dataset)
+      req(input$pDataHeatmap)
       pData <- rmNA(pDatas())
       colnames <- names(pData)[!sapply(pData, is.numeric)] # remove muneric categories
       colnames <- colnames[colnames %notin% c("Sample","ID","Patient_ID","Sample_ID", "Matching.sample", "Therapy_Class","title")]
@@ -1191,6 +1191,10 @@ shinyServer(
       heat_data <- list(eset= esetSel, topTable = topT)
     })
     
+    colorSideHeatmap <- reactive({
+      input$colorSideHeatmap
+    })
+    
     output$DEheatmap <- renderPlot({
       if(dim(de_data()[["topTable"]])[1]==0){
         return()
@@ -1201,12 +1205,12 @@ shinyServer(
       )
       eset <- de_data()[["eset"]]
       if(input$pDataHeatmap) {
-        req(input$colorSideHeatmap %in% names(pDatas()))
+        req(colorSideHeatmap() %in% names(pDatas()))
         pData <- pDatas()[pDatas()$Sample %in% row.names(eset), ]
-        an <- pData[,input$colorSideHeatmap, drop = FALSE]
-        # n <- nlevels(pData[,input$colorSideHeatmap])
+        an <- pData[,colorSideHeatmap(), drop = FALSE]
+        # n <- nlevels(pData[,colorSideHeatmap()])
         # colors <- brewer_pal(palette = "Set1")(n) #Dark2
-        # names(colors) <- levels(pData[,input$colorSideHeatmap])
+        # names(colors) <- levels(pData[,colorSideHeatmap()])
         ha <- HeatmapAnnotation(an,show_annotation_name = TRUE)
       } else {
         ha <- NULL
@@ -1230,7 +1234,7 @@ shinyServer(
         need(dim(de_data()[["topTable"]])[1]>5,
              "Less than 5 genes were differentially expressed with the current settings, enrichment analysis will not be performed")
       )
-      entrez <-  suppressWarnings(bitr(row.names(de_data()[["topTable"]]), fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Hs.eg.db"))
+      entrez <-  suppressWarnings(bitr(row.names(de_data()[["topTable"]]), fromType="SYMBOL", toType="ENTREZID", annoDb="org.Hs.eg.db"))
       entrez <- merge(entrez,de_data()[["topTable"]], by.x="SYMBOL",by.y="row.names",all.x=T)
       entrez
     })
@@ -1252,7 +1256,7 @@ shinyServer(
     
     enrich_GO <- eventReactive(go$GO ,{
       require(clusterProfiler)
-      ego <- clusterProfiler::enrichGO(gene = entrez()$ENTREZID, OrgDb = 'org.Hs.eg.db', ont = input$ont, pAdjustMethod = "BH",
+      ego <- clusterProfiler::enrichGO(gene = entrez()$ENTREZID, organism = "human", ont = input$ont, pAdjustMethod = "BH",
                       pvalueCutoff  = input$pvalueCutoff, qvalueCutoff  = input$qvalueCutoff, readable=TRUE)
       if(length(ego@geneInCategory)==0) {
         createAlert(session, anchorId = "goAlert", alertId = "goAlertId", title = "Sorry...",
@@ -1291,7 +1295,7 @@ shinyServer(
     
     #' KEGG
     enrich_Kegg <- eventReactive(go$KEGG,{
-      eKegg <- clusterProfiler::enrichKEGG(gene = entrez()$ENTREZID, organism = "hsa", pAdjustMethod = "BH", pvalueCutoff  = input$pvalueCutoffKegg,
+      eKegg <- clusterProfiler::enrichKEGG(gene = entrez()$ENTREZID, organism = "human", pAdjustMethod = "BH", pvalueCutoff  = input$pvalueCutoffKegg,
                           qvalueCutoff  = input$qvalueCutoffKegg)
       if(length(eKegg@geneInCategory)==0) {
         createAlert(session, anchorId = "keggAlert", alertId = "keggAlertId", title = "Sorry...",
@@ -1323,7 +1327,7 @@ shinyServer(
     
     output$enrichKeggTable <- DT::renderDataTable({
       req(length(enrich_Kegg()@geneInCategory)>0)
-      eKegg <- DOSE::setReadable(enrich_Kegg(), OrgDb = "org.Hs.eg.db", keytype = "ENTREZID")
+      eKegg <- DOSE::setReadable(enrich_Kegg())
       data_table(summary(eKegg))
     },server = FALSE)
     
