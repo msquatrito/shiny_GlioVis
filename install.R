@@ -50,7 +50,7 @@ install_gliovis <- function() {
 
   # install needed packages from Bioconductor
   bioc <- c("GSVA","limma","ComplexHeatmap","DOSE","clusterProfiler")
-  if(!(pkg %in% installed.packages())){
+  if(!(bioc %in% installed.packages())){
     source("http://bioconductor.org/biocLite.R")
     biocLite(bioc) 
   }
