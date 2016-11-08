@@ -459,6 +459,9 @@ shinyServer(
     download_plot_width <- reactive({
       input$downloadPlotWidth
     })
+    download_plot_res <- reactive({
+      input$downloadPlotRes
+    })
     
     #' Download the Plot
     output$downloadPlot <- downloadHandler(
@@ -471,6 +474,9 @@ shinyServer(
         # Gets the name of the function to use from the downloadFileType reactive element.
         plotFunction <- match.fun(download_plot_file_type())
         plotFunction(file, width = download_plot_width(), height =  download_plot_height())
+        if(download_plot_file_type()!="pdf"){
+          plotFunction(file, width = download_plot_width(), height =  download_plot_height(),res = download_plot_res())
+        }
         if (input$tukeyPlot) {
           grid.draw(box_Plot())
         } else {
@@ -629,6 +635,9 @@ shinyServer(
       content = function(file) {
         plotFunction <- match.fun(download_plot_file_type())
         plotFunction(file, width = download_plot_width(), height =  download_plot_height())
+        if(download_plot_file_type()!="pdf"){
+          plotFunction(file, width = download_plot_width(), height =  download_plot_height(),res = download_plot_res())
+        }
         if(input$allSubSurv) {
           nrow <- ceiling(length(subtype())/2)
           p <- list()
@@ -734,6 +743,9 @@ shinyServer(
       content = function(file) {
         plotFunction <- match.fun(download_plot_file_type())
         plotFunction(file, width = download_plot_width(), height =  download_plot_height())
+        if(download_plot_file_type()!="pdf"){
+          plotFunction(file, width = download_plot_width(), height =  download_plot_height(),res = download_plot_res())
+        }
         kmPlot(cutoff = get_Cutoff(), surv = survival_Fml(), censor = input$censor, conf.int = input$confInt, font.legend = input$surv_legend_size, input$riskTable)
         dev.off()
       }
@@ -812,6 +824,9 @@ shinyServer(
       content = function(file) {
         plotFunction <- match.fun(download_plot_file_type())
         plotFunction(file, width = download_plot_width(), height =  download_plot_height())
+        if(download_plot_file_type()!="pdf"){
+          plotFunction(file, width = download_plot_width(), height =  download_plot_height(),res = download_plot_res())
+        }
         myCorggPlot(corr_two_data(), input$gene, input$gene2, color_by(), separate_by())
         dev.off()
       }
@@ -875,6 +890,9 @@ shinyServer(
       content = function(file) {
         plotFunction <- match.fun(download_plot_file_type())
         plotFunction(file, width = download_plot_width(), height =  download_plot_height())
+        if(download_plot_file_type()!="pdf"){
+          plotFunction(file, width = download_plot_width(), height =  download_plot_height(),res = download_plot_res())
+        }
         print(ggpairs(corr_many_genes(), mapping = aes(alpha=0.5),lower=list(continuous="smooth")))
         dev.off()
       }

@@ -64,11 +64,11 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                              ),
                              conditionalPanel(
                                condition = "input.gene !=''",
-                             checkboxInput(inputId = "removeMe", label = "Remove/arrange samples", value = FALSE),
-                             conditionalPanel(
-                               condition="input.removeMe",
-                               uiOutput(outputId = "removeGp")
-                             )
+                               checkboxInput(inputId = "removeMe", label = "Remove/arrange samples", value = FALSE),
+                               conditionalPanel(
+                                 condition="input.removeMe",
+                                 uiOutput(outputId = "removeGp")
+                               )
                              ),
                              helpModal(modal_title ="Box plots", link = "help", 
                                        help_file = includeMarkdown("tools/help/help.Rmd"))
@@ -88,13 +88,13 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                radioButtons(inputId ="gcimpSurv", label = strong("CIMP stauts:"), choices = c("All","G-CIMP","NON G-CIMP"), selected = NULL, inline = T),
                                conditionalPanel(
                                  condition = "input.dataset =='TCGA_GBM' | input.dataset =='Murat'",
-                               radioButtons(inputId ="primarySurv", label = strong("Recurrence:"), choices = c("All","Primary","Recurrent"), selected = NULL, inline = T),
-                               radioButtons(inputId ="mgmtSurv", label = strong("MGMT status:"), choices = c("All","Methylated","Unmethylated"), selected = NULL, inline = T)
+                                 radioButtons(inputId ="primarySurv", label = strong("Recurrence:"), choices = c("All","Primary","Recurrent"), selected = NULL, inline = T),
+                                 radioButtons(inputId ="mgmtSurv", label = strong("MGMT status:"), choices = c("All","Methylated","Unmethylated"), selected = NULL, inline = T)
                                )
                                # checkboxInput(inputId = "gcimpSurv", label = "Exclude G-CIMP samples", value = FALSE),
                                # checkboxInput(inputId = "primarySurv", label = "Exclude Recurrent samples", value = FALSE)
                              ),
-
+                             
                              conditionalPanel(
                                condition = "input.tabSurv == 'km'",
                                selectInput(inputId = "cutoff", label = h4("Cutoff:"), 
@@ -127,7 +127,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                helpText("mRNA expression (log2). Blue lines represent 25%, 50% and 75% quartiles. Red line represents the current selection."))
                            ),
                            
-  
+                           
                            # Tab Differential expression
                            conditionalPanel(
                              condition = "input.tab1 == 7",
@@ -218,7 +218,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                              h4("Plot options:"),
                              conditionalPanel(
                                condition = "!input.allSubSurv",
-                             checkboxInput(inputId = "riskTable", label = "Show risk table", value = FALSE)
+                               checkboxInput(inputId = "riskTable", label = "Show risk table", value = FALSE)
                              ),
                              checkboxInput(inputId = "censor", label = "Show censored samples", value = FALSE),
                              checkboxInput(inputId = "confInt", label = "Show confidence interval", value = FALSE),
@@ -299,14 +299,14 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                            ),
                            conditionalPanel(
                              condition = "input.tabDE == 'heatmap'",
-                           wellPanel(
-                             checkboxInput(inputId = "pDataHeatmap", label = "Include annotation to heatmap", value = FALSE),
-                             conditionalPanel(
-                               condition = "input.pDataHeatmap",
-                               selectizeInput(inputId = "colorSideHeatmap", label = h4("Select group:"), choices = NULL, multiple = T,
-                                           options = list(plugins = list('remove_button','drag_drop')))
+                             wellPanel(
+                               checkboxInput(inputId = "pDataHeatmap", label = "Include annotation to heatmap", value = FALSE),
+                               conditionalPanel(
+                                 condition = "input.pDataHeatmap",
+                                 selectizeInput(inputId = "colorSideHeatmap", label = h4("Select group:"), choices = NULL, multiple = T,
+                                                options = list(plugins = list('remove_button','drag_drop')))
+                               )
                              )
-                           )
                            )
                          ),
                          
@@ -317,7 +317,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                            wellPanel( 
                              h4("Download:"),
                              selectInput(inputId = "downloadPlotFileType", label = strong("Select download file type"),
-                                         choices = list("PDF"  = "pdf", "BMP"  = "bmp", "JPEG" = "jpeg", "PNG"  = "png")
+                                         choices = list("PDF"  = "pdf", "TIFF"  = "tiff", "PNG"  = "png", "BMP"  = "bmp", "JPEG" = "jpeg")
                              ),
                              strong("Set download image dimensions"),
                              helpText("(units are inches for PDF, pixels for all other formats)"),
@@ -330,6 +330,15 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                      numericInput(inputId = "downloadPlotWidth", label = "Width (inches)", 
                                                   value = 7, min = 1, max = 100)
                                  )
+                             ),
+                             conditionalPanel(
+                               condition = "input.downloadPlotFileType != 'pdf'",
+                               div(class="row",
+                                   div(class="col-xs-6",
+                                       numericInput(inputId = "downloadPlotRes", label = "Resolution (ppi)", 
+                                                    value = 72, min = 72, max = 600)
+                                   )
+                               )
                              ),
                              br(),
                              
