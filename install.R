@@ -38,7 +38,7 @@ install_gliovis <- function() {
   # install needed packages from CRAN
   pkg <- c("shiny", "survival", "weights", "googleVis", "tidyverse","shinydashboard", 
            "htmlwidgets","kernlab","devtools","markdown","caret","Cairo", "DT","GGally",
-           "Cairo","reshape2","htmlwidgets","cgdsr","shinyBS", "gridExtra","survminer")
+           "Cairo","reshape2", "cgdsr","shinyBS", "gridExtra","survminer")
   
   new.pkg <- pkg[!(pkg %in% installed.packages())]
   
@@ -49,9 +49,12 @@ install_gliovis <- function() {
   update.packages(pkg[!(pkg %in% new.pkg)])
 
   # install needed packages from Bioconductor
-  source("http://bioconductor.org/biocLite.R")
-  biocLite("GSVA","limma")
-  
+  bioc <- c("GSVA","limma","fgsea")
+  if(!(pkg %in% installed.packages())){
+    source("http://bioconductor.org/biocLite.R")
+    biocLite(bioc) 
+  }
+
   # install needed packages from Github
   devtools::install_github("jokergoo/ComplexHeatmap")
   devtools::install_github(c("GuangchuangYu/DOSE", "GuangchuangYu/clusterProfiler"))
