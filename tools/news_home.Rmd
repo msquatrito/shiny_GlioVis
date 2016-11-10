@@ -1,13 +1,9 @@
 **NEWS**     
 
-**21-09-2016**   
-* **New datasets**   
-  + 2 new datasets for pediatric gliomas: Kool_2014 and Robinson.  
+**09-11-2016**   
+* **GlioVis paper has been published!** [(Bowman R. et al., 2016)](http://neuro-oncology.oxfordjournals.org/content/early/2016/11/09/neuonc.now247.long)   
 
-**24-06-2016**  
-<span class="blink">IMPORTANT</span>
-
-For GBM subtyping we have now switched to the latest classification from the Verhaak lab with 3 classes (Classical, Mesenchymal and Proneural). Please check
-[Wang Q. et al. 2016](http://biorxiv.org/content/early/2016/08/13/052076) for details. 4 classes subtyping will be still available as "Subtype_Verhaak_2010".      
+* **New features**  
+  Improved downloading options: it's now possible to specify the resolution (ppi) of the plots to be downloaded.   
 
 
