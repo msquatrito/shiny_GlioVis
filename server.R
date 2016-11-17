@@ -1234,7 +1234,7 @@ shinyServer(
         need(dim(de_data()[["topTable"]])[1]>5,
              "Less than 5 genes were differentially expressed with the current settings, enrichment analysis will not be performed")
       )
-      entrez <-  suppressWarnings(bitr(row.names(de_data()[["topTable"]]), fromType="SYMBOL", toType="ENTREZID", annoDb="org.Hs.eg.db"))
+      entrez <-  suppressWarnings(bitr(row.names(de_data()[["topTable"]]), fromType="SYMBOL", toType="ENTREZID", OrgDb ="org.Hs.eg.db"))
       entrez <- merge(entrez,de_data()[["topTable"]], by.x="SYMBOL",by.y="row.names",all.x=T)
       entrez
     })
@@ -1256,9 +1256,9 @@ shinyServer(
     
     enrich_GO <- eventReactive(go$GO ,{
       require(clusterProfiler)
-      ego <- clusterProfiler::enrichGO(gene = entrez()$ENTREZID, organism = "human", ont = input$ont, pAdjustMethod = "BH",
+      ego <- clusterProfiler::enrichGO(gene = entrez()$ENTREZID, OrgDb = 'org.Hs.eg.db', ont = input$ont, pAdjustMethod = "BH",
                       pvalueCutoff  = input$pvalueCutoff, qvalueCutoff  = input$qvalueCutoff, readable=TRUE)
-      if(length(ego@geneInCategory)==0) {
+      if(length(ego@result$ID)==0) {
         createAlert(session, anchorId = "goAlert", alertId = "goAlertId", title = "Sorry...",
                     content = paste("No categories identified, try to change p/q value cutoff"),
                     style = "danger")
@@ -1269,7 +1269,7 @@ shinyServer(
     })
     
     observe({
-      l <- length(enrich_GO()@geneInCategory)
+      l <- length(enrich_GO()@result$ID)
       if(l>50) l <- 50
       updateSliderInput(session,inputId = "showCategory", max = l, value = 10)
     })
@@ -1277,27 +1277,27 @@ shinyServer(
     output$enrichGOPlot <- renderPlot({
       validate(
         need(!is.null(go$GO), message = "Please press the Submit button to initiate the analysis")%then%
-          need(length(enrich_GO()@geneInCategory)>0, FALSE)
+          need(length(enrich_GO()@result$ID)>0, FALSE)
       )
       clusterProfiler::dotplot(enrich_GO(), showCategory= input$showCategory)
     })
     
     output$enrichGOMap <- renderPlot({
-      req(length(enrich_GO()@geneInCategory)>0)
+      req(length(enrich_GO()@result$ID)>0)
       # clusterProfiler::cnetplot(enrich_GO(), foldChange=entrez()$logFC,showCategory= input$showCategory)
-      clusterProfiler::enrichMap(enrich_GO(), n=input$showCategory)
+      DOSE::enrichMap(enrich_GO(), n=input$showCategory)
     })
     
     output$enrichGOTable <- DT::renderDataTable({
-      req(length(enrich_GO()@geneInCategory)>0)
-      data_table(summary(enrich_GO()))
+      req(length(enrich_GO()@result$ID)>0)
+      data_table(as.data.frame(enrich_GO()))
     },server = FALSE)
     
     #' KEGG
     enrich_Kegg <- eventReactive(go$KEGG,{
-      eKegg <- clusterProfiler::enrichKEGG(gene = entrez()$ENTREZID, organism = "human", pAdjustMethod = "BH", pvalueCutoff  = input$pvalueCutoffKegg,
+      eKegg <- clusterProfiler::enrichKEGG(gene = entrez()$ENTREZID, organism = "hsa", pAdjustMethod = "BH", pvalueCutoff  = input$pvalueCutoffKegg,
                           qvalueCutoff  = input$qvalueCutoffKegg)
-      if(length(eKegg@geneInCategory)==0) {
+      if(length(eKegg@result$ID)==0) {
         createAlert(session, anchorId = "keggAlert", alertId = "keggAlertId", title = "Sorry...",
                     content = paste("No categories identified, try to change p/q value cutoff"),
                     style = "danger")
@@ -1308,27 +1308,27 @@ shinyServer(
     })
     
     observe({
-      l <- length(enrich_Kegg()@geneInCategory)
+      l <- length(enrich_Kegg()@result$ID)
       updateSliderInput(session,inputId = "showCategoryKegg", max = l, value = 10)
     })
     
     output$enrichKeggPlot <- renderPlot({
       validate(
         need(!is.null(go$KEGG), message = "Please press the Submit button to initiate the analysis")%then%
-          need(length(enrich_Kegg()@geneInCategory)>0, FALSE)
+          need(length(enrich_Kegg()@result$ID)>0, FALSE)
       )
       clusterProfiler::dotplot(enrich_Kegg(), showCategory= input$showCategoryKegg)
     })
     
     output$enrichKeggMap <- renderPlot({
-      req(length(enrich_Kegg()@geneInCategory)>0)
-      clusterProfiler::enrichMap(enrich_Kegg(),n=input$showCategoryKegg)
+      req(length(enrich_Kegg()@result$ID)>0)
+      DOSE::enrichMap(enrich_Kegg(),n=input$showCategoryKegg)
     })
     
     output$enrichKeggTable <- DT::renderDataTable({
-      req(length(enrich_Kegg()@geneInCategory)>0)
-      eKegg <- DOSE::setReadable(enrich_Kegg())
-      data_table(summary(eKegg))
+      req(length(enrich_Kegg()@result$ID)>0)
+      # eKegg <- DOSE::setReadable(enrich_Kegg(),OrgDb = 'org.Hs.eg.db')
+      data_table(as.data.frame(enrich_Kegg()))
     },server = FALSE)
     
     #' Generate reports
