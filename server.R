@@ -323,7 +323,7 @@ shinyServer(
       
       p <- ggplot(data, mapping=aes_string(x=plot_type(), y = "mRNA")) +
         geom_boxplot(aes_string(fill = fillBox), outlier.size = 0, outlier.stroke = 0) +
-        geom_jitter(position = position_jitter(width = .5), mapping = aes_string(colour = col, shape = shape),
+        geom_jitter(position = position_jitter(width = .25), mapping = aes_string(colour = col, shape = shape),
                     size = input$point_size, alpha = input$alpha) +
         ylab(ylabel) + xlab(xlabel) + theme
       
@@ -349,7 +349,7 @@ shinyServer(
     },server = FALSE)
     
     observe({
-      data <- rmNA(filter_plot_data())
+      data <- .rmNA(filter_plot_data())
       colnames <- names(data)[!sapply(data, is.numeric)] # remove muneric categories
       colnames <- colnames[colnames %notin% "Sample"]
       # Create the selectInput for the different pData categories
@@ -366,7 +366,7 @@ shinyServer(
     #' Create the selected plot
     output$plot <- renderPlot({
       # To avoid an error when switching datasets in case the colStrip is not available.
-      data <- rmNA(filter_plot_data())
+      data <- .rmNA(filter_plot_data())
       colnames <- names(data)[names(data) %notin% c("mRNA","Sample","status","survival")]
       req(input$colorP %in% c("None", colnames) & input$shapeP %in% c("None", colnames))
       box_Plot()
@@ -531,7 +531,7 @@ shinyServer(
       }
       data <- df[,c("Sample", "Histology", "Recurrence", "Subtype", "CIMP_status", "mRNA",  "survival", "status")]
       names(data)[7:8] <- c("survival_month", "survival_status")
-      data <- rmNA(data)
+      data <- .rmNA(data)
     })
     
     #' Create a slider for the manual cutoff of the Kaplan Meier plot
@@ -653,6 +653,36 @@ shinyServer(
         dev.off()
       }
     )
+    
+    #' Select optimal cutpoint for Kaplan Meier plot
+    cutpointData <- reactive({
+      req(input$histology %in% c("All", histo()))
+      df <- surv_data()
+      surv.cut <- surv_cutpoint(df, time = "survival_month", event = "survival_status", variables = "mRNA")
+      df.cat <<- surv.cut %>% surv_categorize()
+      cutpoint <- list(surv.cut = surv.cut, df.cat = df.cat)
+    })
+    
+    output$cutpointPlot <- renderPlot({
+      df.cat <- cutpointData()[["df.cat"]]
+      fit <- survfit(Surv(survival_month, survival_status) ~ mRNA, data = df.cat)
+      p1 <- plot.surv_cutpoint(cutpointData()[["surv.cut"]])
+      p2 <- ggsurvplot(fit, risk.table = FALSE, pval = TRUE, conf.int = input$confInt, font.legend = input$surv_legend_size, 
+                       legend = c(.75,.75), legend.title = paste("Cutoff:", round(cutpointData()[["surv.cut"]]$cutpoint,2)), surv.scale = "percent", font.x = 12, font.y = 12, font.main = 14, ylab = "Surviving",
+                       main = "Kaplan Meier Survival Estimates", legend.labs = c(paste(input$gene, "High"), paste(input$gene, "Low")), censor = input$censor, 
+                       xlab = "Survival time (Months)")
+      
+      distribution <- ggplotGrob(p1[[1]]$distribution + theme(legend.position = "none"))
+      maxstat <- ggplotGrob(p1[[1]]$maxstat + theme(legend.position = "none"))
+      survival <- ggplotGrob(p2[[1]])
+      
+      grid::grid.draw(rbind(distribution, maxstat, survival))
+    })
+    
+    output$cutpointDataTable <- DT::renderDataTable({
+      data <- cutpointData()[["df.cat"]]
+      data_table(data,rownames = T)
+    }, server = FALSE)
     
     #' Subset to GBM samples for the interactive HR plot.
     surv_GBM <- reactive({
@@ -1047,7 +1077,7 @@ shinyServer(
       r <- round(cor.test(data$mRNA,data$rppa, use = "complete.obs")$estimate,3)
       p.value <- signif(cor.test(data$mRNA,data$rppa, use = "complete.obs")$p.value,3)
       p1 <- ggplot(data, aes(x=strat, y = rppa)) + geom_boxplot(outlier.size = 0, outlier.stroke = 0) +
-        geom_jitter(aes(colour = strat), position = position_jitter(width = .5), size = 2, alpha = 0.5) +
+        geom_jitter(aes(colour = strat), position = position_jitter(width = .25), size = 2, alpha = 0.5) +
         xlab(paste(input$gene, "mRNA")) + ylab(paste(protein,"RPPA score")) +
         guides(colour=FALSE) + theme_linedraw()
       p2 <- ggplot(data, aes(x=mRNA, y = rppa)) + geom_point(aes(colour = strat), alpha=0.5) +
@@ -1070,14 +1100,14 @@ shinyServer(
     #' Mutation call using cgdsr
     mut_data <- reactive ({
       closeAlert(session, "mutAlertId")
-      mycgds = CGDS("http://www.cbioportal.org/")
+      mycgds = cgdsr::CGDS("http://www.cbioportal.org/")
       cohort <- switch(input$dataset,
                        "TCGA_GBM" = "gbm_tcga_",
                        "TCGA_LGG" = "lgg_tcga_",
                        "TCGA_GBMLGG" = "lgggbm_tcga_pub_"
       )
       caseList <- ifelse(cohort %in% c("gbm_tcga_","lgg_tcga_"), "sequenced","all")
-      ann <- getMutationData(mycgds, caseList = paste0(cohort, caseList), geneticProfile = paste0(cohort,"mutations"), genes = mut_genes())
+      ann <- cgdsr::getMutationData(mycgds, caseList = paste0(cohort, caseList), geneticProfile = paste0(cohort,"mutations"), genes = mut_genes())
       ann$case_id <- gsub(pattern = "-",replacement = ".",ann$case_id)
       ann$case_id <- substr(ann$case_id,0,12)
       ann <- ann[, c(3,2,6,8,13:17)] # select only useful columns
@@ -1087,7 +1117,7 @@ shinyServer(
                     content = paste("No mutations identified for", input$mutGene, "in the", input$dataset, "dataset"),
                     style = "danger")
       }
-      mut_df <- getProfileData(mycgds, caseList = paste0(cohort, caseList), geneticProfile = paste0(cohort,"mutations"), genes = mut_genes())
+      mut_df <- cgdsr::getProfileData(mycgds, caseList = paste0(cohort, caseList), geneticProfile = paste0(cohort,"mutations"), genes = mut_genes())
       # row.names(mut_df) <- substr(row.names(mut_df),0,12)
       mut_df <- apply(mut_df,2,as.factor)
       mut_df[mut_df == "NaN"] = ""
@@ -1095,7 +1125,7 @@ shinyServer(
       mut_df[mut_df != ''] = "MUT"
       mat <- as.matrix(t(mut_df))
       if(input$add_cna){
-        cna <- getProfileData(mycgds, caseList = paste0(cohort,caseList), geneticProfile = paste0(cohort,"gistic"), genes = mut_genes())
+        cna <- cgdsr::getProfileData(mycgds, caseList = paste0(cohort,caseList), geneticProfile = paste0(cohort,"gistic"), genes = mut_genes())
         cna <- apply(cna,2,function(x)as.character(factor(x, levels = c(-2:2), labels = c("HOMDEL", "HETLOSS", "DIPLOID", "GAIN", "AMP"))))
         cna[is.na(cna)] = ""
         cna[cna == 'DIPLOID'] = ""
@@ -1157,7 +1187,7 @@ shinyServer(
     #' Differential Expression
     observe({
       req(input$pDataHeatmap)
-      pData <- rmNA(pDatas())
+      pData <- .rmNA(pDatas())
       colnames <- names(pData)[!sapply(pData, is.numeric)] # remove muneric categories
       colnames <- colnames[colnames %notin% c("Sample","ID","Patient_ID","Sample_ID", "Matching.sample", "Therapy_Class","title")]
       updateSelectizeInput(session, inputId = "colorSideHeatmap", choices = colnames, selected = colnames[1])
@@ -1178,6 +1208,7 @@ shinyServer(
       design <- model.matrix(~strat$strat)
       fit <- eBayes(lmFit(eset,design))
       topT <- topTable(fit, coef = 2, number = Inf, lfc = input$lfc, p.value = as.numeric(input$pvalueDE), resort.by="logFC") # genes with at least 1.4 fold change and a pvalue<.05
+      topT_all <- topTable(fit, coef = 2, number = Inf, lfc = 0, p.value = 1, resort.by="logFC") %>% rownames_to_column(var = "Gene_symbol")
       if(dim(topT)[1]==0) {
         createAlert(session, anchorId = "DEAlert", alertId = "DEAlertId", title = "Sorry...",
                     content = paste("No differentially regulated genes were identified using the current settings.
@@ -1188,7 +1219,7 @@ shinyServer(
       }
       esetSel <- eset[row.names(topT), ]
       esetSel <- scale(t(esetSel))
-      heat_data <- list(eset= esetSel, topTable = topT)
+      heat_data <- list(eset= esetSel, topTable = topT, topTable_all = topT_all)
     })
     
     colorSideHeatmap <- reactive({
@@ -1218,7 +1249,40 @@ shinyServer(
       Heatmap(t(eset), col = colorRampPalette(c("green","black", "red"))(1024),
               name = "",show_column_names = FALSE,cluster_rows = FALSE, top_annotation = ha)
     })
-
+    
+    # adapted from https://github.com/jminnier/STARTapp
+    output$volcanoplot <- plotly::renderPlotly({
+      de_data <- de_data()[["topTable_all"]]
+      fdrcut = input$pvalueDE  
+      absFCcut = input$lfc
+      de_data$color = "None"
+      de_data$color[which((abs(de_data$logFC)>absFCcut)*(de_data$adj.P.Val<fdrcut)==1)] = paste0("adj-pval","<",fdrcut," & abs(logFc)>",absFCcut)
+      de_data$color[which((abs(de_data$logFC)<absFCcut)*(de_data$adj.P.Val<fdrcut)==1)] = paste0("adj-pval","<",fdrcut, " & abs(logFc)<",absFCcut)
+      de_data$color = factor(de_data$color,levels = unique(c("None",
+                                                             paste0("adj-pval","<",fdrcut," & abs(logFc)<",absFCcut), 
+                                                             paste0("adj-pval","<",fdrcut, " & abs(logFc)>",absFCcut)
+      )))
+      
+      p <- ggplot(de_data,aes(x=logFC,y=-log10(P.Value), color = color, text = Gene_symbol)) + geom_point()
+      p <- p +  scale_color_manual(values=c("grey40","green3","red2"), limits=levels(de_data$color), name="Significance")
+      p <- p + theme_bw() + theme(plot.margin = unit(c(2,2,2,2), "cm"))
+      
+      g <- plotly::plotly_build(p)
+      
+      #Match order of text to proper gene order
+      newtext =  paste("Gene ID:",de_data$Gene_symbol,"<br>",
+                       "logFC",signif(de_data$logFC,3),"<br>",
+                       "P.Value",signif(de_data$P.Value,3),"<br>",
+                       "adj.P.Val",signif(de_data$adj.P.Val,3))
+      
+      for(ii in 1:length(g[["x"]]$data)) {
+        tmpid = do.call(rbind,strsplit(g[[1]]$data[[ii]]$text,"<br>"))[,4]
+        g[[1]]$data[[ii]]$text <- newtext[match(tmpid,de_data$Gene_symbol)]
+      }
+      
+      g
+    })
+    
     output$DETable <- DT::renderDataTable({
       validate(
         need(dim(de_data()[["topTable"]])[1]>0, message = "No differentially regulated genes were identified using the current setting.
@@ -1234,7 +1298,7 @@ shinyServer(
         need(dim(de_data()[["topTable"]])[1]>5,
              "Less than 5 genes were differentially expressed with the current settings, enrichment analysis will not be performed")
       )
-      entrez <-  suppressWarnings(bitr(row.names(de_data()[["topTable"]]), fromType="SYMBOL", toType="ENTREZID", OrgDb ="org.Hs.eg.db"))
+      entrez <-  suppressWarnings(clusterProfiler::bitr(row.names(de_data()[["topTable"]]), fromType="SYMBOL", toType="ENTREZID", OrgDb ="org.Hs.eg.db"))
       entrez <- merge(entrez,de_data()[["topTable"]], by.x="SYMBOL",by.y="row.names",all.x=T)
       entrez
     })
@@ -1255,9 +1319,8 @@ shinyServer(
     })
     
     enrich_GO <- eventReactive(go$GO ,{
-      require(clusterProfiler)
       ego <- clusterProfiler::enrichGO(gene = entrez()$ENTREZID, OrgDb = 'org.Hs.eg.db', ont = input$ont, pAdjustMethod = "BH",
-                      pvalueCutoff  = input$pvalueCutoff, qvalueCutoff  = input$qvalueCutoff, readable=TRUE)
+                                       pvalueCutoff  = input$pvalueCutoff, qvalueCutoff  = input$qvalueCutoff, readable=TRUE)
       if(length(ego@result$ID)==0) {
         createAlert(session, anchorId = "goAlert", alertId = "goAlertId", title = "Sorry...",
                     content = paste("No categories identified, try to change p/q value cutoff"),
@@ -1296,7 +1359,7 @@ shinyServer(
     #' KEGG
     enrich_Kegg <- eventReactive(go$KEGG,{
       eKegg <- clusterProfiler::enrichKEGG(gene = entrez()$ENTREZID, organism = "hsa", pAdjustMethod = "BH", pvalueCutoff  = input$pvalueCutoffKegg,
-                          qvalueCutoff  = input$qvalueCutoffKegg)
+                                           qvalueCutoff  = input$qvalueCutoffKegg)
       if(length(eKegg@result$ID)==0) {
         createAlert(session, anchorId = "keggAlert", alertId = "keggAlertId", title = "Sorry...",
                     content = paste("No categories identified, try to change p/q value cutoff"),
@@ -1377,9 +1440,7 @@ shinyServer(
             stat <- stat[,-1]
             stat <- rbind(stat,TOTAL = tot)
             t <- tableGrob(stat)
-            # , gp = gpar(fontsize=14),row.just = "right", core.just = "right")
-            #             t <- tableGrob(stat, theme = ttheme_default(core = list(fg_params = list(hjust=1, x=0.9)),
-            #                                                         rowhead = list(fg_params=list(hjust=1, x=0.95))))
+            
             grid.arrange(p, t, ncol = 2)
           })
         })
@@ -1398,7 +1459,7 @@ shinyServer(
         names(CN_status) <- paste0(input$gene,"_CN_status")
         data <- cbind(data, CN_status)
       }
-      data <- rmNA(data)
+      data <- .rmNA(data)
       data
     })
     
@@ -1406,17 +1467,17 @@ shinyServer(
     output$table <- DT::renderDataTable({
       # If a gene is not specified show the pData only
       if (input$gene == "") {
-        data <- rmNA(pDatas())
+        data <- .rmNA(pDatas())
       } else {
         data <- summary_data()
       }
       datatable(data, rownames = FALSE, extensions = c("FixedColumns", 'Buttons'),
                 options = list(scrollX = TRUE, scrollCollapse = TRUE, orderClasses = TRUE, autoWidth = TRUE))
-    },server = FALSE)
+    }, server = FALSE)
     
     # output$annotation <- renderPlot({
     #   if (input$gene == "") {
-    #     data <- rmNA(pDatas())
+    #     data <- .rmNA(pDatas())
     #   } else {
     #     data <- summary_data()
     #   }
@@ -1429,7 +1490,7 @@ shinyServer(
     #' Generate a graphic summary of the dataset, using googleVis
     output$piePlots <- renderUI({
       data <- exprs()[ ,c("Histology", "Grade", "Recurrence", "Subtype", "CIMP_status")]
-      data <- rmNA(data) # Removing unavailable (all NA) groups
+      data <- .rmNA(data) # Removing unavailable (all NA) groups
       plot_output_list <- lapply(names(data), function(i) {
         plotname <- paste("plot", i, sep="")
         htmlOutput(plotname)
@@ -1444,7 +1505,7 @@ shinyServer(
         need(input$dataset %notin% datasets$no_surv_dataset, "Sorry, no survival data are available for this dataset")
       )
       df <- exprs()[ ,c("Histology", "Grade", "Recurrence", "Subtype", "CIMP_status","survival", "status")]
-      df <-  rmNA(df) # Removing unavailable (all NA) groups
+      df <-  .rmNA(df) # Removing unavailable (all NA) groups
       groups <- names(df)[names(df) %notin% c("Sample","status","survival")]
       plot_output_list <- lapply(groups, function(i) {
         plot_surv_name <- paste("plotSurv", i, sep = "")
@@ -1456,7 +1517,7 @@ shinyServer(
     observe({
       req(input$dataset)
       df <- exprs()[ ,c("Histology", "Grade", "Recurrence", "Subtype", "CIMP_status","survival", "status")]
-      df <- rmNA(df)
+      df <- .rmNA(df)
       if ("Histology" %in% names(df)) {
         df <- subset(df, Histology != "Non-tumor")
         df$Histology <- droplevels(df$Histology)
@@ -1470,20 +1531,20 @@ shinyServer(
             req(input$dataset %notin% datasets$no_surv_dataset)
             df1 <- na.omit(data.frame(status = df[ ,"status"], time = df[ ,"survival"], strata = df[ ,my_Survi]))
             df1$strata <- droplevels(df1$strata)
-            fit <- survfit(Surv(time, status == 1) ~ strata, data = df1)
+            fit <- do.call(survfit, list(formula = Surv(time, status == 1) ~ strata, data = df1))
             survminer::ggsurvplot(fit, legend = c(0.75,0.75), surv.scale = "percent", ylab = "Surviving", legend.labs = levels(df1$strata), color = "red",
-                       xlab = "Survival time (Months)", main = paste0("\n",my_Survi), legend.title = "", font.legend = 12, palette = "Set1")
+                                  xlab = "Survival time (Months)", main = paste0("\n",my_Survi), legend.title = "", font.legend = 12, palette = "Set1")
           })
           plotname <- paste("plot", my_Survi, sep="")
           output[[plotname]] <- googleVis::renderGvis({
             plotData <- data.frame(table(df[, my_Survi]))
             pie <- googleVis::gvisPieChart(labelvar = "Var1", numvar = "Freq", data = plotData, chartid= plotname, options = list(width = 400, height = 300, pieSliceText = 'label', chartArea.left = 1,
-                                                                                                                       colors = "['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999','#a6cee3','#006d2c','#810f7c','#02818a']")) # title = my_i,
+                                                                                                                                  colors = "['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999','#a6cee3','#006d2c','#810f7c','#02818a']")) # title = my_i,
             return(pie)
           })
         })
       }
-    },priority = 100)
+    }, priority = 100)
     
     #' Reactivity required to display download button after file upload
     output$finishedUploading <- reactive({
@@ -1622,7 +1683,7 @@ shinyServer(
       sub3 <- data_frame(Sample = upData$Sample, svm_call = svm_call()[,"svm.subtype.call"],
                          knn_call = as.character(knn_call()[,"knn.subtype.call"]), gsea_call = as.character(gsva_call()[,"gsea.subtype.call"]),
                          equal.call = ifelse(svm_call==knn_call & knn_call==gsea_call, "TRUE", "FALSE"))
-      sub3$majority.call <- apply(sub3[,2:4],1,maj) # compare calls
+      sub3$majority.call <- apply(sub3[,2:4],1,.maj) # compare calls
       sub3 <- data.frame(sub3) # the dataframe generated with dplyr gives issue when sorting the html table
     })
     
@@ -1674,7 +1735,7 @@ shinyServer(
           need(input$platformEst == "affymetrix", "Sorry, the purity plot for Agilent and RNAseq have not yet been impemented") %then%
           need(input$estScore_rows_selected != "","Click on a row to see the corresponding purity plot.")
       )
-      plotPurity(est_call(), est_call()[input$estScore_rows_selected,"Sample"], platform = input$platformEst)
+      .plotPurity(est_call(), est_call()[input$estScore_rows_selected,"Sample"], platform = input$platformEst)
     })
     
     #' Gene sets in msigdb.v5
@@ -1707,7 +1768,7 @@ shinyServer(
       }
       set.seed(1234)
       gsva_results <- GSVA::gsva(expr=as.matrix(exprs), gset.idx.list = gene_list, method="ssgsea", rnaseq = platformDec, parallel.sz = 0,
-                           min.sz = input$min.sz, max.sz= input$max.sz, verbose= FALSE)
+                                 min.sz = input$min.sz, max.sz= input$max.sz, verbose= FALSE)
       deconv_scores <- data.frame(Sample = rownames(upData),t(gsva_results))
       deconv <- list(results = gsva_results, scores = deconv_scores)
     })
@@ -1718,7 +1779,7 @@ shinyServer(
       )
       inFile <- input$pDataFile
       pData <- read.csv(inFile$datapath, header=input$header, sep=input$sep, quote=input$quote, stringsAsFactors=FALSE)
-      pData <- rmNA(pData)
+      pData <- .rmNA(pData)
       pData_group <- names(pData)
       pData_group <- pData_group[pData_group!="Sample"]
       # Create the selectInput for the different pData categories
@@ -1756,7 +1817,7 @@ shinyServer(
         validate(
           need(all.equal(pData$Sample,names(data)),"ERROR: Samples don't match")
         )
-        pData <- rmNA(pData)
+        pData <- .rmNA(pData)
         an <- pData[,input$pDataDec, drop = FALSE]
         ha <- HeatmapAnnotation(an,show_annotation_name = TRUE)
       } else {
@@ -1786,13 +1847,13 @@ shinyServer(
           need(all.equal(pData$Sample,names(data)),"ERROR: Samples don't match")
         )
         melted <- reshape2::melt(merge(t(data),pData[,c("Sample",input$pDataDec)],
-                             by.x="row.names",by.y="Sample"))
+                                       by.x="row.names",by.y="Sample"))
         p <- ggplot(melted,aes_string(x=input$pDataDec,y="value",fill=input$pDataDec)) + geom_boxplot() + xlab("") + ylab("score") +
-          facet_wrap(~variable)
+          facet_wrap(~variable, scales = "free")
       }
       p
     },height = 800)
-
+    
     #' Rerndering the Deconvolute scores as a data table
     output$deconvScore <- DT::renderDataTable({
       validate(
@@ -1820,7 +1881,7 @@ shinyServer(
         paste(Sys.Date(), input$dataset, "pheno.txt", sep = "_")
       },
       content = function(file) {
-        write.table(rmNA(pDatas()), file, sep = "\t", row.names = FALSE)
+        write.table(.rmNA(pDatas()), file, sep = "\t", row.names = FALSE)
       }
     )
   })

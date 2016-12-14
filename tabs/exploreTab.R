@@ -76,9 +76,9 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                            
                            # Tab Survival
                            conditionalPanel(
-                             condition = "input.tab1 == 2 & input.tabSurv == 'km'",
+                             condition = "input.tab1 == 2 & input.tabSurv != 'hr'",
                              conditionalPanel(
-                               condition = "input.subtype == 'All'",
+                               condition = "input.tabSurv == 'km' & input.subtype == 'All'",
                                checkboxInput(inputId = "allSubSurv", label = "Separate by subtype", value = FALSE)
                                
                              ),
@@ -91,8 +91,6 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                  radioButtons(inputId ="primarySurv", label = strong("Recurrence:"), choices = c("All","Primary","Recurrent"), selected = NULL, inline = T),
                                  radioButtons(inputId ="mgmtSurv", label = strong("MGMT status:"), choices = c("All","Methylated","Unmethylated"), selected = NULL, inline = T)
                                )
-                               # checkboxInput(inputId = "gcimpSurv", label = "Exclude G-CIMP samples", value = FALSE),
-                               # checkboxInput(inputId = "primarySurv", label = "Exclude Recurrent samples", value = FALSE)
                              ),
                              
                              conditionalPanel(
@@ -230,6 +228,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                              )
                            )
                          ),
+                         
                          # Tab correlation plotting options
                          conditionalPanel(
                            condition = "input.tab1 == 3 & input.tabCorr == 'corrTwo'",
@@ -429,7 +428,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                                      )
                                                                    )
                                                           ),  
-                                                          
+
                                                           tabPanel(title = "Hazard ratio", value = "hr",
                                                                    tabsetPanel(
                                                                      tabPanel(title = "Plot",
@@ -458,7 +457,23 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                                               DT::dataTableOutput(outputId = "hazardDataTable", width = 600)
                                                                      )
                                                                    )
+                                                          ),
+                                                          
+                                                          tabPanel(title = "Optimal Cutoff",  value = "cp",
+                                                                   tabsetPanel(
+                                                                     tabPanel(title = "Plot",
+                                                                              div(style = "width: 100%; overflow: hidden;",
+                                                                                  div(style = "width: 550px; float: left;", p(class = "lead","Determine optimal cutoff for Kaplan-Meier survival analysis")),
+                                                                                  div(style = "margin-left: 550px;", helpModal(modal_title = "Optimal Cutoff", link = "helpCP", help_file = includeMarkdown("tools/help/help_cp.Rmd")))
+                                                                              ),
+                                                                              plotOutput(outputId = "cutpointPlot", height = 750, width = 500)
+                                                                     ),
+                                                                     tabPanel(title = "Data",
+                                                                              DT::dataTableOutput(outputId = "cutpointDataTable", width = 400)
+                                                                     )
+                                                                   )
                                                           )
+                                                          
                                               )
                                      ),
                                      
@@ -537,10 +552,15 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                               
                                               tabsetPanel(id = "tabDE",
                                                           
-                                                          tabPanel(title = "DE Heatmap", value = "heatmap",
+                                                          tabPanel(title = "Heatmap", value = "heatmap",
                                                                    bsAlert("DEAlert"),
                                                                    busy(),
                                                                    plotOutput(outputId = "DEheatmap", height = 1000)      
+                                                          ),
+                                                          
+                                                          tabPanel(title = "Volcano plot", value = "volcanoplot",
+                                                                   busy(),
+                                                                   plotly::plotlyOutput("volcanoplot", height = 600)
                                                           ),
                                                           
                                                           tabPanel(title = "DE Data",

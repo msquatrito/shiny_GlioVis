@@ -1,0 +1,7 @@
+---
+title: "Optimal Cutoff"
+output: html_document
+---
+
+We use the  [maximally selected rank statistics](https://cran.r-project.org/web/packages/maxstat/vignettes/maxstat.pdf) to determine the optimal cutoff for continuous variables, as provided in the ['survminer'](https://github.com/kassambara/survminer) package.   
+   

@@ -28,13 +28,14 @@ library(GGally)
 library(DT)
 library(Cairo)
 # library(reshape2)
-library(cgdsr)
+# library(cgdsr)
 library(shinyBS)
 library(limma)
 library(ComplexHeatmap)
-# library(survminer)
+library(survminer)
 # library(clusterProfiler)
 library(tidyverse)
+library(plotly)
 
 
 options(shiny.usecairo=TRUE)
@@ -76,7 +77,7 @@ gene_set_list <- readRDS("data/gene_set_list.Rds")
 ################################################
 ##############  Remove NA column  ##############
 ################################################
-rmNA <- function (df) {
+.rmNA <- function (df) {
   df <- df[,colSums(is.na(df)) < nrow(df)]
 }
 
@@ -395,34 +396,6 @@ alter_fun_list = list(
 ############## Help popup (https://gist.github.com/jcheng5/5913297)  #######
 ############################################################################
 ## https://groups.google.com/forum/#!searchin/shiny-discuss/helpPopup/shiny-discuss/ZAkBsL5QwB4/vnmbT47uY7gJ
-helpPopup <- function(title, content,
-                      placement=c("right", "top", "left", "bottom"),
-                      trigger=c("click", "hover", "focus", "manual"),
-                      glue = NULL) {
-  
-  tagList(
-    singleton(
-      tags$head(
-        tags$script("$(function() { $(\"[data-toggle='popover']\").popover(); })")
-      )
-    ),
-    tags$a(
-      href = "#",
-      # class = "btn btn-default",
-      `data-toggle` = "popover",
-      title = title,
-      `data-content` = content,
-      `data-html` = TRUE,
-      `data-animation` = TRUE,
-      `data-placement` = match.arg(placement, several.ok=TRUE)[1],
-      `data-trigger` = match.arg(trigger, several.ok=TRUE)[1],
-      glue,
-      # tags$i(class="icon-info-sign")
-      tags$i(class="icon-question-sign")
-    ),
-    tags$style(type='text/css', ".popover { width: 1200px; relative; top: 20px; left: 20px !important; }")
-  )
-}
 
 helpModal <- function(modal_title, link, help_file) {
   sprintf("<div class='modal fade' id='%s' tabindex='-1' role='dialog' aria-labelledby='%s_label' aria-hidden='true'>
@@ -605,7 +578,7 @@ assignInNamespace("ggally_cor", ggally_cor, "GGally")
 ###############################################
 ########## majority vote for 3-way sub ########
 ###############################################
-maj <- function(InVec) {
+.maj <- function(InVec) {
   if (!is.factor(InVec)) InVec <- factor(InVec)
   A <- tabulate(InVec)
   levels(InVec)[which.max(A)]
@@ -718,7 +691,7 @@ myEstimateScore <- function (ds, platform = c("affymetrix", "agilent","illumina"
 ##################################
 ########## Plot purity score #####
 ##################################
-plotPurity <- function (estimate.df, sample, platform = c("affymetrix","agilent", "illumina")) {
+.plotPurity <- function (estimate.df, sample, platform = c("affymetrix","agilent", "illumina")) {
   platform <- match.arg(platform)
   convert_row_estimate_score_to_tumor_purity <- function(x) {
     stopifnot(is.numeric(x))
@@ -791,8 +764,8 @@ run.ssgsea.GBM <- function (data, number_perms) {
   }
 
   selected.models <- c("Proneural", "Classical", "Mesenchymal")
-  random_result <- OPAM.apply.model.2(input.ds = random_profile, models.dir = "www/ssgsea_temp/data/", models = selected.models)
-  original_result <- OPAM.apply.model.2(input.ds = data, models.dir = "www/ssgsea_temp/data/", models = selected.models)
+  random_result <- .OPAM.apply.model.2(input.ds = random_profile, models.dir = "www/ssgsea_temp/data/", models = selected.models)
+  original_result <- .OPAM.apply.model.2(input.ds = data, models.dir = "www/ssgsea_temp/data/", models = selected.models)
   random_result <- random_result[-1]
   random_result <- t(random_result)
   original_result <- original_result[-1]
@@ -813,7 +786,7 @@ run.ssgsea.GBM <- function (data, number_perms) {
   results
 }
 
-OPAM.apply.model.2 <- function (input.ds, input.cls = NA, models.dir, models = "ALL") {
+.OPAM.apply.model.2 <- function (input.ds, input.cls = NA, models.dir, models = "ALL") {
   erf <- function(x) 2 * pnorm(x * sqrt(2)) - 1
   m <- data.matrix(input.ds)
   gene.names <- gene.descs <- row.names(input.ds)
@@ -906,7 +879,7 @@ OPAM.apply.model.2 <- function (input.ds, input.cls = NA, models.dir, models = "
     msig.up.descs.test <- gene.descs[locs]
     msig.up.size.test <- length(locs)
     
-    OPAM <- OPAM.Projection(m, gene.names, Ns, Ng, weight,statistic, msig.up.genes.test, nperm = nperm)
+    OPAM <- .OPAM.Projection(m, gene.names, Ns, Ng, weight,statistic, msig.up.genes.test, nperm = nperm)
     
     score <- OPAM$ES.vector
     score.matrix[model.i, ] <- score
@@ -920,7 +893,7 @@ OPAM.apply.model.2 <- function (input.ds, input.cls = NA, models.dir, models = "
 }
 
 
-OPAM.Projection <- function (data.array, gene.names, n.cols, n.rows, weight = 0,
+.OPAM.Projection <- function (data.array, gene.names, n.cols, n.rows, weight = 0,
                              statistic = "Kolmogorov-Smirnov", gene.set, nperm = 200) {
   ES.vector <- vector(length = n.cols)
   NES.vector <- vector(length = n.cols)
@@ -936,7 +909,7 @@ OPAM.Projection <- function (data.array, gene.names, n.cols, n.rows, weight = 0,
     else if (weight > 0) {
       correl.vector <- data.array[gene.list, sample.index]
     }
-    GSEA.results <- GSEA.EnrichmentScore5(gene.list = gene.list,
+    GSEA.results <- .GSEA.EnrichmentScore5(gene.list = gene.list,
                                           gene.set = gene.set2, statistic = statistic, alpha = weight,
                                           correl.vector = correl.vector)
     ES.vector[sample.index] <- GSEA.results$ES
@@ -953,7 +926,7 @@ OPAM.Projection <- function (data.array, gene.names, n.cols, n.rows, weight = 0,
         else if (weight > 0) {
           correl.vector <- data.array[reshuffled.gene.labels, sample.index]
         }
-        GSEA.results <- GSEA.EnrichmentScore5(gene.list = reshuffled.gene.labels,
+        GSEA.results <- .GSEA.EnrichmentScore5(gene.list = reshuffled.gene.labels,
                                               gene.set = gene.set2, statistic = statistic,
                                               alpha = weight, correl.vector = correl.vector)
         phi[sample.index, r] <- GSEA.results$ES
@@ -983,7 +956,7 @@ OPAM.Projection <- function (data.array, gene.names, n.cols, n.rows, weight = 0,
               p.val.vector = p.val.vector))
 }
 
-GSEA.EnrichmentScore5 <- function (gene.list, gene.set, statistic = "Kolmogorov-Smirnov",
+.GSEA.EnrichmentScore5 <- function (gene.list, gene.set, statistic = "Kolmogorov-Smirnov",
                                    alpha = 1, correl.vector = NULL) {
   tag.indicator <- sign(match(gene.list, gene.set, nomatch = 0))
   no.tag.indicator <- 1 - tag.indicator
@@ -1140,5 +1113,82 @@ GSEA.EnrichmentScore5 <- function (gene.list, gene.set, statistic = "Kolmogorov-
     ES <- log(1/W$p.value)
     return(list(ES = ES, arg.ES = NULL, RES = NULL, indicator = tag.indicator))
   }
+}
+
+# ############################
+# ##### Optimal Cutpoint #####
+# ############################
+# # copy from survminer: https://github.com/kassambara/survminer/blob/master/R/surv_cutpoint.R
+plot.surv_cutpoint <- function(x, variables = NULL, ggtheme = theme_classic2(), bins = 30, ...)
+{
+
+  if(!inherits(x, "surv_cutpoint"))
+    stop("x must be an object of class surv_cutpoint.")
+
+  data <- x$data
+  surv_data <- x$data[, 1:2]
+  data <- x$data[, -1*c(1:2), drop = FALSE]
+  if(is.null(variables)) variables <- colnames(data)
+  data <- data[, variables, drop = FALSE]
+  cutpoints <- x$cutpoint[variables,"cutpoint"]
+  nvar <- length(variables)
+
+  p <- list()
+  for(variable in variables){
+    max_stat <- x[[variable]]
+
+    p_data <- data.frame(
+      stats = max_stat$stats,
+      cuts = max_stat$cuts,
+      grps = .dichotomize(max_stat$cuts, max_stat$estimate)
+    )
+
+    vline_df <- data.frame(x1 = max_stat$estimate, x2 = max_stat$estimate,
+                           y1 = 0, y2 = max(p_data$stats))
+    cutpoint_label <- paste0("Cutpoint: ", round(max_stat$estimate,2))
+    x1 <- y1 <- x2 <- y2 <- NULL
+    max_stat_p <- ggplot(data = p_data, mapping=aes_string("cuts", "stats"))+
+      geom_point(aes_string(color = "grps"), shape = 19, size = 0.5)+
+      geom_segment(aes(x = x1, y = y1, xend = x2, yend = y2),
+                   data = vline_df, linetype = "dashed", size = 0.5)+
+      ggplot2::annotate("text", x = max_stat$estimate, y = 0.5,
+                        label = cutpoint_label, size = 4)+
+      labs(y = "Standardized Log-Rank Statistic",
+           x = variable, title = "Maximally Selected Rank Statistics")
+    max_stat_p <- .ggpar(max_stat_p, gggtheme = ggtheme, ...)
+
+    distribution <- ggpubr::gghistogram(p_data, x = "cuts", fill = "grps",
+                                        main = "Distribution", ylab = "Density",
+                                        xlab = "", add_density = TRUE, bins = bins)
+    distribution <- .ggpar(distribution, gggtheme = ggtheme, ...)
+    res <- list(maxstat = max_stat_p, distribution = distribution)
+
+    attr(res, "name") <- variable
+    attr(res, "cutpoint") <- max_stat$estimate
+    res <- structure(res, class = c("list", "plot_surv_cutpoint"))
+
+    p[[variable]] <- res
+  }
+  p
+}
+# Helper function
+# %%%%%%%%%%%%%%%%%%%%%
+
+.ggpar <- function(p, ggtheme = theme_classic2(),...){
+  argmt <- list(...)
+  p <- ggpubr::ggpar(p, ggtheme = ggtheme,...)
+  if(is.null(argmt$font.x)) p <- p + theme(axis.text.x = element_text(face = "plain"))
+  if(is.null(argmt$font.y)) p <- p + theme(axis.text.y = element_text(face = "plain"))
+  p
+}
+
+# Helper functions
+#+++++++++++++++++++++++++++++++++
+.dichotomize <- function(x, cutpoint, labels = c("low", "high")){
+  grps <- x
+  grps[x <= cutpoint] = labels[1]
+  grps[x > cutpoint] = labels[2]
+
+  grps
 }
 
