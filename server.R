@@ -500,7 +500,11 @@ shinyServer(
       updateRadioButtons(session, "mgmtSurv",  selected = "All")
     })
     observeEvent(input$dataset =="TCGA_GBMLGG", {
-      updateCheckboxInput(session, "gcimpSurv", value = FALSE)
+      updateRadioButtons(session, "gcimpSurv",  selected = "All")
+    })
+    
+    observeEvent(!input$dataset %in% c("TCGA_GBM","Murat"), {
+      updateRadioButtons(session, "mgmtSurv",  selected = "All")
     })
     
     observeEvent(c(input$subtype != "All", input$tabSurv != 'km'), {
@@ -1403,7 +1407,7 @@ shinyServer(
       groups <- c(plotList(), plot_user_selection())
       plot_output_list <- lapply(groups, function(i) {
         plot_report <- paste("plotReport", i, sep = "")
-        shinydashboard::box(height = 355, title = paste0(i), width = NULL, solidHeader = TRUE, status = "primary",
+        shinydashboard::box(height = 355, title = paste0(i), width = NULL, solidHeader = TRUE, status = "primary", 
                             busy(paste("Rendering", i, "boxplot")),
                             plotOutput(plot_report, height = 300)
         )
@@ -1424,7 +1428,7 @@ shinyServer(
             )
             data <- filter(data,!is.na(data[,my_i]))
             p <- ggplot(data, mapping=aes_string(x=my_i, y = "mRNA")) + geom_boxplot(outlier.stroke = 0, outlier.size = 0) +
-              geom_jitter(position = position_jitter(width = .5), size = 2, alpha = 0.5) +
+              geom_jitter(position = position_jitter(width = .25), size = 2, alpha = 0.5) +
               ylab("mRNA expression (log2)") + theme(axis.title.x = element_blank()) + theme(axis.title.y=element_text(vjust=1))
             stat <- data %>%
               group_by_(my_i) %>%
@@ -1739,7 +1743,7 @@ shinyServer(
     })
     
     #' Gene sets in msigdb.v5
-    updateSelectizeInput(session, inputId = "genesets_msigdb", choices = row.names(gene_set_list$msigdb), server = TRUE)
+    updateSelectizeInput(session, inputId = "genesets_msigdb", choices = names(gene_set_list$msigdb), server = TRUE)
     
     goDec <- reactiveValues(Submit = NULL)
     observeEvent(input$goDec, {
@@ -1756,16 +1760,13 @@ shinyServer(
       row.names(upData) <- upData[,"Sample"]
       exprs <- data.frame(t(upData[,-1]),check.names=FALSE)
       platformDec <- ifelse(input$platformDec == "rnaseq",TRUE, FALSE)
-      if(input$geneListDec == "MSigDB gene sets"){
-        gene_list <- gene_set_list$msigdb[input$genesets_msigdb,-1]
-        gene_list <- as.list(data.frame(t(gene_list),stringsAsFactors = FALSE))
-        # gene_list <- getBroadSets(asBroadUri(input$genesets_msigdb))
-      } else {
-        gene_list <- switch(input$geneListDec,
-                            "Newman et al. 2015" = gene_set_list$LM22,
-                            "Engler et al. 2012" = gene_set_list$engler,
-                            "Bindea et al. 2013" = gene_set_list$galon)
-      }
+      gene_list <- switch(input$geneListDec,
+                          "Charoentong et al. 2017" = gene_set_list$charoentong,
+                          "Newman et al. 2015" = gene_set_list$LM22,
+                          "Engler et al. 2012" = gene_set_list$engler,
+                          "Bindea et al. 2013" = gene_set_list$galon,
+                          "MSigDB gene sets" = gene_set_list$msigdb[input$genesets_msigdb])
+      
       set.seed(1234)
       gsva_results <- GSVA::gsva(expr=as.matrix(exprs), gset.idx.list = gene_list, method="ssgsea", rnaseq = platformDec, parallel.sz = 0,
                                  min.sz = input$min.sz, max.sz= input$max.sz, verbose= FALSE)
