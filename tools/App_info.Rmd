@@ -1,0 +1,8 @@
+Version 0.20 (18/03/2016)
+
+By: [Massimo Squatrito](http://www.cnio.es/ing/grupos/plantillas/presentacion.asp?grupo=50008938)
+
+Built using [Shiny](http://www.rstudio.com/shiny) by [RStudio](http://www.rstudio.com)
+
+Code available on [GitHub](https://github.com/msquatrito/shiny_GlioVis)
+
