@@ -100,6 +100,13 @@ data_table <- function (df,rownames = FALSE, selection = 'none', filter = "none"
   
 }
 
+
+panel_div <-function(class_type, panel_title, content) {
+  HTML(paste0("<div class='panel panel-", class_type,
+              "'> <div class='panel-heading'><h3 class='panel-title'>", panel_title,
+              "</h3></div><div class='panel-body'>", content,  "</div></div>", sep=""))
+}
+
 ####################################
 ##############  busy  ##############
 ####################################
@@ -413,6 +420,19 @@ helpModal <- function(modal_title, link, help_file) {
           link, link, link, modal_title, help_file, link) %>%
     enc2utf8 %>% HTML
 }
+
+helpPopup <- function(content, title = NULL) {
+  a(href = "#",
+    class = "popover-link",
+    `data-toggle` = "popover",
+    `data-title` = title,
+    `data-content` = content,
+    `data-html` = "true",
+    `data-trigger` = "hover",
+    icon("question-circle")
+  )
+}
+
 
 #####################################
 ############## ggally_cor  ##########
