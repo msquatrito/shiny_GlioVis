@@ -1,12 +1,7 @@
-***NEWS***
+**21-3-2017**   
 
-**10-2-2017**   
-
-**Updates**    
-
-DeconvoluteMe:
-  - Added a new gene list: [Charoentong et al. 2017](https://www.ncbi.nlm.nih.gov/pubmed/28052254)   
-  - MSigDb updated to v5.2    
+Lately we have been experiencing some technical issues with our server. If you encounter any problem while using the portal (e.g. the screens "graysout" and the application freezes) contact us at: gliovis.app@gmail.com.
+Thanks for your cooperation!!
   
   
   

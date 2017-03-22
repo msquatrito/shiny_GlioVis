@@ -414,7 +414,7 @@ shinyServer(
     #' Render tukey
     output$tukeyTest <- renderTable({
       tukey()
-    }, digits = c(2,2,2,-1,2),rownames =TRUE, striped = TRUE)
+    }, digits = c(2,2,2,-1,2), rownames =TRUE, striped = TRUE)
     
     #' Pairwise t test
     output$pairwiseTtest <- renderTable({
@@ -660,6 +660,7 @@ shinyServer(
     
     #' Select optimal cutpoint for Kaplan Meier plot
     cutpointData <- reactive({
+      surv_need ()
       req(input$histology %in% c("All", histo()))
       df <- surv_data()
       surv.cut <- surv_cutpoint(df, time = "survival_month", event = "survival_status", variables = "mRNA")
@@ -1212,8 +1213,15 @@ shinyServer(
       design <- model.matrix(~strat$strat)
       fit <- eBayes(lmFit(eset,design))
       topT <- topTable(fit, coef = 2, number = Inf, lfc = input$lfc, p.value = as.numeric(input$pvalueDE), resort.by="logFC") # genes with at least 1.4 fold change and a pvalue<.05
-      topT_all <- topTable(fit, coef = 2, number = Inf, lfc = 0, p.value = 1, resort.by="logFC") %>% rownames_to_column(var = "Gene_symbol")
-      if(dim(topT)[1]==0) {
+      topT_all <- topTable(fit, coef = 2, number = Inf, lfc = 0, p.value = 1, resort.by="logFC") %>% rownames_to_column(var = "Gene_symbol") %>%
+        mutate(status = case_when(.$logFC>=0 & abs(.$logFC)>input$lfc & .$adj.P.Val<input$pvalueDE ~ "up",
+                                  .$logFC<=0 & abs(.$logFC)>input$lfc & .$adj.P.Val<input$pvalueDE ~ "down",
+                                  abs(.$logFC)<input$lfc | .$adj.P.Val>input$pvalueDE ~ "insign"))
+      count <- topT_all %>%
+        group_by(status) %>%
+        summarize(count = n())
+      
+      if(dim(topT)[1] == 0) {
         createAlert(session, anchorId = "DEAlert", alertId = "DEAlertId", title = "Sorry...",
                     content = paste("No differentially regulated genes were identified using the current settings.
                                     Consider to change either the cutoff, the Log2 fold change filter or the p value"),
@@ -1223,7 +1231,7 @@ shinyServer(
       }
       esetSel <- eset[row.names(topT), ]
       esetSel <- scale(t(esetSel))
-      heat_data <- list(eset= esetSel, topTable = topT, topTable_all = topT_all)
+      heat_data <- list(eset= esetSel, topTable = topT, topTable_all = topT_all, gene_count = count)
     })
     
     colorSideHeatmap <- reactive({
@@ -1231,7 +1239,7 @@ shinyServer(
     })
     
     output$DEheatmap <- renderPlot({
-      if(dim(de_data()[["topTable"]])[1]==0){
+      if(dim(de_data()[["topTable"]])[1] == 0){
         return()
       }
       validate(
@@ -1257,8 +1265,8 @@ shinyServer(
     # adapted from https://github.com/jminnier/STARTapp
     output$volcanoplot <- plotly::renderPlotly({
       de_data <- de_data()[["topTable_all"]]
-      fdrcut = input$pvalueDE  
-      absFCcut = input$lfc
+      fdrcut <- input$pvalueDE  
+      absFCcut <- input$lfc
       de_data$color = "None"
       de_data$color[which((abs(de_data$logFC)>absFCcut)*(de_data$adj.P.Val<fdrcut)==1)] = paste0("adj-pval","<",fdrcut," & abs(logFc)>",absFCcut)
       de_data$color[which((abs(de_data$logFC)<absFCcut)*(de_data$adj.P.Val<fdrcut)==1)] = paste0("adj-pval","<",fdrcut, " & abs(logFc)<",absFCcut)
@@ -1287,14 +1295,50 @@ shinyServer(
       g
     })
     
+    # # # STATUS BOXES adapted from https://github.com/BioinformaticsFMRP/TCGAbiolinksGUI/blob/7a992d66dcdb989369a30076c19981ca6527d411/inst/app/server/volcano.R
+    #   output$volcanoBoxUp <- renderValueBox({
+    #     req(input$gene)
+    #     value <- de_data()[["gene_count"]]
+    #     valueBox(
+    #       value = value$count[3],
+    #       subtitle = "Upregulated",
+    #       icon = icon("arrow-up"),
+    #       color = "red"
+    #     )
+    #   })
+    #   
+    #   output$volcanoBoxInsig <- renderValueBox({
+    #     req(input$gene)
+    #     value <- de_data()[["gene_count"]]
+    #     valueBox(
+    #       value = value$count[2],
+    #       subtitle = "Not significant",
+    #       icon = icon("minus"),
+    #       color = "black"
+    #     )
+    #   })
+    #   
+    #   output$volcanoBoxDown <- renderValueBox({
+    #     req(input$gene)
+    #     value <- de_data()[["gene_count"]]
+    #     valueBox(
+    #       value = value$count[1],
+    #       subtitle = "Downregulated",
+    #       icon = icon("arrow-down"),
+    #       color = "olive"
+    #     )
+    #   })
+
+    
     output$DETable <- DT::renderDataTable({
       validate(
         need(dim(de_data()[["topTable"]])[1]>0, message = "No differentially regulated genes were identified using the current setting.
              Consider to change either the cutoff, the Log2 fold change filter or the p value")
       )
       data <- de_data()[["topTable"]]
-      data_table(data,rownames = TRUE)
-    },server = FALSE)
+      data <- apply(data, 1, signif, 4)
+      data_table(t(data),rownames = TRUE)
+    }, server = FALSE)
     
     #' Gene Onthology
     entrez <- eventReactive(input$goGO | input$goKegg ,{
@@ -1324,7 +1368,7 @@ shinyServer(
     
     enrich_GO <- eventReactive(go$GO ,{
       ego <- clusterProfiler::enrichGO(gene = entrez()$ENTREZID, OrgDb = 'org.Hs.eg.db', ont = input$ont, pAdjustMethod = "BH",
-                                       pvalueCutoff  = input$pvalueCutoff, qvalueCutoff  = input$qvalueCutoff, readable=TRUE)
+                                       pvalueCutoff  = input$pvalueCutoff, qvalueCutoff  = input$qvalueCutoff, readable=TRUE) 
       if(length(ego@result$ID)==0) {
         createAlert(session, anchorId = "goAlert", alertId = "goAlertId", title = "Sorry...",
                     content = paste("No categories identified, try to change p/q value cutoff"),
@@ -1357,7 +1401,9 @@ shinyServer(
     
     output$enrichGOTable <- DT::renderDataTable({
       req(length(enrich_GO()@result$ID)>0)
-      data_table(as.data.frame(enrich_GO()))
+      ego <- as.data.frame(enrich_GO()) %>% 
+        mutate(pvalue = signif(pvalue, 4), p.adjust = signif(p.adjust, 4), qvalue = signif(qvalue, 4))
+      data_table(ego)
     },server = FALSE)
     
     #' KEGG
@@ -1394,8 +1440,9 @@ shinyServer(
     
     output$enrichKeggTable <- DT::renderDataTable({
       req(length(enrich_Kegg()@result$ID)>0)
-      # eKegg <- DOSE::setReadable(enrich_Kegg(),OrgDb = 'org.Hs.eg.db')
-      data_table(as.data.frame(enrich_Kegg()))
+      eKegg <- as.data.frame(DOSE::setReadable(enrich_Kegg(),OrgDb = 'org.Hs.eg.db', keytype = "ENTREZID")) %>% 
+        mutate(pvalue = signif(pvalue, 4), p.adjust = signif(p.adjust, 4), qvalue = signif(qvalue, 4))
+      data_table(eKegg)
     },server = FALSE)
     
     #' Generate reports
