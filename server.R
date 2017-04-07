@@ -836,13 +836,18 @@ shinyServer(
       req(input$gene != input$gene2)
       df <- corr_two_data()
       if (separate_by() != "none") {
-        df <- df %>% select_(group = separate_by(), gene1 = input$gene, gene2 = input$gene2) 
+        # df <- df %>% select_(group = separate_by(), gene1 = input$gene, gene2 = input$gene2) # select_ is deprecated in rlang
+        df <- df %>% data.frame(group = .[ ,separate_by()], gene1 = .[ ,input$gene], gene2 = .[ ,input$gene2]) %>% 
+          select(group, gene1, gene2)
         more_than_three <- df %>% group_by(group) %>% count(group) %>% filter(n>3)  # to drop levels with less than 3 elements
         df <- df %>% filter(group %in% more_than_three$group & group != "") %>% group_by(group) 
       } else {
-        df <- df %>% select_(gene1 = input$gene, gene2 = input$gene2)
+        # df <- df %>% select_(gene1 = input$gene, gene2 = input$gene2)
+        df <- df %>% data.frame(gene1 = .[ ,input$gene], gene2 = .[ ,input$gene2]) %>% 
+          select(gene1, gene2)
       }
-      cor <- df %>% do(broom::tidy(cor.test(~ gene1 + gene2, data =., use = "complete.obs", method = tolower(input$statCorr))))
+      # cor <- df %>% do(broom::tidy(cor.test(~ gene1 + gene2, data =., use = "complete.obs", method = tolower(input$statCorr))))
+      cor <- df %>% do(broom::tidy(cor.test(rlang::tidy_quote(gene1 + gene2), data =., use = "complete.obs", method = tolower(input$statCorr))))
     }, striped = TRUE)
     
     #' Table with the data used for the correlation plot
@@ -1247,19 +1252,24 @@ shinyServer(
         errorClass = "dangerous" # errorClass does not work
       )
       eset <- de_data()[["eset"]]
+      annotation <- NULL
+      ha <- NULL
       if(input$pDataHeatmap) {
         req(colorSideHeatmap() %in% names(pDatas()))
         pData <- pDatas()[pDatas()$Sample %in% row.names(eset), ]
-        an <- pData[,colorSideHeatmap(), drop = FALSE]
+        annotation <- pData[,colorSideHeatmap(), drop = FALSE]
         # n <- nlevels(pData[,colorSideHeatmap()])
         # colors <- brewer_pal(palette = "Set1")(n) #Dark2
         # names(colors) <- levels(pData[,colorSideHeatmap()])
-        ha <- HeatmapAnnotation(an,show_annotation_name = TRUE)
-      } else {
-        ha <- NULL
-      }
+        ha <- HeatmapAnnotation(annotation, show_annotation_name = TRUE)
+      } 
       Heatmap(t(eset), col = colorRampPalette(c("green","black", "red"))(1024),
               name = "",show_column_names = FALSE,cluster_rows = FALSE, top_annotation = ha)
+      # require(iheatmapr)
+      # iheatmap(t(eset), cluster_cols = "hclust", colors = colorRampPalette(c("green","black", "red"))(1024)) %>% 
+      #   add_row_labels() %>% 
+      #   add_col_annotation(annotation, size = 0.025, side = "bottom") %>% 
+      #   as_plotly()
     })
     
     # adapted from https://github.com/jminnier/STARTapp
