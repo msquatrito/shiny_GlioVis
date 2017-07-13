@@ -5,7 +5,7 @@ output: html_document
 
 In pattern recognition, the k-Nearest Neighbors algorithm (or k-NN for short) is a non-parametric method used for classification and regression. In both cases, the input consists of the k closest training examples in the feature space. In k-NN classification, the output is a class membership. An object is classified by a majority vote of its neighbors, with the object being assigned to the class most common among its k nearest neighbors (k is a positive integer, typically small) (Ref:[*Wikipedia*](http://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm)).      
 
-* The **K-NN** Subtype calls, are obtained using the `knn3Train` function of the [‘caret’](http://cran.r-project.org/web/packages/caret/caret.pdf) package. As training dataset for the GBM we use the TCGA GBM samples described in [Wang Q. et al. 2016](http://biorxiv.org/content/early/2016/05/08/052076). As training dataset for the LGG we use the TCGA LGG samples described in [NEJM](http://www.ncbi.nlm.nih.gov/pubmed/26061751)  
+* The **K-NN** Subtype calls, are obtained using the `knn3Train` function of the [‘caret’](http://cran.r-project.org/web/packages/caret/caret.pdf) package. As training dataset for the GBM we use the TCGA GBM samples described in [Wang Q. et al. 2017](https://www.ncbi.nlm.nih.gov/pubmed/28697342). As training dataset for the LGG we use the TCGA LGG samples described in [NEJM](http://www.ncbi.nlm.nih.gov/pubmed/26061751)  
 
 **Output format**: Subtype calls with the probability score   
 

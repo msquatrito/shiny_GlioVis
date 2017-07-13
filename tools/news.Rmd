@@ -11,7 +11,7 @@ DeconvoluteMe:
   + Interactive volcano plot for differential expression analysis.   
 
 **09-11-2016**   
-* **GlioVis paper has been published!** [Bowman R. et al. 2016](http://neuro-oncology.oxfordjournals.org/content/early/2016/11/09/neuonc.now247.long)   
+* **GlioVis paper has been published!** [Bowman R. et al. 2017](http://neuro-oncology.oxfordjournals.org/content/early/2016/11/09/neuonc.now247.long)   
 
 * **New features**  
   + Improved downloading options: it's now possible to specify the resolution (ppi) of the plots to be downloaded.     

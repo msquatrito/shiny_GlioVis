@@ -28,7 +28,7 @@ tabPanel(title = "Home", icon = icon("home"),
              #     #   strong("NEWS")),
              #     includeMarkdown("tools/news_home.Rmd")
              # ),
-             panel_div(class_type = "danger", panel_title = "IMPORTANT", content = includeMarkdown("tools/news_home.Rmd")),
+             # panel_div(class_type = "danger", panel_title = "IMPORTANT", content = includeMarkdown("tools/news_home.Rmd")),
              h4(class = "outer", "How does it work?"),
              p(class = "outer"," GlioVis is very easy to use:"),
              tags$ol(
