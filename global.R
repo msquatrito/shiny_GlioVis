@@ -252,9 +252,9 @@ survivalPlot <- function (df, gene, group, subtype, cutoff, numeric, censor,risk
                     sprintf("4th (n=%s, median=%s)", surv$records[4], surv$median[4]))
     xlegend <- 0.70
   }
-  p <- survminer::ggsurvplot(expr.surv, censor = censor, conf.int = conf.int, legend = c(xlegend,0.9), surv.scale = "percent", ylab = "Surviving", xlab = "Survival time (Months)",
-                  xlim = c(0,smax),main = main, legend.labs = legend.labs, legend.title = "", font.legend = font.legend, risk.table = risk.table,
-                  risk.table.y.text = F, risk.table.y.text.col = T, risk.table.height = 0.4)
+  p <- survminer::ggsurvplot(data = df, fit = expr.surv, censor = censor, conf.int = conf.int, legend = c(xlegend,0.9), surv.scale = "percent", ylab = "Surviving", xlab = "Survival time (Months)",
+                             xlim = c(0,smax),main = main, legend.labs = legend.labs, legend.title = "", font.legend = font.legend, risk.table = risk.table,
+                             risk.table.y.text = F, risk.table.y.text.col = T, risk.table.height = 0.4)
   plot <- p$plot
   if (cutoff != "quartiles"){
     plot <- plot + annotate("text", x = xmax, y = c(0.725,0.65,0.575), size = font.legend/3,
@@ -360,11 +360,13 @@ kmPlot <- function (cutoff,surv,censor,conf.int,risk.table,font.legend){
   smax <- max(sFit$time,na.rm=TRUE)
   tmax <- smax-(25*smax)/100
   xmax <- (90*tmax)/100
-  p <- survminer::ggsurvplot(sFit, censor = censor, conf.int = conf.int, legend = c(0.65,0.9), surv.scale = "percent", ylab = "Surviving", xlab = "Survival time (Months)",
-                  xlim = c(0,smax), main = "Kaplan Meier Survival Estimates", legend.title = "", font.legend = font.legend, 
-                  legend.labs = c(sprintf("High expr. (n=%s, events=%s, median=%s)", sTable$records[1], sTable$events[1], sTable$median[1]),
-                                  sprintf("Low expr. (n=%s, events=%s, median=%s)", sTable$records[2], sTable$events[2], sTable$median[2])),
-                  risk.table = risk.table, risk.table.y.text = F, risk.table.y.text.col = T, risk.table.height = 0.4)
+  p <- suppressWarnings(
+    survminer::ggsurvplot(fit = sFit, censor = censor, conf.int = conf.int, legend = c(0.65,0.9), surv.scale = "percent", ylab = "Surviving", xlab = "Survival time (Months)",
+                          xlim = c(0,smax), main = "Kaplan Meier Survival Estimates", legend.title = "", font.legend = font.legend, 
+                          legend.labs = c(sprintf("High expr. (n=%s, events=%s, median=%s)", sTable$records[1], sTable$events[1], sTable$median[1]),
+                                          sprintf("Low expr. (n=%s, events=%s, median=%s)", sTable$records[2], sTable$events[2], sTable$median[2])),
+                          risk.table = risk.table, risk.table.y.text = F, risk.table.y.text.col = T, risk.table.height = 0.4)
+  )
   plot <- p$plot
   plot <- plot + annotate("text", x = xmax, y = c(0.725,0.65,0.575), size = font.legend/3,
                           label = c(sprintf("HR = %s, (%s - %s)",HR, HR.lower, HR.upper),
@@ -782,7 +784,7 @@ run.ssgsea.GBM <- function (data, number_perms) {
       print(i)
     }
   }
-
+  
   selected.models <- c("Proneural", "Classical", "Mesenchymal")
   random_result <- .OPAM.apply.model.2(input.ds = random_profile, models.dir = "www/ssgsea_temp/data/", models = selected.models)
   original_result <- .OPAM.apply.model.2(input.ds = data, models.dir = "www/ssgsea_temp/data/", models = selected.models)
@@ -914,7 +916,7 @@ run.ssgsea.GBM <- function (data, number_perms) {
 
 
 .OPAM.Projection <- function (data.array, gene.names, n.cols, n.rows, weight = 0,
-                             statistic = "Kolmogorov-Smirnov", gene.set, nperm = 200) {
+                              statistic = "Kolmogorov-Smirnov", gene.set, nperm = 200) {
   ES.vector <- vector(length = n.cols)
   NES.vector <- vector(length = n.cols)
   p.val.vector <- vector(length = n.cols)
@@ -930,8 +932,8 @@ run.ssgsea.GBM <- function (data, number_perms) {
       correl.vector <- data.array[gene.list, sample.index]
     }
     GSEA.results <- .GSEA.EnrichmentScore5(gene.list = gene.list,
-                                          gene.set = gene.set2, statistic = statistic, alpha = weight,
-                                          correl.vector = correl.vector)
+                                           gene.set = gene.set2, statistic = statistic, alpha = weight,
+                                           correl.vector = correl.vector)
     ES.vector[sample.index] <- GSEA.results$ES
     if (nperm == 0) {
       NES.vector[sample.index] <- ES.vector[sample.index]
@@ -947,8 +949,8 @@ run.ssgsea.GBM <- function (data, number_perms) {
           correl.vector <- data.array[reshuffled.gene.labels, sample.index]
         }
         GSEA.results <- .GSEA.EnrichmentScore5(gene.list = reshuffled.gene.labels,
-                                              gene.set = gene.set2, statistic = statistic,
-                                              alpha = weight, correl.vector = correl.vector)
+                                               gene.set = gene.set2, statistic = statistic,
+                                               alpha = weight, correl.vector = correl.vector)
         phi[sample.index, r] <- GSEA.results$ES
       }
       if (ES.vector[sample.index] >= 0) {
@@ -977,7 +979,7 @@ run.ssgsea.GBM <- function (data, number_perms) {
 }
 
 .GSEA.EnrichmentScore5 <- function (gene.list, gene.set, statistic = "Kolmogorov-Smirnov",
-                                   alpha = 1, correl.vector = NULL) {
+                                    alpha = 1, correl.vector = NULL) {
   tag.indicator <- sign(match(gene.list, gene.set, nomatch = 0))
   no.tag.indicator <- 1 - tag.indicator
   N <- length(gene.list)
@@ -1141,10 +1143,10 @@ run.ssgsea.GBM <- function (data, number_perms) {
 # # copy from survminer: https://github.com/kassambara/survminer/blob/master/R/surv_cutpoint.R
 plot.surv_cutpoint <- function(x, variables = NULL, ggtheme = theme_classic2(), bins = 30, ...)
 {
-
+  
   if(!inherits(x, "surv_cutpoint"))
     stop("x must be an object of class surv_cutpoint.")
-
+  
   data <- x$data
   surv_data <- x$data[, 1:2]
   data <- x$data[, -1*c(1:2), drop = FALSE]
@@ -1152,17 +1154,17 @@ plot.surv_cutpoint <- function(x, variables = NULL, ggtheme = theme_classic2(), 
   data <- data[, variables, drop = FALSE]
   cutpoints <- x$cutpoint[variables,"cutpoint"]
   nvar <- length(variables)
-
+  
   p <- list()
   for(variable in variables){
     max_stat <- x[[variable]]
-
+    
     p_data <- data.frame(
       stats = max_stat$stats,
       cuts = max_stat$cuts,
       grps = .dichotomize(max_stat$cuts, max_stat$estimate)
     )
-
+    
     vline_df <- data.frame(x1 = max_stat$estimate, x2 = max_stat$estimate,
                            y1 = 0, y2 = max(p_data$stats))
     cutpoint_label <- paste0("Cutpoint: ", round(max_stat$estimate,2))
@@ -1176,17 +1178,17 @@ plot.surv_cutpoint <- function(x, variables = NULL, ggtheme = theme_classic2(), 
       labs(y = "Standardized Log-Rank Statistic",
            x = variable, title = "Maximally Selected Rank Statistics")
     max_stat_p <- .ggpar(max_stat_p, gggtheme = ggtheme, ...)
-
+    
     distribution <- ggpubr::gghistogram(p_data, x = "cuts", fill = "grps",
                                         main = "Distribution", ylab = "Density",
                                         xlab = "", add_density = TRUE, bins = bins)
     distribution <- .ggpar(distribution, gggtheme = ggtheme, ...)
     res <- list(maxstat = max_stat_p, distribution = distribution)
-
+    
     attr(res, "name") <- variable
     attr(res, "cutpoint") <- max_stat$estimate
     res <- structure(res, class = c("list", "plot_surv_cutpoint"))
-
+    
     p[[variable]] <- res
   }
   p
@@ -1208,7 +1210,7 @@ plot.surv_cutpoint <- function(x, variables = NULL, ggtheme = theme_classic2(), 
   grps <- x
   grps[x <= cutpoint] = labels[1]
   grps[x > cutpoint] = labels[2]
-
+  
   grps
 }
 

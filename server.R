@@ -672,7 +672,7 @@ shinyServer(
       df.cat <- cutpointData()[["df.cat"]]
       fit <- survfit(Surv(survival_month, survival_status) ~ mRNA, data = df.cat)
       p1 <- plot.surv_cutpoint(cutpointData()[["surv.cut"]])
-      p2 <- ggsurvplot(fit, risk.table = FALSE, pval = TRUE, conf.int = input$confInt, font.legend = input$surv_legend_size, 
+      p2 <- ggsurvplot(data = df.cat,fit = fit, risk.table = FALSE, pval = TRUE, conf.int = input$confInt, font.legend = input$surv_legend_size, 
                        legend = c(.75,.75), legend.title = paste("Cutoff:", round(cutpointData()[["surv.cut"]]$cutpoint,2)), surv.scale = "percent", font.x = 12, font.y = 12, font.main = 14, ylab = "Surviving",
                        main = "Kaplan Meier Survival Estimates", legend.labs = c(paste(input$gene, "High"), paste(input$gene, "Low")), censor = input$censor, 
                        xlab = "Survival time (Months)")
@@ -835,19 +835,22 @@ shinyServer(
     output$corrTest <- renderTable({
       req(input$gene != input$gene2)
       df <- corr_two_data()
+      # gene1 <- as.symbol(input$gene)
+      # gene2 <- as.symbol(input$gene2)
+      # group <- as.symbol(separate_by())
       if (separate_by() != "none") {
-        # df <- df %>% select_(group = separate_by(), gene1 = input$gene, gene2 = input$gene2) # select_ is deprecated in rlang
-        df <- df %>% data.frame(group = .[ ,separate_by()], gene1 = .[ ,input$gene], gene2 = .[ ,input$gene2]) %>% 
-          select(group, gene1, gene2)
+        # df <- df %>% select(group = !!group, gene1 = !!gene1, gene2 = !!gene2) # select_ is deprecated 
+        df <- df %>% data.frame(group = .[ ,separate_by()], gene1 = .[ ,input$gene], gene2 = .[ ,input$gene2]) %>%
+          .[,c("group","gene1", "gene2")]
         more_than_three <- df %>% group_by(group) %>% count(group) %>% filter(n>3)  # to drop levels with less than 3 elements
         df <- df %>% filter(group %in% more_than_three$group & group != "") %>% group_by(group) 
       } else {
-        # df <- df %>% select_(gene1 = input$gene, gene2 = input$gene2)
-        df <- df %>% data.frame(gene1 = .[ ,input$gene], gene2 = .[ ,input$gene2]) %>% 
-          select(gene1, gene2)
+        # df <- df %>% select(gene1 = !!gene1, gene2 = !!gene2)
+        df <- df %>% data.frame(gene1 = .[ ,input$gene], gene2 = .[ ,input$gene2]) %>%
+          .[,c("gene1", "gene2")]
       }
-      # cor <- df %>% do(broom::tidy(cor.test(~ gene1 + gene2, data =., use = "complete.obs", method = tolower(input$statCorr))))
-      cor <- df %>% do(broom::tidy(cor.test(rlang::tidy_quote(gene1 + gene2), data =., use = "complete.obs", method = tolower(input$statCorr))))
+      cor <- df %>% do(broom::tidy(cor.test(~ gene1 + gene2, data =., use = "complete.obs", method = tolower(input$statCorr))))
+      # cor <- df %>% do(broom::tidy(cor.test(quo(gene1 + gene2), data =., use = "complete.obs", method = tolower(input$statCorr))))
     }, striped = TRUE)
     
     #' Table with the data used for the correlation plot
@@ -1293,12 +1296,12 @@ shinyServer(
       
       #Match order of text to proper gene order
       newtext =  paste("Gene ID:",de_data$Gene_symbol,"<br>",
-                       "logFC",signif(de_data$logFC,3),"<br>",
-                       "P.Value",signif(de_data$P.Value,3),"<br>",
-                       "adj.P.Val",signif(de_data$adj.P.Val,3))
+                       "logFC:",signif(de_data$logFC,3),"<br>",
+                       "P.Value:",signif(de_data$P.Value,3),"<br>",
+                       "adj.P.Val:",signif(de_data$adj.P.Val,3))
       
       for(ii in 1:length(g[["x"]]$data)) {
-        tmpid = do.call(rbind,strsplit(g[[1]]$data[[ii]]$text,"<br>"))[,4]
+        tmpid = do.call(rbind,strsplit(g[[1]]$data[[ii]]$text,"<br />"))[,4]
         g[[1]]$data[[ii]]$text <- newtext[match(tmpid,de_data$Gene_symbol)]
       }
       
@@ -1593,7 +1596,7 @@ shinyServer(
             df1 <- na.omit(data.frame(status = df[ ,"status"], time = df[ ,"survival"], strata = df[ ,my_Survi]))
             df1$strata <- droplevels(df1$strata)
             fit <- do.call(survfit, list(formula = Surv(time, status == 1) ~ strata, data = df1))
-            survminer::ggsurvplot(fit, legend = c(0.75,0.75), surv.scale = "percent", ylab = "Surviving", legend.labs = levels(df1$strata), color = "red",
+            survminer::ggsurvplot(data = df1, fit = fit, legend = c(0.75,0.75), surv.scale = "percent", ylab = "Surviving", legend.labs = levels(df1$strata), color = "red",
                                   xlab = "Survival time (Months)", main = paste0("\n",my_Survi), legend.title = "", font.legend = 12, palette = "Set1")
           })
           plotname <- paste("plot", my_Survi, sep="")
