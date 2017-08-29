@@ -672,7 +672,11 @@ shinyServer(
       df.cat <- cutpointData()[["df.cat"]]
       fit <- survfit(Surv(survival_month, survival_status) ~ mRNA, data = df.cat)
       p1 <- plot.surv_cutpoint(cutpointData()[["surv.cut"]])
-      p2 <- ggsurvplot(data = df.cat,fit = fit, risk.table = FALSE, pval = TRUE, conf.int = input$confInt, font.legend = input$surv_legend_size, 
+      # p2 <- ggsurvplot(data = df.cat,fit = fit, risk.table = FALSE, pval = TRUE, conf.int = input$confInt, font.legend = input$surv_legend_size, 
+      #                  legend = c(.75,.75), legend.title = paste("Cutoff:", round(cutpointData()[["surv.cut"]]$cutpoint,2)), surv.scale = "percent", font.x = 12, font.y = 12, font.main = 14, ylab = "Surviving",
+      #                  main = "Kaplan Meier Survival Estimates", legend.labs = c(paste(input$gene, "High"), paste(input$gene, "Low")), censor = input$censor, 
+      #                  xlab = "Survival time (Months)")
+      p2 <- ggsurvplot(fit = fit, risk.table = FALSE, pval = TRUE, conf.int = input$confInt, font.legend = input$surv_legend_size, 
                        legend = c(.75,.75), legend.title = paste("Cutoff:", round(cutpointData()[["surv.cut"]]$cutpoint,2)), surv.scale = "percent", font.x = 12, font.y = 12, font.main = 14, ylab = "Surviving",
                        main = "Kaplan Meier Survival Estimates", legend.labs = c(paste(input$gene, "High"), paste(input$gene, "Low")), censor = input$censor, 
                        xlab = "Survival time (Months)")
@@ -1596,7 +1600,9 @@ shinyServer(
             df1 <- na.omit(data.frame(status = df[ ,"status"], time = df[ ,"survival"], strata = df[ ,my_Survi]))
             df1$strata <- droplevels(df1$strata)
             fit <- do.call(survfit, list(formula = Surv(time, status == 1) ~ strata, data = df1))
-            survminer::ggsurvplot(data = df1, fit = fit, legend = c(0.75,0.75), surv.scale = "percent", ylab = "Surviving", legend.labs = levels(df1$strata), color = "red",
+            # survminer::ggsurvplot(data = df1, fit = fit, legend = c(0.75,0.75), surv.scale = "percent", ylab = "Surviving", legend.labs = levels(df1$strata), color = "red",
+            #                       xlab = "Survival time (Months)", main = paste0("\n",my_Survi), legend.title = "", font.legend = 12, palette = "Set1")
+            survminer::ggsurvplot(fit = fit, legend = c(0.75,0.75), surv.scale = "percent", ylab = "Surviving", legend.labs = levels(df1$strata), color = "red",
                                   xlab = "Survival time (Months)", main = paste0("\n",my_Survi), legend.title = "", font.legend = 12, palette = "Set1")
           })
           plotname <- paste("plot", my_Survi, sep="")

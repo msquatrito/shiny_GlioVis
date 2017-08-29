@@ -252,7 +252,10 @@ survivalPlot <- function (df, gene, group, subtype, cutoff, numeric, censor,risk
                     sprintf("4th (n=%s, median=%s)", surv$records[4], surv$median[4]))
     xlegend <- 0.70
   }
-  p <- survminer::ggsurvplot(data = df, fit = expr.surv, censor = censor, conf.int = conf.int, legend = c(xlegend,0.9), surv.scale = "percent", ylab = "Surviving", xlab = "Survival time (Months)",
+  # p <- survminer::ggsurvplot(data = df, fit = expr.surv, censor = censor, conf.int = conf.int, legend = c(xlegend,0.9), surv.scale = "percent", ylab = "Surviving", xlab = "Survival time (Months)",
+  #                            xlim = c(0,smax),main = main, legend.labs = legend.labs, legend.title = "", font.legend = font.legend, risk.table = risk.table,
+  #                            risk.table.y.text = F, risk.table.y.text.col = T, risk.table.height = 0.4)
+  p <- survminer::ggsurvplot(fit = expr.surv, censor = censor, conf.int = conf.int, legend = c(xlegend,0.9), surv.scale = "percent", ylab = "Surviving", xlab = "Survival time (Months)",
                              xlim = c(0,smax),main = main, legend.labs = legend.labs, legend.title = "", font.legend = font.legend, risk.table = risk.table,
                              risk.table.y.text = F, risk.table.y.text.col = T, risk.table.height = 0.4)
   plot <- p$plot
