@@ -1305,7 +1305,7 @@ shinyServer(
                        "adj.P.Val:",signif(de_data$adj.P.Val,3))
       
       for(ii in 1:length(g[["x"]]$data)) {
-        tmpid = do.call(rbind,strsplit(g[[1]]$data[[ii]]$text,"<br />"))[,4]
+        tmpid = do.call(rbind,strsplit(g[[1]]$data[[ii]]$text,"<br>"))[,4]
         g[[1]]$data[[ii]]$text <- newtext[match(tmpid,de_data$Gene_symbol)]
       }
       
