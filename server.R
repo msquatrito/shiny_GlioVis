@@ -1280,7 +1280,7 @@ shinyServer(
     })
     
     # adapted from https://github.com/jminnier/STARTapp
-    output$volcanoplot <- plotly::renderPlotly({
+    output$volcanoplot <- renderPlotly({
       de_data <- de_data()[["topTable_all"]]
       fdrcut <- input$pvalueDE  
       absFCcut <- input$lfc
