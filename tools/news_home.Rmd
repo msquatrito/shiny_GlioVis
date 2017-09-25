@@ -1,7 +1,7 @@
-**21-3-2017**   
-
-Lately we have been experiencing some technical issues with our server. If you encounter any problem while using the portal (e.g. the screens "graysout" and the application freezes) contact us at: gliovis.app@gmail.com.
-Thanks for your cooperation!!
+**21-09-2016**      
+* **New dataset**   
+  + 1 new dataset for pediatric tumors:[Cavalli et al. 2017](https://www.ncbi.nlm.nih.gov/pubmed/28609654)    
+       
   
   
   
