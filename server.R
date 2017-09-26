@@ -239,22 +239,46 @@ shinyServer(
           # Not all genes are available for all the dataset
           need(input$gene %in% names(exprs()),"Gene not available for this dataset")
       )
-      mRNA <- exprs()[ ,input$gene]
+      # mRNA <- exprs()[ ,input$gene]
+      # if (input$scale) {
+      #   mRNA <- scale(mRNA)
+      # }
+      # data <- cbind(mRNA, exprs()[,2:6]) # To combine with pData
+      # data <- cbind(data, pDatas()[,!names(pDatas()) %in% names(data)]) # To combine with more pData for the report
+      # if (input$dataset %in% c("TCGA_GBM", "TCGA_LGG", "TCGA_GBMLGG")) {
+      #   if(input$gene %in% names(cnas())){
+      #     Copy_number <- cnas()[ ,input$gene]
+      #     Copy_number <- factor(Copy_number, levels = c(-2:2), labels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp"))
+      #     Copy_number <- droplevels(Copy_number)
+      #   } else {
+      #     Copy_number <- NA # Some genes don't have copy numbers data
+      #   }
+      #   data <- cbind(Copy_number,data)
+      # }
+      
+      data <- exprs()[ ,c("Sample", input$gene)]
+      names(data)[2] <- "mRNA"
       if (input$scale) {
-        mRNA <- scale(mRNA)
+        data$mRNA <- as.numeric(scale(data$mRNA))
       }
-      data <- cbind(mRNA, exprs()[,2:6]) # To combine with pData
-      data <- cbind(data, pDatas()[,!names(pDatas()) %in% names(data)]) # To combine with more pData for the report
+      data <- merge(data, pDatas(), by = "Sample") # To combine with pData
+      
       if (input$dataset %in% c("TCGA_GBM", "TCGA_LGG", "TCGA_GBMLGG")) {
-        if(input$gene %in% names(cnas())){
-          Copy_number <- cnas()[ ,input$gene]
-          Copy_number <- factor(Copy_number, levels = c(-2:2), labels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp"))
-          Copy_number <- droplevels(Copy_number)
+        if (plot_type() == "Copy_number" & input$gene %in% names(cnas())) {
+          cna <- rownames_to_column(cnas(), var = "Sample")
+          cna <- cna[ ,c("Sample", input$gene)]
+          names(cna)[2] <- "Copy_number"
+          cna <- cna %>%
+            # rename("Copy_number" = !!names(.[2]) %>% 
+            mutate(Copy_number = factor(Copy_number, levels = c(-2:2), labels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp")),
+                   Copy_number = droplevels(Copy_number))
+          data <- merge(cna, data, by = "Sample")
         } else {
-          Copy_number <- NA # Some genes don't have copy numbers data
+          data$Copy_number <- NA # Some genes don't have copy numbers data
         }
-        data <- cbind(Copy_number,data)
       }
+      
+      rownames(data) <- data$Sample
       data <- data[complete.cases(data[,"mRNA"]),] # Aiglent TCGA_GBM data doesn't have all the observations
       data
     })
@@ -533,8 +557,7 @@ shinyServer(
       if (input$primarySurv != "All" & any(!is.na(df$Recurrence))) {
         df <- subset(df, Recurrence == input$primarySurv)
       }
-      data <- df[,c("Sample", "Histology", "Recurrence", "Subtype", "CIMP_status", "mRNA",  "survival", "status")]
-      names(data)[7:8] <- c("survival_month", "survival_status")
+      data <- df[ ,names(df) %in% c("Sample", "Histology", "Recurrence", "Subtype", "CIMP_status", "mRNA",  "survival", "status")]
       data <- .rmNA(data)
     })
     
@@ -600,7 +623,7 @@ shinyServer(
     
     #' Create a Kaplan Meier plot with cutoff based on quantiles or manual selection
     output$survPlot <- renderPlot({
-      surv_need ()
+      surv_need()
       req(input$histology %in% c("All", histo()))
       # Use 'try' to suppress a message throwed the first time manual cutoff is selected
       if(input$allSubSurv) {
@@ -628,8 +651,9 @@ shinyServer(
         strat <- factor(strat,labels = c("1st quartile","2nd quartile","3rd quartile","4th quartile"))
       }
       data <- data.frame(data, cutoff_group = strat)
+      data <- rename(data, survival_month = survival, survival_status = status)
       data_table(data)
-    },server = FALSE)
+    }, server = FALSE)
     
     #' Download the survPlot
     output$downloadsurvPlot <- downloadHandler(
@@ -663,14 +687,14 @@ shinyServer(
       surv_need ()
       req(input$histology %in% c("All", histo()))
       df <- surv_data()
-      surv.cut <- surv_cutpoint(df, time = "survival_month", event = "survival_status", variables = "mRNA")
+      surv.cut <- surv_cutpoint(df, time = "survival", event = "status", variables = "mRNA")
       df.cat <<- surv.cut %>% surv_categorize()
       cutpoint <- list(surv.cut = surv.cut, df.cat = df.cat)
     })
     
     output$cutpointPlot <- renderPlot({
       df.cat <- cutpointData()[["df.cat"]]
-      fit <- survfit(Surv(survival_month, survival_status) ~ mRNA, data = df.cat)
+      fit <- survfit(Surv(survival, status) ~ mRNA, data = df.cat)
       p1 <- plot.surv_cutpoint(cutpointData()[["surv.cut"]])
       # p2 <- ggsurvplot(data = df.cat,fit = fit, risk.table = FALSE, pval = TRUE, conf.int = input$confInt, font.legend = input$surv_legend_size, 
       #                  legend = c(.75,.75), legend.title = paste("Cutoff:", round(cutpointData()[["surv.cut"]]$cutpoint,2)), surv.scale = "percent", font.x = 12, font.y = 12, font.main = 14, ylab = "Surviving",
@@ -690,6 +714,7 @@ shinyServer(
     
     output$cutpointDataTable <- DT::renderDataTable({
       data <- cutpointData()[["df.cat"]]
+      data <- rename(data, survival_month = survival, survival_status = status)
       data_table(data,rownames = T)
     }, server = FALSE)
     
@@ -763,7 +788,7 @@ shinyServer(
       # Create the groups based on which samples are above/below the cutoff
       expressionGrp <- as.integer(gene_exp() < get_Cutoff())
       # Create the survival object
-      surv <- with(surv_GBM(), Surv(survival_month, survival_status == 1))
+      surv <- with(surv_GBM(), Surv(survival, status == 1))
       return(surv ~ expressionGrp)
     })
     

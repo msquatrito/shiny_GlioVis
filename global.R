@@ -124,8 +124,8 @@ busy <- function (text = "") {
 ######################################
 getHR <- function (df) {
   mRNA <- df[ ,"mRNA"]
-  surv.status <- df[ ,"survival_status"]
-  surv.time <- df[ ,"survival_month"]
+  surv.status <- df[ ,"status"]
+  surv.time <- df[ ,"survival"]
   my.Surv <- Surv(surv.time, surv.status == 1)
   mRNA.values <- mRNA[!is.na(mRNA)]
   # Generate a vector of continuos values, excluding the first an last value
@@ -222,8 +222,8 @@ survivalPlot <- function (df, gene, group, subtype, cutoff, numeric, censor,risk
   }
   
   mRNA <- df[ ,"mRNA"]
-  surv.status <- df[ ,"survival_status"]
-  surv.time <- df[ ,"survival_month"]
+  surv.status <- df[ ,"status"]
+  surv.time <- df[ ,"survival"]
   my.Surv <- Surv(time = surv.time, event = surv.status== 1)
   smax <- max(surv.time, na.rm = TRUE)
   tmax <- smax-(25*smax)/100
