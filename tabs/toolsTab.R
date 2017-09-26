@@ -8,7 +8,9 @@ tabPanel(title = "Tools", icon = icon("gear"),
                          br(),
                          wellPanel(
                            helpText("Upload a .csv file with samples in rows and genes expression in columns.",
-                                    "The first column should contain the sample ID and should be named 'Sample'"),
+                                    "The first column should contain the sample ID and should be named 'Sample':"),
+                           img(src = "Example_dataset.png", class="responsive-image"),
+                           p(" "),
                            conditionalPanel(
                              condition = "input.tabTools == 'SubtypeME'",
                              radioButtons(inputId = "tumorType", label = strong("Training set:"), 
