@@ -50,7 +50,7 @@ datasets <- list(
   adult_datasets = c("TCGA_GBM", "TCGA_LGG","TCGA_GBMLGG", "Rembrandt", "Gravendeel","Bao", "Kamoun","Ivy_GAP", "LeeY", "Oh","Phillips",
                      "Gill", "Freije", "Murat","Gorovets", "POLA_Network", "Reifenberger", "Joo","Ducray", "Walsh", "Nutt", "Kwom", "Vital",
                      "Grzmil", "Gleize", "Donson", "Li"),
-  pediatric_datasets = c("Northcott_2012","Sturm_2016","Bergthold","Griesinger","Gump","Northcott_2011","Pomeroy",
+  pediatric_datasets = c("Cavalli", "Northcott_2012","Sturm_2016","Bergthold","Griesinger","Gump","Northcott_2011","Pomeroy",
                          "Johnson","Robinson","Witt", "Kool_2014","Henriquez","Hoffman","Kool_2011","Lambert","Paugh", "deBont","Johann",
                          "Zakrzewski","Sturm_2012","Buczkowicz","Mascelli","Schwartzentruber","Bender"),
   no_surv_dataset = c("Bao","Reifenberger","Gill","Li", "Oh","Ivy_GAP", "Kwom","Walsh","Gleize",
