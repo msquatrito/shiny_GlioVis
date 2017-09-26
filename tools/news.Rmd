@@ -1,7 +1,10 @@
+<<<<<<< HEAD
 **21-09-2016**      
 * **New datasets**   
   + 1 new pediatric dataset: [Cavalli et al. 2017](https://www.ncbi.nlm.nih.gov/pubmed/28609654) 
   
+=======
+>>>>>>> 37d536ae0fc18806bf9569c3691a10a882b28d14
 **10-2-2017**   
 * **Updates**    
 
