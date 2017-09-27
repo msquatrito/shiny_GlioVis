@@ -28,7 +28,7 @@ DeconvoluteMe:
 
 * **Updates** 
   + For GBM subtyping we have now switched to the latest classification from the Verhaak lab with 3 classes (Classical, Mesenchymal and Proneural). Please check
-[Wang Q. et al. 2016](http://biorxiv.org/content/early/2016/08/13/052076) for details. 4 classes subtyping will be still available as "Subtype_Verhaak_2010".  
+[Wang Q. et al. 2017](https://www.ncbi.nlm.nih.gov/pubmed/28697342) for details. 4 classes subtyping will be still available as "Subtype_Verhaak_2010".  
   + Agilent-4502A and RNA-seq data are now availble for the TCGA GBM dataset.   
   + Mutations are now available also for the TCGA Pan-Glioma dataset.      
 
