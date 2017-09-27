@@ -264,7 +264,7 @@ shinyServer(
       data <- merge(data, pDatas(), by = "Sample") # To combine with pData
       
       if (input$dataset %in% c("TCGA_GBM", "TCGA_LGG", "TCGA_GBMLGG")) {
-        if (plot_type() == "Copy_number" & input$gene %in% names(cnas())) {
+        if (input$gene %in% names(cnas())) {
           cna <- rownames_to_column(cnas(), var = "Sample")
           cna <- cna[ ,c("Sample", input$gene)]
           names(cna)[2] <- "Copy_number"
@@ -272,7 +272,7 @@ shinyServer(
             # rename("Copy_number" = !!names(.[2]) %>% 
             mutate(Copy_number = factor(Copy_number, levels = c(-2:2), labels = c("Homdel", "Hetloss", "Diploid", "Gain", "Amp")),
                    Copy_number = droplevels(Copy_number))
-          data <- merge(cna, data, by = "Sample")
+          data <- merge(cna, data, by = "Sample", all = TRUE)
         } else {
           data$Copy_number <- NA # Some genes don't have copy numbers data
         }
