@@ -263,6 +263,13 @@ shinyServer(
       }
       data <- merge(data, pDatas(), by = "Sample") # To combine with pData
       
+      # Temporary fix: when I changed from `cbind` to `merge` I forgot to include 
+      # the Subtype column (present in exprs() but not in pDatas() of most GBM datasets)
+      if(!"Subtype" %in% names(data)){
+        sub <- exprs()[ ,c("Sample", "Subtype")]
+        data <- merge(data, sub, by = "Sample")
+      }
+      
       if (input$dataset %in% c("TCGA_GBM", "TCGA_LGG", "TCGA_GBMLGG")) {
         if (input$gene %in% names(cnas())) {
           cna <- rownames_to_column(cnas(), var = "Sample")
