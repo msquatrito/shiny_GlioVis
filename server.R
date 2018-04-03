@@ -658,7 +658,7 @@ shinyServer(
         strat <- factor(strat,labels = c("1st quartile","2nd quartile","3rd quartile","4th quartile"))
       }
       data <- data.frame(data, cutoff_group = strat)
-      data <- rename(data, survival_month = survival, survival_status = status)
+      # data <- dplyr::rename(data, survival_month = survival, survival_status = status)
       data_table(data)
     }, server = FALSE)
     
@@ -721,8 +721,8 @@ shinyServer(
     
     output$cutpointDataTable <- DT::renderDataTable({
       data <- cutpointData()[["df.cat"]]
-      data <- rename(data, survival_month = survival, survival_status = status)
-      data_table(data,rownames = T)
+      # data <- dplyr::rename(data, survival_month = survival, survival_status = status)
+      data_table(data, rownames = T)
     }, server = FALSE)
     
     #' Subset to GBM samples for the interactive HR plot.
