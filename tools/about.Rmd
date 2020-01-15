@@ -45,7 +45,7 @@ GlioVis is free software: you can redistribute it and/or modify it under the ter
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details. 
 
-&copy; Massimo Squatrito (2016) <a rel="license" href="http://www.creativecommons.org/licenses/by-nc/4.0/"><img alt="Creative Commons License" style="border-width:0" src="cc.png" /></a><br />This work is licensed under a <a rel="license" href="http://www.creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0 International License</a>. 
+&copy; Massimo Squatrito (2020) <a rel="license" href="http://www.creativecommons.org/licenses/by-nc/4.0/"><img alt="Creative Commons License" style="border-width:0" src="cc.png" /></a><br />This work is licensed under a <a rel="license" href="http://www.creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0 International License</a>. 
 
 ***
 ### Acknowledgments  
