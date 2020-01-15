@@ -17,6 +17,10 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                              condition = "input.dataset == 'TCGA_GBM'",
                              selectInput(inputId = "microarray_platform", label = h4("Platform:"), choices = c("HG-U133A","Agilent-4502A","RNA-Seq"), selected = "HG-U133A")
                            ),
+                           conditionalPanel(
+                             condition = "input.dataset =='CGGA'",
+                             selectInput(inputId ="primaryCgga", label = h4("Tumor type:"), choices = c("All","Primary","Recurrent","Secondary"), selected = "Primary")
+                           ),
                            # genes
                            conditionalPanel(
                              condition = "input.tabCorr != 'corrMany' & input.tab1 != 5 & input.tab1 != 8",
@@ -76,21 +80,38 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                            
                            # Tab Survival
                            conditionalPanel(
-                             condition = "input.tab1 == 2 & input.tabSurv != 'hr'",
+                             # condition = "input.tab1 == 2 & input.tabSurv != 'hr'",
+                             condition = "input.tab1 == 2",
                              conditionalPanel(
                                condition = "input.tabSurv == 'km' & input.subtype == 'All'",
                                checkboxInput(inputId = "allSubSurv", label = "Separate by subtype", value = FALSE)
-                               
                              ),
-                             br(),
+                             # br(),
+                              # selectInput(inputId ="genderSurv", label = h4("Gender:"),
+                              #             choices = c("All","Female","Male"), selected = "All"),
+                             uiOutput("genderSurv"),
+                             uiOutput("idhSurv"),
+                             uiOutput("gcimpSurv"),
                              conditionalPanel(
-                               condition = "input.datasetType != 'Pediatric' & input.histology == 'GBM' & input.dataset != 'TCGA_GBMLGG'",
-                               radioButtons(inputId ="gcimpSurv", label = strong("CIMP stauts:"), choices = c("All","G-CIMP","NON G-CIMP"), selected = NULL, inline = T),
+                               condition = "input.dataset =='TCGA_GBM' | input.dataset =='TCGA_LGG' | input.dataset =='TCGA_GBMLGG' |
+                                            input.dataset =='CGGA' | input.dataset == 'Gorovets' | input.dataset == 'Gravendeel' | input.dataset == 'POLA_Network' |
+                                            input.dataset == 'Kamoun'",
+                               selectInput(inputId ="idhSurv", label = h4("IDH status:"),
+                                            choices = c("All","Wild_type","Mutant"), selected = "All")
+                             ),
+                             # conditionalPanel(
+                             #   condition = "input.datasetType != 'Pediatric' & input.histology == 'GBM'",
+                               conditionalPanel(
+                                 condition = "input.dataset =='Rembrandt' | input.dataset =='LeeY' | input.dataset =='Phillips' |
+                                            input.dataset =='Freije' | input.dataset == 'Murat' | input.dataset == 'Joo' | input.dataset == 'Ducray' |
+                                            input.dataset == 'Nutt' | input.dataset == 'Grzmil' | input.dataset == 'Donson'",
+                                 radioButtons(inputId ="gcimpSurv", label = strong("CIMP stauts:"), choices = c("All","G-CIMP","NON G-CIMP"), selected = NULL, inline = T)
+                               ),
                                conditionalPanel(
                                  condition = "input.dataset =='TCGA_GBM' | input.dataset =='Murat'",
                                  radioButtons(inputId ="primarySurv", label = strong("Recurrence:"), choices = c("All","Primary","Recurrent"), selected = NULL, inline = T),
                                  radioButtons(inputId ="mgmtSurv", label = strong("MGMT status:"), choices = c("All","Methylated","Unmethylated"), selected = NULL, inline = T)
-                               )
+                               # )
                              ),
                              
                              conditionalPanel(
@@ -438,7 +459,7 @@ tabPanel(title = "Explore", icon = icon("picture-o"), id = "explore",
                                                                               ),
                                                                               column(width = 9,
                                                                                      wellPanel(
-                                                                                       helpText(HTML('<font color="red"><b>IMPORTANT: </b> Currently active only for GBM samples.</font>')),
+                                                                                       # helpText(HTML('<font color="red"><b>IMPORTANT: </b> Currently active only for GBM samples.</font>')),
                                                                                        busy(),
                                                                                        conditionalPanel(condition = "output.hazardPlot",
                                                                                                         helpText(HTML("<b>Note: </b> This is an interactive plot, click on a specific mRNA expression value 
