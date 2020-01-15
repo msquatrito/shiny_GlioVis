@@ -47,7 +47,7 @@ options(shiny.usecairo=TRUE)
 ############## Datasets  ##############
 #######################################
 datasets <- list(
-  adult_datasets = c("TCGA_GBM", "TCGA_LGG","TCGA_GBMLGG", "Rembrandt", "Gravendeel","Bao", "Kamoun","Ivy_GAP", "LeeY", "Oh","Phillips",
+  adult_datasets = c("CGGA","TCGA_GBM", "TCGA_LGG","TCGA_GBMLGG", "Rembrandt", "Gravendeel","Bao", "Kamoun","Ivy_GAP", "LeeY", "Oh","Phillips",
                      "Gill", "Freije", "Murat","Gorovets", "POLA_Network", "Reifenberger", "Joo","Ducray", "Walsh", "Nutt", "Kwom", "Vital",
                      "Grzmil", "Gleize", "Donson", "Li"),
   pediatric_datasets = c("Cavalli", "Northcott_2012","Sturm_2016","Bergthold","Griesinger","Gump","Northcott_2011","Pomeroy",
@@ -57,7 +57,7 @@ datasets <- list(
                       "Sturm_2016","Henriquez","Bergthold","Buczkowicz","Mascelli","Lambert","Griesinger",
                       "Zakrzewski","Bender", "deBont","Gump","Johnson","Northcott_2012","Northcott_2011", "Kool_2011",
                       "Johann","Robinson","Kool_2014"),
-  rnaseq_datasets = c("TCGA_LGG", "TCGA_GBMLGG", "Bao", "Ivy_GAP","Gill")
+  rnaseq_datasets = c("CGGA", "TCGA_LGG", "TCGA_GBMLGG", "Bao", "Ivy_GAP","Gill")
 )
 
 for (i in unlist(datasets[1:2], use.names = F)) {
@@ -70,6 +70,7 @@ rm(i)
 ########## other variables  ###########
 #######################################
 genes <- readRDS("data/genes.Rds")
+genes <-  rbind(genes, c("LOC100506474",NA,NA))
 lgg.core.samples <- readRDS("data/lgg.core.229samples.Rds")
 gene_set_list <- readRDS("data/gene_set_list.Rds")
 
@@ -210,7 +211,8 @@ survivalPlot <- function (df, gene, group, subtype, cutoff, numeric, censor,risk
   # Select a specific subtype
   if (subtype != "All") {
     df <- filter(df, Subtype == subtype)
-  }
+  } 
+  
   if(cutoff == "Use a specific mRNA value") {
     main <- paste0("Histology: ", group,
                    "; Subtype: ", subtype,
@@ -229,9 +231,10 @@ survivalPlot <- function (df, gene, group, subtype, cutoff, numeric, censor,risk
   tmax <- smax-(25*smax)/100
   xmax <- (90*tmax)/100
   df$cutoff_group <- get_cutoff(mRNA, cutoff, numeric)
-  expr.surv <- survfit(my.Surv ~ cutoff_group, data=df)
-  log.rank <- survdiff(my.Surv ~ cutoff_group, rho = 0, data=df)
-  mantle.cox <- survdiff(my.Surv ~ cutoff_group, rho = 1, data=df)
+  expr.surv <- survfit(my.Surv ~ cutoff_group, data = df)
+  # expr.surv <- survminer::surv_fit(Surv(time = surv.time, event = surv.status== 1) ~ cutoff_group, data = df)
+  log.rank <- survdiff(my.Surv ~ cutoff_group, rho = 0, data = df)
+  mantle.cox <- survdiff(my.Surv ~ cutoff_group, rho = 1, data = df)
   surv <- data.frame(summary(expr.surv)$table)
   model <- summary(coxph(my.Surv ~ cutoff_group, data=df))
   HR <- round(model$conf.int[1],2)
@@ -252,9 +255,9 @@ survivalPlot <- function (df, gene, group, subtype, cutoff, numeric, censor,risk
                     sprintf("4th (n=%s, median=%s)", surv$records[4], surv$median[4]))
     xlegend <- 0.70
   }
-  # p <- survminer::ggsurvplot(data = df, fit = expr.surv, censor = censor, conf.int = conf.int, legend = c(xlegend,0.9), surv.scale = "percent", ylab = "Surviving", xlab = "Survival time (Months)",
+  # p <- survminer::ggsurvplot(fit = expr.surv, censor = censor, conf.int = conf.int, legend = c(xlegend,0.9), surv.scale = "percent", ylab = "Surviving", xlab = "Survival time (Months)",
   #                            xlim = c(0,smax),main = main, legend.labs = legend.labs, legend.title = "", font.legend = font.legend, risk.table = risk.table,
-  #                            risk.table.y.text = F, risk.table.y.text.col = T, risk.table.height = 0.4)
+  #                            risk.table.y.text = F, risk.table.y.text.col = T, risk.table.height = 0.4, data = df)
   p <- survminer::ggsurvplot(fit = expr.surv, censor = censor, conf.int = conf.int, legend = c(xlegend,0.9), surv.scale = "percent", ylab = "Surviving", xlab = "Survival time (Months)",
                              xlim = c(0,smax),main = main, legend.labs = legend.labs, legend.title = "", font.legend = font.legend, risk.table = risk.table,
                              risk.table.y.text = F, risk.table.y.text.col = T, risk.table.height = 0.4)
@@ -347,8 +350,10 @@ myCorggPlot <- function (df, gene1, gene2, colorBy = "none", separateBy = "none"
 ############## kmPlot  ###############
 ######################################
 # Use to plot survival curves, getting the cutoff from the interactive HR plot
-kmPlot <- function (cutoff,surv,censor,conf.int,risk.table,font.legend){
+kmPlot <- function (data, cutoff, surv, censor, conf.int, risk.table, font.legend){
+  df <- data
   sFit <- survfit(surv)
+  # sFit <- survminer::surv_fit(surv, data = df)
   sTable <- data.frame(summary(sFit)$table)
   sDiff.log <- survdiff(surv)
   sDiff.mcox <- survdiff(surv,rho = 1)
@@ -365,11 +370,18 @@ kmPlot <- function (cutoff,surv,censor,conf.int,risk.table,font.legend){
   xmax <- (90*tmax)/100
   p <- suppressWarnings(
     survminer::ggsurvplot(fit = sFit, censor = censor, conf.int = conf.int, legend = c(0.65,0.9), surv.scale = "percent", ylab = "Surviving", xlab = "Survival time (Months)",
-                          xlim = c(0,smax), main = "Kaplan Meier Survival Estimates", legend.title = "", font.legend = font.legend, 
+                          xlim = c(0,smax), main = "Kaplan Meier Survival Estimates", legend.title = "", font.legend = font.legend,
                           legend.labs = c(sprintf("High expr. (n=%s, events=%s, median=%s)", sTable$records[1], sTable$events[1], sTable$median[1]),
                                           sprintf("Low expr. (n=%s, events=%s, median=%s)", sTable$records[2], sTable$events[2], sTable$median[2])),
                           risk.table = risk.table, risk.table.y.text = F, risk.table.y.text.col = T, risk.table.height = 0.4)
   )
+  # survminer::ggsurvplot(fit = sFit, censor = censor, conf.int = conf.int, legend = c(0.65,0.9), surv.scale = "percent", ylab = "Surviving", xlab = "Survival time (Months)",
+  #                       xlim = c(0,smax), main = "Kaplan Meier Survival Estimates", legend.title = "", font.legend = font.legend,
+  #                       legend.labs = c(sprintf("High expr. (n=%s, events=%s, median=%s)", sTable$records[1], sTable$events[1], sTable$median[1]),
+  #                                       sprintf("Low expr. (n=%s, events=%s, median=%s)", sTable$records[2], sTable$events[2], sTable$median[2])),
+  #                       risk.table = risk.table, risk.table.y.text = F, risk.table.y.text.col = T, risk.table.height = 0.4,
+  #                       data = df)
+  # )
   plot <- p$plot
   plot <- plot + annotate("text", x = xmax, y = c(0.725,0.65,0.575), size = font.legend/3,
                           label = c(sprintf("HR = %s, (%s - %s)",HR, HR.lower, HR.upper),
