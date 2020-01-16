@@ -4,8 +4,8 @@
   
 * **New features**  
   + Select gender for survival analysis.
-  + Select IDH status for survival analysis. For the datasets that have IDH status information you can now specifically use the drop list to selct the specific group of interest. For those datasets without IDH status, you can still use the inferred GCIMP status as alternative   
-
+  + Select IDH status for survival analysis. For the adult datasets with IDH status information ("CGGA","TCGA_GBM", "TCGA_GBMLGG","Gorovets","Gravendeel","POLA_Network","Kamoun") you can now use a drop list to selct the specific group of interest. For the other adult datasets, you can still use the inferred G-CIMP status as an alternative.   
+  
 **26-09-2017**      
 * **New datasets**   
   + 1 new pediatric dataset: [Cavalli et al. 2017](https://www.ncbi.nlm.nih.gov/pubmed/28609654) 
