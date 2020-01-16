@@ -584,7 +584,8 @@ shinyServer(
                                   "IDH2_status", "IDH.status")]
       
       if(input$dataset %in% c("CGGA","TCGA_GBM", "TCGA_GBMLGG","Gorovets","Gravendeel","POLA_Network","Kamoun")){
-        df <- rename(df, IDH_status = starts_with("IDH"))
+        # df <- rename(df, IDH_status = starts_with("IDH"))
+        names(df)[grepl("IDH", names(df))] <- "IDH_status"
         df$IDH_status <- ifelse(df$IDH_status %in% c("Wild-type","Wildtype","Wild_type","WT","IDHwt"), "Wild_type",
                                 ifelse(df$IDH_status %in% c("Mutant","Mut","IDHmut-codel","IDHmut-non-codel"),"Mutant",df$IDH_status))
       } else if(input$dataset == "TCGA_LGG"){
